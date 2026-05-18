@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Home, Package, ArrowDownToLine, Bell, Users, LogOut, ShoppingCart } from "lucide-react";
 import { T, font } from "../constants/colors";
 import { can, ROLE_META } from "../constants/permissions";
-import { SURGERY_PRESETS } from "../constants/surgeryPresets";
-import { getActiveOrder, todayKey } from "../utils/helpers";
 import { useToast } from "../hooks/useToast";
+import { usePushNotifications } from "../hooks/usePushNotifications";
+import { useStockActions } from "../hooks/useStockActions";
+import { useOrderActions } from "../hooks/useOrderActions";
+import { useCartActions } from "../hooks/useCartActions";
+import { useSurgeryActions } from "../hooks/useSurgeryActions";
 import { HomeScreen } from "./screens/HomeScreen";
 import { InventoryScreen } from "./screens/InventoryScreen";
 import { InOutScreen } from "./screens/InOutScreen";
@@ -28,267 +31,30 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   const [cat,     setCat]     = useState(0);
   const [toast,   showToast]  = useToast();
   const [editItemsState, setEditItemsState] = useState(null);
-  const firedPushesRef    = useRef(new Set());
-  const firedRemindersRef = useRef(new Set());
 
   const role       = currentUser.role;
   const canApprove = can(role, "orders_approve");
   const adminBadge = canApprove ? pendingOrders : 0;
 
+  const { firePush, requestPushPermission, firedRemindersRef } = usePushNotifications();
+
+  const { commit } = useStockActions({ items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
+
+  const { submitOrder, approveOrder, rejectOrder, confirmReceipt } = useOrderActions({ orders, setOrders, items, setItems, cart, setCart, setTxs, setNotifs, currentUser, showToast, setModal });
+
+  const { updateCartQty, removeFromCart, clearCart, submitCart } = useCartActions({ cart, setCart, orders, setOrders, setNotifs, items, currentUser, showToast, setTab });
+
+  const { addSurgery, confirmSurgeryPrep, updateSurgeryItems } = useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentUser, showToast, firePush, firedRemindersRef });
+
+  // ── 로그인 직후: 브라우저 푸쉬 권한 요청 ──
+  // (당일 수술 알림 useEffect는 useSurgeryActions 내부로 이동)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { requestPushPermission(); }, []);
+
   const openModal = (type, item=null) => { setSelItem(item); setForm({qty:1, note:""}); setModal(type); };
 
   const openItemsEditor = (initialItems, onSave, title) =>
     setEditItemsState({initialItems, onSave, title});
-
-  const updateSurgeryItems = (surgeryId, newItems) => {
-    setSurgeries(p=>p.map(s=>s.id===surgeryId?{...s, required_items:newItems}:s));
-    showToast("준비 품목이 수정되었습니다.");
-  };
-
-  const requestPushPermission = () => {
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission().catch(()=>{});
-    }
-  };
-  const firePush = (key, title, body) => {
-    if (firedPushesRef.current.has(key)) return;
-    firedPushesRef.current.add(key);
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      try { new Notification(title, {body, tag:key}); } catch { /* push silently fails */ }
-    }
-  };
-
-  // ── 입출고 처리 ─────────────────────────────────────
-  const commit = type => {
-    if (!selItem) return;
-    const requestedQty = Math.max(1, parseInt(form.qty)||1);
-    const qty   = type==="out" ? Math.min(requestedQty, selItem.current_qty) : requestedQty;
-    if (type==="out" && qty < requestedQty) {
-      showToast(`현재 재고는 ${selItem.current_qty}${selItem.unit}입니다.`);
-    }
-    if (type==="out" && qty === 0) return;
-    const after = type==="in" ? selItem.current_qty+qty : selItem.current_qty-qty;
-    const upd   = items.map(i=>i.id===selItem.id?{...i,current_qty:after}:i);
-    setItems(upd);
-    setTxs(p=>[{id:`t${Date.now()}`, item_id:selItem.id, type, qty, note:form.note, created_at:new Date().toISOString(), user:currentUser.name},...p]);
-    const u = upd.find(i=>i.id===selItem.id);
-    if (u.current_qty < u.min_qty)
-      setNotifs(p=>[{id:`n${Date.now()}`, type:"low_stock", item_id:selItem.id, message:`${selItem.name} 재고가 부족합니다`, sub:`현재 ${u.current_qty}${selItem.unit} · 최소 ${selItem.min_qty}${selItem.unit}`, is_read:false, created_at:new Date().toISOString()},...p]);
-    showToast(`${type==="in"?"입고":"출고"} ${qty}${selItem.unit} 완료`);
-    setModal(null);
-  };
-
-  // ── 발주 요청 → 장바구니 담기 ───────────────────────
-  const submitOrder = (item, qty, note) => {
-    if (getActiveOrder(orders, item.id)) {
-      showToast("이미 진행 중인 발주가 있습니다.");
-      setModal(null);
-      return;
-    }
-    if (cart.some(c => c.item_id === item.id)) {
-      showToast("이미 장바구니에 담긴 품목입니다.");
-      setModal(null);
-      return;
-    }
-    setCart(p => [...p, { item_id: item.id, qty, note }]);
-    showToast(`${item.name} 장바구니에 담았어요`);
-    setModal(null);
-  };
-
-  const updateCartQty = (itemId, qty) => {
-    setCart(p => p.map(c => c.item_id === itemId ? { ...c, qty } : c));
-  };
-
-  const removeFromCart = (itemId) => {
-    setCart(p => p.filter(c => c.item_id !== itemId));
-  };
-
-  const clearCart = () => {
-    if (cart.length === 0) return;
-    if (!window.confirm("장바구니를 모두 비우시겠습니까?")) return;
-    setCart([]);
-    showToast("장바구니를 비웠어요");
-  };
-
-  // ── 장바구니 일괄 발주 요청 ─────────────────────────
-  const submitCart = () => {
-    if (cart.length === 0) return;
-    // 진행 중인 발주가 생긴 품목은 자동 제외
-    const valid = cart.filter(c => !getActiveOrder(orders, c.item_id));
-    const skipped = cart.length - valid.length;
-    if (valid.length === 0) {
-      showToast("이미 진행 중인 발주만 있어요");
-      return;
-    }
-    const now = new Date().toISOString();
-    const newOrders = valid.map((c, i) => ({
-      id: `o${Date.now()}-${i}`,
-      item_id: c.item_id,
-      requested_by: currentUser.name,
-      requested_at: now,
-      qty: c.qty,
-      note: c.note,
-      status: "pending",
-      reviewed_by: null,
-      reviewed_at: null,
-      review_note: "",
-    }));
-    const newNotifs = valid.map((c, i) => {
-      const item = items.find(it => it.id === c.item_id);
-      return {
-        id: `n${Date.now()}-${i}`,
-        type: "order_req",
-        item_id: c.item_id,
-        message: `${item?.name} 발주 요청이 도착했습니다`,
-        sub: `${currentUser.name} · ${c.qty}${item?.unit || ""}`,
-        is_read: false,
-        created_at: now,
-      };
-    });
-    setOrders(p => [...newOrders, ...p]);
-    setNotifs(p => [...newNotifs, ...p]);
-    setCart([]);
-    showToast(`${valid.length}건 발주 요청 완료${skipped > 0 ? ` (${skipped}건 자동 제외)` : ""}`);
-    setTab("home");
-  };
-
-  // ── 발주 승인 (ordered 상태로, 재고 반영 없음) ────────
-  const approveOrder = (orderId, reviewNote) => {
-    const order = orders.find(o=>o.id===orderId);
-    if (!order || order.status !== "pending") {
-      showToast("처리할 발주 요청을 찾을 수 없습니다.");
-      return;
-    }
-    const item  = items.find(i=>i.id===order.item_id);
-    if (!item) {
-      showToast("발주 품목을 찾을 수 없습니다.");
-      return;
-    }
-    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"ordered", reviewed_by:currentUser.name, reviewed_at:new Date().toISOString(), review_note:reviewNote}:o));
-    setNotifs(p=>[{id:`n${Date.now()}`, type:"ordered", item_id:item.id, message:`${item.name} 발주가 완료되었습니다`, sub:`${currentUser.name} 승인 · ${order.qty}${item.unit} 배송 대기`, is_read:false, created_at:new Date().toISOString()},...p]);
-    showToast("발주가 승인되었습니다.");
-  };
-
-  // ── 발주 거절 ────────────────────────────────────────
-  const rejectOrder = (orderId, reviewNote) => {
-    const order = orders.find(o=>o.id===orderId);
-    if (!order || order.status !== "pending") {
-      showToast("처리할 발주 요청을 찾을 수 없습니다.");
-      return;
-    }
-    const item  = items.find(i=>i.id===order.item_id);
-    if (!item) {
-      showToast("발주 품목을 찾을 수 없습니다.");
-      return;
-    }
-    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"rejected", reviewed_by:currentUser.name, reviewed_at:new Date().toISOString(), review_note:reviewNote}:o));
-    setNotifs(p=>[{id:`n${Date.now()}`, type:"order_rejected", item_id:item.id, message:`${item.name} 발주가 거절되었습니다`, sub:`${currentUser.name} · ${reviewNote||"사유 없음"}`, is_read:false, created_at:new Date().toISOString()},...p]);
-    showToast("발주 요청이 거절되었습니다");
-  };
-
-  // ── 실 입고 확인 (ordered → received, 재고 반영) ──────
-  const confirmReceipt = (orderId, actualQty, note) => {
-    const order = orders.find(o=>o.id===orderId);
-    if (!order || order.status !== "ordered") {
-      showToast("입고 확인할 발주를 찾을 수 없습니다.");
-      return;
-    }
-    const item  = items.find(i=>i.id===order.item_id);
-    if (!item) {
-      showToast("입고 품목을 찾을 수 없습니다.");
-      return;
-    }
-    const after = item.current_qty + actualQty;
-    setItems(p=>p.map(i=>i.id===item.id?{...i, current_qty:after}:i));
-    setTxs(p=>[{id:`t${Date.now()}`, item_id:item.id, type:"in", qty:actualQty, note:`발주 입고 확인 (요청자: ${order.requested_by})${note?` · ${note}`:""}`, created_at:new Date().toISOString(), user:currentUser.name},...p]);
-    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"received"}:o));
-    setNotifs(p=>[{id:`n${Date.now()}`, type:"received", item_id:item.id, message:`${item.name} 입고 확인 완료`, sub:`${currentUser.name} 확인 · ${actualQty}${item.unit} 입고`, is_read:false, created_at:new Date().toISOString()},...p]);
-    showToast(`${actualQty}${item.unit} 입고 확인 완료`);
-    setModal(null);
-  };
-
-  const addSurgery = (data) => {
-    const preset = SURGERY_PRESETS[data.type] || SURGERY_PRESETS.implant;
-    const requiredItems = (data.required_items && data.required_items.length) ? data.required_items : preset.items;
-    const surgery = {
-      id:`s${Date.now()}`,
-      title:data.title || preset.label,
-      patient:data.patient || "-",
-      type:data.type,
-      scheduled_date:data.scheduled_date,
-      scheduled_time:data.scheduled_time,
-      note:data.note,
-      required_items:requiredItems,
-      created_by:currentUser.name,
-      prep_confirmed:false,
-      prepared_by:null,
-      prepared_at:null,
-    };
-    setSurgeries(p=>[surgery,...p]);
-    if (surgery.scheduled_date===todayKey()) {
-      setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_today", surgery_id:surgery.id, item_id:null, message:"오늘 예정된 수술 준비가 필요합니다", sub:`${surgery.title} · ${surgery.scheduled_time}`, is_read:false, created_at:new Date().toISOString()},...p]);
-      firePush(`today:${surgery.id}`, "오늘 수술 일정", `${surgery.title} · ${surgery.scheduled_time}`);
-    }
-    showToast("수술 일정이 등록되었습니다.");
-  };
-
-  const confirmSurgeryPrep = (surgeryId) => {
-    const surgery = surgeries.find(s=>s.id===surgeryId);
-    if (!surgery) return;
-    setSurgeries(p=>p.map(s=>s.id===surgeryId?{...s, prep_confirmed:true, prepared_by:currentUser.name, prepared_at:new Date().toISOString()}:s));
-    setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_ready", surgery_id:surgeryId, item_id:null, message:"수술 준비 확인이 완료되었습니다", sub:`${surgery.title} · ${currentUser.name}`, is_read:false, created_at:new Date().toISOString()},...p]);
-    showToast("수술 준비가 확인되었습니다.");
-  };
-
-  // ── 로그인 직후: 브라우저 푸쉬 권한 요청 + 당일 수술 인앱 알림 자동 생성 ──
-  useEffect(() => {
-    requestPushPermission();
-    const today = todayKey();
-    const todays = surgeries.filter(s=>s.scheduled_date===today);
-    if (todays.length === 0) return;
-    setNotifs(p => {
-      const existing = new Set(p.filter(n=>n.type==="surgery_today"&&n.surgery_id).map(n=>n.surgery_id));
-      const missing = todays.filter(s=>!existing.has(s.id));
-      if (missing.length === 0) return p;
-      const created = missing.map(s=>({
-        id:`n${Date.now()}-${s.id}`, type:"surgery_today", surgery_id:s.id, item_id:null,
-        message:"오늘 예정된 수술 준비가 필요합니다",
-        sub:`${s.title} · ${s.scheduled_time}`,
-        is_read:false, created_at:new Date().toISOString(),
-      }));
-      return [...created, ...p];
-    });
-    todays.forEach(s => firePush(`today:${s.id}`, "오늘 수술 일정", `${s.title} · ${s.scheduled_time}`));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── 30분 전 미준비 리마인더 ──
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      surgeries.forEach(s => {
-        if (s.prep_confirmed) return;
-        if (s.scheduled_date !== todayKey()) return;
-        const start = new Date(`${s.scheduled_date}T${s.scheduled_time}`);
-        const diffMin = (start - now) / 60000;
-        if (diffMin > 0 && diffMin <= 30 && !firedRemindersRef.current.has(s.id)) {
-          firedRemindersRef.current.add(s.id);
-          const mins = Math.ceil(diffMin);
-          setNotifs(p => [{
-            id:`n${Date.now()}-r${s.id}`, type:"surgery_reminder", surgery_id:s.id, item_id:null,
-            message:`${mins}분 후 수술 시작 — 준비 미완료`,
-            sub:`${s.title} · ${s.scheduled_time}`,
-            is_read:false, created_at:new Date().toISOString(),
-          }, ...p]);
-          firePush(`reminder:${s.id}`, "수술 임박 — 준비 미완료", `${s.title} · ${s.scheduled_time}`);
-        }
-      });
-    };
-    tick();
-    const id = setInterval(tick, 60_000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [surgeries]);
 
   const filteredItems = items.filter(i=>i.name.includes(search)&&(cat===0||i.category_id===cat));
   const navItems = [
@@ -368,7 +134,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
               <div style={{width:36, height:4, borderRadius:9999, background:T.grey200}}/>
             </div>
             {(modal==="in"||modal==="out")&&!selItem&&<ItemPickerSheet items={items} setSelItem={setSelItem} onClose={()=>setModal(null)}/>}
-            {(modal==="in"||modal==="out")&&selItem&&<InOutSheet modal={modal} selItem={selItem} form={form} setForm={setForm} onCommit={()=>commit(modal)} onClose={()=>setModal(null)}/>}
+            {(modal==="in"||modal==="out")&&selItem&&<InOutSheet modal={modal} selItem={selItem} form={form} setForm={setForm} onCommit={()=>commit(modal, selItem, form)} onClose={()=>setModal(null)}/>}
             {modal==="order_req"&&selItem&&<OrderRequestSheet item={selItem} currentUser={currentUser} onSubmit={submitOrder} onClose={()=>setModal(null)} orders={orders}/>}
             {modal==="confirm_receipt"&&selItem&&<ReceiptConfirmSheet item={selItem} orders={orders} currentUser={currentUser} onConfirm={confirmReceipt} onClose={()=>setModal(null)}/>}
             {modal==="add_item"&&<AddItemModal setItems={setItems} onClose={()=>setModal(null)} showToast={showToast}/>}
