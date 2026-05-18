@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { T, font } from "./constants/colors";
+import { font } from "./constants/colors";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { seedIfEmpty, resetToInitial } from "./api/seed";
 import { usersApi } from "./api/usersApi";
 import { itemsApi } from "./api/itemsApi";
@@ -17,7 +18,8 @@ import { MainApp } from "./components/MainApp";
 // 모듈 로드 시점에 1회 시드 (테스트에서도 안전하게 호출됨)
 seedIfEmpty();
 
-export default function DentalStock() {
+function DentalStockInner() {
+  const { tokens: dynamicT } = useTheme();
   const [appState,    setAppState]    = useState(() => authApi.getCurrentUser() ? "app" : "login_select");
   const [currentUser, setCurrentUser] = useState(() => authApi.getCurrentUser());
   const [pinTarget,   setPinTarget]   = useState(null);
@@ -63,8 +65,8 @@ export default function DentalStock() {
   };
 
   return (
-    <div style={{display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100vh", background:T.grey100, fontFamily:font, padding:20}}>
-      <div style={{width:"min(100%, 390px)", height:"min(844px, calc(100vh - 40px))", background:T.grey50, borderRadius:24, boxShadow:"0px 8px 24px rgba(0,0,0,0.16)", display:"flex", flexDirection:"column", overflow:"hidden", position:"relative"}}>
+    <div style={{display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100vh", background:dynamicT.grey100, fontFamily:font, padding:20}}>
+      <div style={{width:"min(100%, 390px)", height:"min(844px, calc(100vh - 40px))", background:dynamicT.grey50, borderRadius:24, boxShadow:"0px 8px 24px rgba(0,0,0,0.16)", display:"flex", flexDirection:"column", overflow:"hidden", position:"relative"}}>
         {appState==="login_select" && <LoginSelect users={users} onSelect={u=>{setPinTarget(u);setAppState("login_pin");}}/>}
         {appState==="login_pin"    && pinTarget && <LoginPin user={pinTarget} onSuccess={(u)=>handleLogin(u || pinTarget)} onBack={()=>{setPinTarget(null);setAppState("login_select");}}/>}
         {appState==="app"          && currentUser && (
@@ -88,5 +90,13 @@ export default function DentalStock() {
         *::-webkit-scrollbar{display:none}
       `}</style>
     </div>
+  );
+}
+
+export default function DentalStock() {
+  return (
+    <ThemeProvider>
+      <DentalStockInner />
+    </ThemeProvider>
   );
 }

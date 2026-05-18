@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ArrowDownToLine, ArrowUpFromLine, ChevronRight, AlertTriangle, X,
   Edit2, ShoppingCart, ClipboardList, PackageCheck, CalendarDays, ClipboardCheck
@@ -17,18 +17,25 @@ import { SecTitle } from "../shared/SecTitle";
 
 export function HomeScreen({items, txs, orders, surgeries, setTab, openModal, currentUser, canApprove, confirmSurgeryPrep, openItemsEditor, updateSurgeryItems}) {
   const [statFilter, setStatFilter] = useState(null);
-  const alertItems    = items.filter(i=>getStatus(i)!=="ok");
-  const pendingCount  = orders.filter(o=>o.status==="pending").length;
-  const waitingCount  = orders.filter(o=>o.status==="ordered").length; // 입고 대기
-  const myOrders      = orders.filter(o=>o.requested_by===currentUser.name).slice(0,3);
-  const todaySurgeries = surgeries.filter(s=>s.scheduled_date===todayKey()).sort((a,b)=>(a.scheduled_time||"").localeCompare(b.scheduled_time||""));
 
-  const stats = [
-    {id:"all",     label:"전체 품목", value:items.length,                                    color:T.grey900,  items},
-    {id:"ok",      label:"정상",      value:items.filter(i=>getStatus(i)==="ok").length,     color:T.green500, items:items.filter(i=>getStatus(i)==="ok")},
-    {id:"warning", label:"재고 부족", value:items.filter(i=>getStatus(i)==="warning").length,color:T.orange500,items:items.filter(i=>getStatus(i)==="warning")},
-    {id:"danger",  label:"재고 소진", value:items.filter(i=>getStatus(i)==="danger").length, color:T.red500,   items:items.filter(i=>getStatus(i)==="danger")},
-  ];
+  const alertItems = useMemo(() => items.filter(i => getStatus(i) !== "ok"), [items]);
+  const pendingCount = useMemo(() => orders.filter(o => o.status === "pending").length, [orders]);
+  const waitingCount = useMemo(() => orders.filter(o => o.status === "ordered").length, [orders]);
+  const myOrders = useMemo(() => orders.filter(o => o.requested_by === currentUser.name).slice(0, 3), [orders, currentUser.name]);
+  const todaySurgeries = useMemo(() => surgeries.filter(s => s.scheduled_date === todayKey()).sort((a,b) => (a.scheduled_time||"").localeCompare(b.scheduled_time||"")), [surgeries]);
+
+  const stats = useMemo(() => {
+    const okItems      = items.filter(i => getStatus(i) === "ok");
+    const warningItems = items.filter(i => getStatus(i) === "warning");
+    const dangerItems  = items.filter(i => getStatus(i) === "danger");
+    return [
+      {id:"all",     label:"전체 품목", value:items.length,          color:T.grey900,  items},
+      {id:"ok",      label:"정상",      value:okItems.length,        color:T.green500, items:okItems},
+      {id:"warning", label:"재고 부족", value:warningItems.length,   color:T.orange500,items:warningItems},
+      {id:"danger",  label:"재고 소진", value:dangerItems.length,    color:T.red500,   items:dangerItems},
+    ];
+  }, [items]);
+
   const selectedStat = stats.find(s=>s.id===statFilter);
 
   return (

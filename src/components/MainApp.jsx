@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { Home, Package, ArrowDownToLine, Bell, Users, LogOut, ShoppingCart } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
+import { Home, Package, ArrowDownToLine, Bell, Users, LogOut, ShoppingCart, Moon, Sun } from "lucide-react";
 import { T, font } from "../constants/colors";
+import { useTheme } from "../contexts/ThemeContext";
 import { can, ROLE_META } from "../constants/permissions";
 import { useToast } from "../hooks/useToast";
 import { usePushNotifications } from "../hooks/usePushNotifications";
@@ -8,12 +9,14 @@ import { useStockActions } from "../hooks/useStockActions";
 import { useOrderActions } from "../hooks/useOrderActions";
 import { useCartActions } from "../hooks/useCartActions";
 import { useSurgeryActions } from "../hooks/useSurgeryActions";
-import { HomeScreen } from "./screens/HomeScreen";
-import { InventoryScreen } from "./screens/InventoryScreen";
-import { InOutScreen } from "./screens/InOutScreen";
-import { AlertsScreen } from "./screens/AlertsScreen";
-import { OrderScreen } from "./screens/OrderScreen";
-import { AdminScreen } from "./screens/AdminScreen/AdminScreen";
+
+const HomeScreen      = lazy(() => import("./screens/HomeScreen").then(m => ({ default: m.HomeScreen })));
+const InventoryScreen = lazy(() => import("./screens/InventoryScreen").then(m => ({ default: m.InventoryScreen })));
+const InOutScreen     = lazy(() => import("./screens/InOutScreen").then(m => ({ default: m.InOutScreen })));
+const AlertsScreen    = lazy(() => import("./screens/AlertsScreen").then(m => ({ default: m.AlertsScreen })));
+const OrderScreen     = lazy(() => import("./screens/OrderScreen").then(m => ({ default: m.OrderScreen })));
+const AdminScreen     = lazy(() => import("./screens/AdminScreen/AdminScreen").then(m => ({ default: m.AdminScreen })));
+
 import { ItemPickerSheet } from "./modals/ItemPickerSheet";
 import { InOutSheet } from "./modals/InOutSheet";
 import { OrderRequestSheet } from "./modals/OrderRequestSheet";
@@ -31,6 +34,8 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   const [cat,     setCat]     = useState(0);
   const [toast,   showToast]  = useToast();
   const [editItemsState, setEditItemsState] = useState(null);
+
+  const { tokens: dynamicT, mode, toggle } = useTheme();
 
   const role       = currentUser.role;
   const canApprove = can(role, "orders_approve");
@@ -51,12 +56,12 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { requestPushPermission(); }, []);
 
-  const openModal = (type, item=null) => { setSelItem(item); setForm({qty:1, note:""}); setModal(type); };
+  const openModal = useCallback((type, item=null) => { setSelItem(item); setForm({qty:1, note:""}); setModal(type); }, []);
 
-  const openItemsEditor = (initialItems, onSave, title) =>
-    setEditItemsState({initialItems, onSave, title});
+  const openItemsEditor = useCallback((initialItems, onSave, title) =>
+    setEditItemsState({initialItems, onSave, title}), []);
 
-  const filteredItems = items.filter(i=>i.name.includes(search)&&(cat===0||i.category_id===cat));
+  const filteredItems = useMemo(() => items.filter(i => i.name.includes(search) && (cat===0 || i.category_id===cat)), [items, search, cat]);
   const navItems = [
     {id:"home",      Icon:Home,            label:"홈"},
     {id:"inventory", Icon:Package,         label:"재고"},
@@ -69,13 +74,13 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   return (
     <>
       {/* 상태바 */}
-      <div style={{background:T.white, padding:"14px 24px 8px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${T.grey100}`}}>
+      <div style={{background:dynamicT.white, padding:"14px 24px 8px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${dynamicT.grey100}`}}>
         <span style={{fontSize:13, fontWeight:700, color:T.grey900}}>9:41</span>
         <div style={{width:110, height:24, background:T.grey900, borderRadius:12}}/>
         <span style={{fontSize:12, color:T.grey600}}>100%</span>
       </div>
       {/* 헤더 */}
-      <div style={{background:T.white, padding:"12px 20px 14px", borderBottom:`1px solid ${T.grey100}`}}>
+      <div style={{background:dynamicT.white, padding:"12px 20px 14px", borderBottom:`1px solid ${dynamicT.grey100}`}}>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
           <div>
             <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:2}}>
@@ -87,6 +92,12 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
             </h1>
           </div>
           <div style={{display:"flex", alignItems:"center", gap:4}}>
+            <button
+              aria-label={mode === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
+              onClick={toggle}
+              style={{background:"none", border:"none", cursor:"pointer", padding:8}}>
+              {mode === "dark" ? <Sun size={20} color={T.grey700}/> : <Moon size={20} color={T.grey700}/>}
+            </button>
             <button onClick={()=>setTab("alerts")} style={{position:"relative", background:"none", border:"none", cursor:"pointer", padding:8}}>
               <Bell size={22} color={T.grey700}/>
               {unread>0&&<span style={{position:"absolute", top:4, right:4, background:T.red500, color:T.white, borderRadius:9999, fontSize:10, fontWeight:700, width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center"}}>{unread}</span>}
@@ -102,17 +113,19 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       </div>
 
       {/* 화면 */}
-      <div style={{flex:1, overflowY:"auto", background:T.grey50}}>
-        {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} openModal={openModal} currentUser={currentUser} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
-        {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast}/>}
-        {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
-        {tab==="order"     && <OrderScreen cart={cart} allItems={items} orders={orders} currentUser={currentUser} updateCartQty={updateCartQty} removeFromCart={removeFromCart} submitCart={submitCart} clearCart={clearCart}/>}
-        {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs}/>}
-        {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} approveOrder={approveOrder} rejectOrder={rejectOrder} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
+      <div style={{flex:1, overflowY:"auto", background:dynamicT.grey50}}>
+        <Suspense fallback={<div style={{padding:40, textAlign:"center", color:T.grey500, fontSize:13}}>로딩 중...</div>}>
+          {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} openModal={openModal} currentUser={currentUser} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
+          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast}/>}
+          {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
+          {tab==="order"     && <OrderScreen cart={cart} allItems={items} orders={orders} currentUser={currentUser} updateCartQty={updateCartQty} removeFromCart={removeFromCart} submitCart={submitCart} clearCart={clearCart}/>}
+          {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs}/>}
+          {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} approveOrder={approveOrder} rejectOrder={rejectOrder} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
+        </Suspense>
       </div>
 
       {/* 하단 탭 */}
-      <div style={{background:T.white, borderTop:`1px solid ${T.grey100}`, display:"flex", padding:"6px 0 18px"}}>
+      <div style={{background:dynamicT.white, borderTop:`1px solid ${dynamicT.grey100}`, display:"flex", padding:"6px 0 18px"}}>
         {navItems.map(({id,Icon,label,badge}) => {
           const a = tab===id;
           return (

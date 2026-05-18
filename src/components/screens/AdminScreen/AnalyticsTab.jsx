@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { T } from "../../../constants/colors";
 import { CATEGORIES } from "../../../constants/categories";
 import { getStatus, monthKey, pct } from "../../../utils/helpers";
@@ -7,34 +8,42 @@ import { Chip } from "../../shared/Chip";
 import { SecTitle } from "../../shared/SecTitle";
 
 export function AnalyticsTab({items, txs, orders}) {
-  const latestTx = txs.reduce((latest, tx) => !latest || new Date(tx.created_at) > new Date(latest.created_at) ? tx : latest, null);
-  const now = latestTx ? new Date(latestTx.created_at) : new Date();
-  const currentMonth = now.toISOString().slice(0,7);
-  const prevMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
-  const prevMonth = prevMonthDate.toISOString().slice(0,7);
-  const outTxs = txs.filter(tx=>tx.type==="out");
-  const currentOut = outTxs.filter(tx=>monthKey(tx.created_at)===currentMonth);
-  const prevOut = outTxs.filter(tx=>monthKey(tx.created_at)===prevMonth);
-  const currentTotal = currentOut.reduce((sum,tx)=>sum+tx.qty,0);
-  const prevTotal = prevOut.reduce((sum,tx)=>sum+tx.qty,0);
-  const delta = currentTotal - prevTotal;
-  const activeOrders = orders.filter(o=>o.status==="pending"||o.status==="ordered").length;
-  const lowStock = items.filter(i=>getStatus(i)!=="ok").length;
+  const { outTxs, currentOut, prevOut } = useMemo(() => {
+    const latestTx = txs.reduce((latest, tx) => !latest || new Date(tx.created_at) > new Date(latest.created_at) ? tx : latest, null);
+    const now = latestTx ? new Date(latestTx.created_at) : new Date();
+    const currentMonth = now.toISOString().slice(0,7);
+    const prevMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const prevMonth = prevMonthDate.toISOString().slice(0,7);
+    const outTxs = txs.filter(tx => tx.type === "out");
+    const currentOut = outTxs.filter(tx => monthKey(tx.created_at) === currentMonth);
+    const prevOut = outTxs.filter(tx => monthKey(tx.created_at) === prevMonth);
+    return { outTxs, currentOut, prevOut };
+  }, [txs]);
 
-  const byItem = items.map(item => {
-    const used = currentOut.filter(tx=>tx.item_id===item.id).reduce((sum,tx)=>sum+tx.qty,0);
-    const threeMonthUsed = outTxs.filter(tx=>tx.item_id===item.id).reduce((sum,tx)=>sum+tx.qty,0);
-    const monthlyAvg = Math.max(0.1, threeMonthUsed / 4);
-    const expectedDays = Math.round((item.current_qty / monthlyAvg) * 30);
-    return {...item, used, expectedDays};
-  }).sort((a,b)=>b.used-a.used);
-  const maxUsed = Math.max(1, ...byItem.map(i=>i.used));
+  const currentTotal = useMemo(() => currentOut.reduce((sum,tx) => sum+tx.qty, 0), [currentOut]);
+  const prevTotal    = useMemo(() => prevOut.reduce((sum,tx) => sum+tx.qty, 0), [prevOut]);
+  const delta        = currentTotal - prevTotal;
 
-  const byCat = CATEGORIES.map(cat => {
-    const catItems = items.filter(i=>i.category_id===cat.id).map(i=>i.id);
-    const used = currentOut.filter(tx=>catItems.includes(tx.item_id)).reduce((sum,tx)=>sum+tx.qty,0);
+  const activeOrders = useMemo(() => orders.filter(o => o.status === "pending" || o.status === "ordered").length, [orders]);
+  const lowStock     = useMemo(() => items.filter(i => getStatus(i) !== "ok").length, [items]);
+
+  const { byItem, maxUsed } = useMemo(() => {
+    const byItem = items.map(item => {
+      const used = currentOut.filter(tx => tx.item_id === item.id).reduce((sum,tx) => sum+tx.qty, 0);
+      const threeMonthUsed = outTxs.filter(tx => tx.item_id === item.id).reduce((sum,tx) => sum+tx.qty, 0);
+      const monthlyAvg = Math.max(0.1, threeMonthUsed / 4);
+      const expectedDays = Math.round((item.current_qty / monthlyAvg) * 30);
+      return {...item, used, expectedDays};
+    }).sort((a,b) => b.used - a.used);
+    const maxUsed = Math.max(1, ...byItem.map(i => i.used));
+    return { byItem, maxUsed };
+  }, [items, currentOut, outTxs]);
+
+  const byCat = useMemo(() => CATEGORIES.map(cat => {
+    const catItems = items.filter(i => i.category_id === cat.id).map(i => i.id);
+    const used = currentOut.filter(tx => catItems.includes(tx.item_id)).reduce((sum,tx) => sum+tx.qty, 0);
     return {...cat, used};
-  }).filter(c=>c.used>0);
+  }).filter(c => c.used > 0), [items, currentOut]);
 
   return (
     <div>

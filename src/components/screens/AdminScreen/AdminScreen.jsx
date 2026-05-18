@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ShoppingCart, Truck, XCircle, PackageCheck, LogOut, RotateCcw } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
 import { T, font } from "../../../constants/colors";
@@ -20,8 +20,8 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
   const [reviewModal,  setReviewModal]  = useState(null);
   const [reviewNote,   setReviewNote]   = useState("");
 
-  const pendingOrders = orders.filter(o=>o.status==="pending");
-  const doneOrders    = orders.filter(o=>o.status!=="pending");
+  const pendingOrders = useMemo(() => orders.filter(o => o.status === "pending"), [orders]);
+  const doneOrders    = useMemo(() => orders.filter(o => o.status !== "pending"), [orders]);
 
   const confirmReview = () => {
     if (!reviewModal) return;

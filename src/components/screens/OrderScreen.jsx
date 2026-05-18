@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ShoppingCart, Minus, Plus, Trash2, Truck, PackageCheck, XCircle, ClipboardList } from "lucide-react";
 import { T, font, CS } from "../../constants/colors";
 import { ORDER_ST } from "../../constants/orderStates";
@@ -8,8 +9,8 @@ import { Chip } from "../shared/Chip";
 import { SecTitle } from "../shared/SecTitle";
 
 export function OrderScreen({cart, allItems, orders, currentUser, updateCartQty, removeFromCart, submitCart, clearCart}) {
-  const myOrders = orders.filter(o => o.requested_by === currentUser.name);
-  const totalQty = cart.reduce((sum, c) => sum + c.qty, 0);
+  const myOrders = useMemo(() => orders.filter(o => o.requested_by === currentUser.name), [orders, currentUser.name]);
+  const totalQty = useMemo(() => cart.reduce((sum, c) => sum + c.qty, 0), [cart]);
 
   return (
     <div style={{padding:"16px"}}>
