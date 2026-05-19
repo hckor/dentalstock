@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { Home, Package, ArrowDownToLine, Bell, Users, ShoppingCart } from "lucide-react";
 import { T, font } from "../constants/colors";
 import { useTheme } from "../contexts/ThemeContext";
@@ -44,6 +44,36 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   const [showExpiry,   setShowExpiry]   = useState(false);
   const [showBarcode,  setShowBarcode]  = useState(false);
   const [showProfile,  setShowProfile]  = useState(false);
+
+  // iOS 뒤로쓸어넘기기 제스처 지원: 오버레이가 열릴 때 history entry 추가
+  const overlayHistoryRef = useRef(false);
+
+  const openDetail  = useCallback((item) => { window.history.pushState({overlay:true}, ''); overlayHistoryRef.current = true; setDetailItem(item); }, []);
+  const openExpiry  = useCallback(() =>      { window.history.pushState({overlay:true}, ''); overlayHistoryRef.current = true; setShowExpiry(true); }, []);
+  const openBarcode = useCallback(() =>      { window.history.pushState({overlay:true}, ''); overlayHistoryRef.current = true; setShowBarcode(true); }, []);
+  const openProfile = useCallback(() =>      { window.history.pushState({overlay:true}, ''); overlayHistoryRef.current = true; setShowProfile(true); }, []);
+
+  const closeOverlay = useCallback((closeFn) => {
+    if (overlayHistoryRef.current) {
+      overlayHistoryRef.current = false;
+      window.history.back();
+    } else {
+      closeFn();
+    }
+  }, []);
+
+  // popstate: 뒤로 제스처/버튼 → 열린 오버레이 닫기
+  useEffect(() => {
+    const onPop = () => {
+      overlayHistoryRef.current = false;
+      if      (detailItem)   setDetailItem(null);
+      else if (showExpiry)   setShowExpiry(false);
+      else if (showBarcode)  setShowBarcode(false);
+      else if (showProfile)  setShowProfile(false);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [detailItem, showExpiry, showBarcode, showProfile]);
 
   const { tokens: dynamicT, mode, toggle } = useTheme();
 
@@ -100,7 +130,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
               {unread > 0 && <span style={{position:"absolute", top:4, right:4, background:T.red500, color:T.white, borderRadius:9999, fontSize:10, fontWeight:700, width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center"}}>{unread}</span>}
             </button>
             {/* 프로필 아바타 버튼 */}
-            <button onClick={()=>setShowProfile(true)} style={{width:32, height:32, borderRadius:9999, border:"none", background:ROLE_META[role].bg, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:ROLE_META[role].color, fontFamily:font}}>
+            <button onClick={openProfile} style={{width:32, height:32, borderRadius:9999, border:"none", background:ROLE_META[role].bg, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:ROLE_META[role].color, fontFamily:font}}>
               {currentUser.name.slice(0,1)}
             </button>
           </div>
@@ -111,7 +141,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       <div style={{flex:1, overflowY:"auto", background:dynamicT.grey50}}>
         <Suspense fallback={<div style={{padding:40, textAlign:"center", color:T.grey500, fontSize:13}}>로딩 중...</div>}>
           {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} openModal={openModal} currentUser={currentUser} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
-          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast} onItemClick={setDetailItem} onExpiryClick={()=>setShowExpiry(true)} onBarcodeClick={()=>setShowBarcode(true)}/>}
+          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast} onItemClick={openDetail} onExpiryClick={openExpiry} onBarcodeClick={openBarcode}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="order"     && <OrderScreen cart={cart} allItems={items} orders={orders} currentUser={currentUser} updateCartQty={updateCartQty} removeFromCart={removeFromCart} submitCart={submitCart} clearCart={clearCart}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs}/>}
@@ -142,7 +172,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
               item={detailItem}
               txs={txs}
               orders={orders}
-              onClose={()=>setDetailItem(null)}
+              onClose={()=>closeOverlay(()=>setDetailItem(null))}
               onIn={()=>openModal("in", detailItem)}
               onOut={()=>openModal("out", detailItem)}
               onOrder={()=>openModal("order_req", detailItem)}
@@ -155,7 +185,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       {showExpiry && (
         <div style={{position:"absolute", inset:0, zIndex:100, background:T.white}}>
           <Suspense fallback={null}>
-            <ExpiryManagementScreen items={items} onClose={()=>setShowExpiry(false)} openModal={openModal}/>
+            <ExpiryManagementScreen items={items} onClose={()=>closeOverlay(()=>setShowExpiry(false))} openModal={openModal}/>
           </Suspense>
         </div>
       )}
@@ -163,14 +193,14 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       {/* 바코드 스캔 */}
       {showBarcode && (
         <Suspense fallback={null}>
-          <BarcodeScanScreen items={items} onSelect={handleBarcodeScan} onClose={()=>setShowBarcode(false)}/>
+          <BarcodeScanScreen items={items} onSelect={handleBarcodeScan} onClose={()=>closeOverlay(()=>setShowBarcode(false))}/>
         </Suspense>
       )}
 
       {/* 프로필 시트 */}
       {showProfile && (
         <Suspense fallback={null}>
-          <ProfileSheet currentUser={currentUser} onClose={()=>setShowProfile(false)} onLogout={onLogout}/>
+          <ProfileSheet currentUser={currentUser} onClose={()=>closeOverlay(()=>setShowProfile(false))} onLogout={onLogout}/>
         </Suspense>
       )}
 
