@@ -65,12 +65,6 @@ export function InventoryScreen({items, search, setSearch, orders, onItemClick, 
         )}
       </div>
 
-      {/* 모달 */}
-      {showAdd && (
-        <BottomSheet onClose={()=>setShowAdd(false)}>
-          <AddItemModal setItems={setItems} onClose={()=>setShowAdd(false)} showToast={showToast}/>
-        </BottomSheet>
-      )}
     </div>
   );
 }
