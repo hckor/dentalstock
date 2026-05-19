@@ -7,5 +7,5 @@ export const STORAGE_KEYS = {
   surgeries: "surgeries",
   notifs:    "notifs",
   session:   "session",
-  cart:      "cart",
+  settings:  "settings",
 };

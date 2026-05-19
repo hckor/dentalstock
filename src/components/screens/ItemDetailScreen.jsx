@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ChevronLeft, ArrowDownToLine, ArrowUpFromLine, ShoppingCart } from "lucide-react";
+import { ChevronLeft, ArrowDownToLine, ArrowUpFromLine, ShoppingCart, Pencil } from "lucide-react";
 import { T, font, CS } from "../../constants/colors";
 import { ST } from "../../constants/itemStates";
 import { ORDER_ST } from "../../constants/orderStates";
@@ -62,7 +62,7 @@ function StockSparkline({txs, itemId, minQty}) {
   );
 }
 
-export function ItemDetailScreen({item, txs, orders, onClose, onIn, onOut, onOrder}) {
+export function ItemDetailScreen({item, txs, orders, onClose, onIn, onOut, onOrder, onEdit}) {
   const st  = getStatus(item);
   const sc  = ST[st];
   const ao  = getActiveOrder(orders, item.id);
@@ -80,10 +80,15 @@ export function ItemDetailScreen({item, txs, orders, onClose, onIn, onOut, onOrd
     <div style={{display:"flex", flexDirection:"column", height:"100%", background:T.grey50}}>
       {/* 헤더 */}
       <div style={{background:T.white, padding:"18px 20px", borderBottom:`1px solid ${T.grey100}`}}>
-        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:12}}>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
           <button onClick={onClose} style={{border:"none", background:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", gap:4, color:T.grey600, fontFamily:font, fontSize: 16}}>
             <ChevronLeft size={22} color={T.grey600}/> 재고 목록
           </button>
+          {onEdit && (
+            <button onClick={onEdit} style={{border:"none", background:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", gap:4, color:T.blue500, fontFamily:font, fontSize: 16, fontWeight:600}}>
+              <Pencil size={16}/> 수정
+            </button>
+          )}
         </div>
         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between"}}>
           <div>

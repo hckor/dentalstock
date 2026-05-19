@@ -10,7 +10,6 @@ import { ordersApi } from "./api/ordersApi";
 import { surgeriesApi } from "./api/surgeriesApi";
 import { notifsApi } from "./api/notifsApi";
 import { authApi } from "./api/authApi";
-import { cartApi } from "./api/cartApi";
 import { usePersistedState } from "./hooks/usePersistedState";
 import { LoginSelect } from "./components/auth/LoginSelect";
 import { LoginPin } from "./components/auth/LoginPin";
@@ -37,7 +36,6 @@ function DentalStockInner() {
   const [orders,    setOrders]    = usePersistedState(() => ordersApi.list(),    ordersApi.save);
   const [surgeries, setSurgeries] = usePersistedState(() => surgeriesApi.list(), surgeriesApi.save);
   const [notifs,    setNotifs]    = usePersistedState(() => notifsApi.list(),    notifsApi.save);
-  const [cart,      setCart]      = useState(() => currentUser ? cartApi.list(currentUser.id) : []);
 
   const unread        = notifs.filter(n=>!n.is_read).length;
   const pendingOrders = orders.filter(o=>o.status==="pending").length;
@@ -58,17 +56,9 @@ function DentalStockInner() {
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
 
-  // cart 사용자별 동기화
-  useEffect(() => {
-    if (currentUser) {
-      cartApi.save(currentUser.id, cart);
-    }
-  }, [cart, currentUser]);
-
   const handleLogin = (user) => {
     authApi.setSession(user);
     setCurrentUser(user);
-    setCart(cartApi.list(user.id));
     setAppState("app");
   };
 
@@ -76,7 +66,6 @@ function DentalStockInner() {
     authApi.clearSession();
     setCurrentUser(null);
     setPinTarget(null);
-    setCart([]);
     setAppState("login_select");
   };
 
@@ -98,7 +87,6 @@ function DentalStockInner() {
           orders={orders} setOrders={setOrders}
           surgeries={surgeries} setSurgeries={setSurgeries}
           notifs={notifs} setNotifs={setNotifs}
-          cart={cart} setCart={setCart}
           unread={unread} pendingOrders={pendingOrders}
           onLogout={handleLogout}
         />

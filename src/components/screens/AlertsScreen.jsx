@@ -9,15 +9,15 @@ import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
 
 const TYPE_META = {
-  low_stock:      {bg:T.orange50, color:T.orange500, Icon:AlertTriangle, actionLabel:"발주 요청"},
-  expiry:         {bg:T.red50,    color:T.red500,    Icon:Clock,         actionLabel:"확인"},
-  order_req:      {bg:T.orange50, color:T.orange500, Icon:ShoppingCart,  actionLabel:"검토"},
-  ordered:        {bg:T.teal50,   color:T.teal500,   Icon:Truck,         actionLabel:"입고 확인"},
-  order_rejected: {bg:T.red50,    color:T.red500,    Icon:XCircle,       actionLabel:null},
-  received:       {bg:T.green50,  color:T.green500,  Icon:PackageCheck,  actionLabel:null},
-  surgery_today:  {bg:T.blue50,   color:T.blue500,   Icon:CalendarDays,  actionLabel:null},
-  surgery_ready:  {bg:T.green50,  color:T.green500,  Icon:ClipboardCheck,actionLabel:null},
-  surgery_reminder:{bg:T.orange50,color:T.orange500, Icon:Clock,         actionLabel:null},
+  low_stock:      {bg:T.orange50, color:T.orange500, Icon:AlertTriangle, actionLabel:"재고 확인",     targetTab:"inventory"},
+  expiry:         {bg:T.red50,    color:T.red500,    Icon:Clock,         actionLabel:"유통기한 확인", targetTab:"inventory"},
+  order_req:      {bg:T.orange50, color:T.orange500, Icon:ShoppingCart,  actionLabel:"발주 검토",     targetTab:"shipping"},
+  ordered:        {bg:T.teal50,   color:T.teal500,   Icon:Truck,         actionLabel:"배송 확인",     targetTab:"shipping"},
+  order_rejected: {bg:T.red50,    color:T.red500,    Icon:XCircle,       actionLabel:null,            targetTab:null},
+  received:       {bg:T.green50,  color:T.green500,  Icon:PackageCheck,  actionLabel:null,            targetTab:null},
+  surgery_today:  {bg:T.blue50,   color:T.blue500,   Icon:CalendarDays,  actionLabel:"수술 준비",     targetTab:"home"},
+  surgery_ready:  {bg:T.green50,  color:T.green500,  Icon:ClipboardCheck,actionLabel:null,            targetTab:null},
+  surgery_reminder:{bg:T.orange50,color:T.orange500, Icon:Clock,         actionLabel:"수술 준비",     targetTab:"home"},
 };
 
 function groupByDate(notifs) {
@@ -33,12 +33,17 @@ function groupByDate(notifs) {
   return Object.entries(groups);
 }
 
-export function AlertsScreen({notifs, setNotifs}) {
+export function AlertsScreen({notifs, setNotifs, setTab}) {
   const unread = notifs.filter(n => !n.is_read).length;
   const grouped = useMemo(() => groupByDate(notifs), [notifs]);
 
   const markRead = (id) => setNotifs(p => p.map(x => x.id===id ? {...x, is_read:true} : x));
   const markAllRead = () => setNotifs(p => p.map(n => ({...n, is_read:true})));
+
+  const handleAction = (n, targetTab) => {
+    markRead(n.id);
+    if (targetTab) setTab(targetTab);
+  };
 
   return (
     <div style={{padding:16}}>
@@ -83,7 +88,7 @@ export function AlertsScreen({notifs, setNotifs}) {
 
                     {/* 액션 버튼 (읽지 않은 중요 알림에만) */}
                     {!n.is_read && m.actionLabel && (
-                      <button onClick={()=>markRead(n.id)} style={{alignSelf:"flex-start", marginLeft:50, padding:"12px 20px", borderRadius:9999, border:"none", background:m.color, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5}}>
+                      <button onClick={()=>handleAction(n, m.targetTab)} style={{alignSelf:"flex-start", marginLeft:50, padding:"12px 20px", borderRadius:9999, border:"none", background:m.color, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5}}>
                         {m.actionLabel} <ChevronRight size={16}/>
                       </button>
                     )}

@@ -1,23 +1,36 @@
 import { useState } from "react";
+import { Save, Check } from "lucide-react";
 import { T, font } from "../../../constants/colors";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
 import { Chip } from "../../shared/Chip";
 import { Inp } from "../../shared/Inp";
+import { settingsApi } from "../../../api/settingsApi";
 
-export function VendorSettingsTab() {
-  // 더미 데이터: 향후 API 연동으로 교체
-  const [vendors] = useState([
-    { id: 1, name: "덴올", connected: true },
-    { id: 2, name: "오스템몰", connected: true },
-    { id: 3, name: "이덴트", connected: false },
-  ]);
+export function VendorSettingsTab({ showToast }) {
+  const [initial, setInitial] = useState(() => settingsApi.load());
+  const [vendors, setVendors] = useState(initial.vendors);
+  const [preferredVendor, setPreferredVendor] = useState(initial.preferredVendor);
+  const [maxOrderAmount, setMaxOrderAmount] = useState(initial.maxOrderAmount);
 
-  const [preferredVendor, setPreferredVendor] = useState("lowest");
-  const [maxOrderAmount, setMaxOrderAmount] = useState("50000");
+  const isDirty =
+    JSON.stringify(vendors) !== JSON.stringify(initial.vendors) ||
+    preferredVendor !== initial.preferredVendor ||
+    maxOrderAmount !== initial.maxOrderAmount;
+
+  const toggleConnect = (id) => {
+    setVendors(p => p.map(v => v.id === id ? { ...v, connected: !v.connected } : v));
+  };
+
+  const handleSave = () => {
+    const next = { vendors, preferredVendor, maxOrderAmount };
+    settingsApi.save(next);
+    setInitial(next);
+    showToast?.("자동발주 설정이 저장되었습니다");
+  };
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingBottom: 80 }}>
       {/* 도매 사이트 연결 섹션 */}
       <p style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: T.grey600 }}>
         도매 사이트 연결
@@ -44,25 +57,23 @@ export function VendorSettingsTab() {
                   color={vendor.connected ? T.teal500 : T.grey600}
                   bg={vendor.connected ? T.teal50 : T.grey100}
                 />
-                {!vendor.connected && (
-                  <button
-                    onClick={() => {}}
-                    style={{
-                      minWidth: 60,
-                      padding: "10px 16px",
-                      borderRadius: 9999,
-                      border: `1.5px solid ${T.grey200}`,
-                      background: T.white,
-                      color: T.grey700,
-                      fontSize: 16,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: font,
-                    }}
-                  >
-                    연결
-                  </button>
-                )}
+                <button
+                  onClick={() => toggleConnect(vendor.id)}
+                  style={{
+                    minWidth: 60,
+                    padding: "10px 16px",
+                    borderRadius: 9999,
+                    border: `1.5px solid ${T.grey200}`,
+                    background: T.white,
+                    color: T.grey700,
+                    fontSize: 16,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: font,
+                  }}
+                >
+                  {vendor.connected ? "해제" : "연결"}
+                </button>
               </div>
             </div>
             {idx < vendors.length - 1 && <Divider />}
@@ -77,15 +88,7 @@ export function VendorSettingsTab() {
       <Card style={{ padding: "20px" }}>
         {/* 선호 사이트 */}
         <div style={{ marginBottom: 24 }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: 8,
-              fontSize: 16,
-              fontWeight: 600,
-              color: T.grey700,
-            }}
-          >
+          <label style={{ display: "block", marginBottom: 8, fontSize: 16, fontWeight: 600, color: T.grey700 }}>
             선호 사이트
           </label>
           <select
@@ -119,15 +122,7 @@ export function VendorSettingsTab() {
 
         {/* 최대 주문금액 */}
         <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: 8,
-              fontSize: 16,
-              fontWeight: 600,
-              color: T.grey700,
-            }}
-          >
+          <label style={{ display: "block", marginBottom: 8, fontSize: 16, fontWeight: 600, color: T.grey700 }}>
             최대 주문금액
           </label>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -138,9 +133,7 @@ export function VendorSettingsTab() {
               placeholder="예: 50000"
               style={{ flex: 1 }}
             />
-            <span style={{ fontSize: 16, fontWeight: 600, color: T.grey600, flexShrink: 0 }}>
-              원
-            </span>
+            <span style={{ fontSize: 16, fontWeight: 600, color: T.grey600, flexShrink: 0 }}>원</span>
           </div>
           <p style={{ margin: "8px 0 0", fontSize: 16, color: T.grey500 }}>
             자동발주 시 이 금액을 초과하지 않습니다
@@ -155,6 +148,32 @@ export function VendorSettingsTab() {
           나중에 설정을 변경할 수 있습니다.
         </p>
       </div>
+
+      {/* 저장 버튼 */}
+      <button
+        onClick={handleSave}
+        disabled={!isDirty}
+        style={{
+          marginTop: 20,
+          width: "100%",
+          padding: "18px 0",
+          borderRadius: 9999,
+          border: "none",
+          background: isDirty ? T.blue500 : T.grey200,
+          color: isDirty ? T.white : T.grey500,
+          fontSize: 16,
+          fontWeight: 600,
+          cursor: isDirty ? "pointer" : "default",
+          fontFamily: font,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          transition: "all 150ms",
+        }}
+      >
+        {isDirty ? <><Save size={18}/> 설정 저장</> : <><Check size={18}/> 저장됨</>}
+      </button>
     </div>
   );
 }

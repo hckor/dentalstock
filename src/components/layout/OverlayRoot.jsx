@@ -9,27 +9,31 @@ const overlayStyle = {position:"absolute", inset:0, zIndex:100, background:T.whi
 
 export function OverlayRoot({
   detailItem, showExpiry, showProfile,
-  items, txs, orders, currentUser,
+  items, txs, orders, currentUser, canEdit,
   onCloseDetail, onCloseExpiry, onCloseProfile,
   openModal, onLogout,
 }) {
   return (
     <>
-      {detailItem && (
-        <div style={overlayStyle}>
-          <Suspense fallback={null}>
-            <ItemDetailScreen
-              item={detailItem}
-              txs={txs}
-              orders={orders}
-              onClose={onCloseDetail}
-              onIn={()=>openModal("in", detailItem)}
-              onOut={()=>openModal("out", detailItem)}
-              onOrder={()=>openModal("order_req", detailItem)}
-            />
-          </Suspense>
-        </div>
-      )}
+      {detailItem && (() => {
+        const liveItem = items.find(i => i.id === detailItem.id) || detailItem;
+        return (
+          <div style={overlayStyle}>
+            <Suspense fallback={null}>
+              <ItemDetailScreen
+                item={liveItem}
+                txs={txs}
+                orders={orders}
+                onClose={onCloseDetail}
+                onIn={()=>openModal("in", liveItem)}
+                onOut={()=>openModal("out", liveItem)}
+                onOrder={()=>openModal("order_req", liveItem)}
+                onEdit={canEdit ? () => openModal("edit_item", liveItem) : null}
+              />
+            </Suspense>
+          </div>
+        );
+      })()}
 
       {showExpiry && (
         <div style={overlayStyle}>

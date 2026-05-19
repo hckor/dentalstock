@@ -72,7 +72,7 @@ export function TasksCard({
                     <div key={`approval-${order.id}`}>
                       {idx > 0 && <Divider />}
                       <button
-                        onClick={() => setTab("admin")}
+                        onClick={() => setTab("shipping")}
                         style={{
                           width: "100%",
                           display: "flex",

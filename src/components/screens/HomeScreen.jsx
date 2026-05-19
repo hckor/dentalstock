@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { getStatus, todayKey } from "../../utils/helpers";
+import { todayKey } from "../../utils/helpers";
 import { SecTitle } from "../shared/SecTitle";
 import { TasksCard } from "./home/TasksCard";
 import { TodaySurgeryCard } from "./home/TodaySurgeryCard";
@@ -9,7 +9,6 @@ import { RecentTxList } from "./home/RecentTxList";
 export function HomeScreen({items, txs, orders, surgeries, setTab, canApprove, confirmSurgeryPrep, openItemsEditor, updateSurgeryItems}) {
   const approvalOrders = useMemo(() => orders.filter(o => o.status === "pending"),  [orders]);
   const shippingOrders = useMemo(() => orders.filter(o => o.status === "ordered"),  [orders]);
-  const alertItems     = useMemo(() => items.filter(i => getStatus(i) !== "ok"),    [items]);
   const todaySurgeries = useMemo(
     () => surgeries
       .filter(s => s.scheduled_date === todayKey())

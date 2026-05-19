@@ -7,7 +7,6 @@ import { useToast } from "../hooks/useToast";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { useStockActions } from "../hooks/useStockActions";
 import { useOrderActions } from "../hooks/useOrderActions";
-import { useCartActions } from "../hooks/useCartActions";
 import { useSurgeryActions } from "../hooks/useSurgeryActions";
 import { useOverlayHistory } from "../hooks/useOverlayHistory";
 import { AppHeader } from "./layout/AppHeader";
@@ -22,7 +21,7 @@ const AlertsScreen         = lazy(() => import("./screens/AlertsScreen").then(m 
 const ShippingTrackingScreen = lazy(() => import("./screens/ShippingTrackingScreen").then(m => ({ default: m.ShippingTrackingScreen })));
 const AdminScreen          = lazy(() => import("./screens/AdminScreen/AdminScreen").then(m => ({ default: m.AdminScreen })));
 
-export function MainApp({currentUser, users, setUsers, items, setItems, txs, setTxs, orders, setOrders, surgeries, setSurgeries, notifs, setNotifs, cart, setCart, unread, pendingOrders, onLogout}) {
+export function MainApp({currentUser, users, setUsers, items, setItems, txs, setTxs, orders, setOrders, surgeries, setSurgeries, notifs, setNotifs, unread, pendingOrders, onLogout}) {
   const [tab,     setTab]     = useState("home");
   const [modal,   setModal]   = useState(null);
   const [selItem, setSelItem] = useState(null);
@@ -56,8 +55,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
 
   const { firePush, requestPushPermission, firedRemindersRef } = usePushNotifications();
   const { commit } = useStockActions({ items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
-  const { submitOrder, approveOrder, rejectOrder, confirmReceipt, startTracking } = useOrderActions({ orders, setOrders, items, setItems, cart, setCart, setTxs, setNotifs, currentUser, showToast, setModal });
-  const { updateCartQty, removeFromCart, clearCart, submitCart } = useCartActions({ cart, setCart, orders, setOrders, setNotifs, items, currentUser, showToast, setTab });
+  const { submitOrder, approveOrder, rejectOrder, confirmReceipt, startTracking } = useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
   const { addSurgery, confirmSurgeryPrep, updateSurgeryItems } = useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentUser, showToast, firePush, firedRemindersRef });
 
   useEffect(() => { requestPushPermission(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -96,8 +94,8 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} orders={orders} onItemClick={openDetail} onExpiryClick={openExpiry}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} openModal={openModal} showToast={showToast} startTracking={startTracking} confirmReceipt={confirmReceipt}/>}
-          {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs}/>}
-          {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} approveOrder={approveOrder} rejectOrder={rejectOrder} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
+          {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
+          {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} approveOrder={approveOrder} rejectOrder={rejectOrder} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast}/>}
         </Suspense>
       </div>
 
@@ -111,6 +109,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         txs={txs}
         orders={orders}
         currentUser={currentUser}
+        canEdit={canApprove}
         onCloseDetail={()=>closeOverlay(()=>setDetailItem(null))}
         onCloseExpiry={()=>closeOverlay(()=>setShowExpiry(false))}
         onCloseProfile={()=>closeOverlay(()=>setShowProfile(false))}

@@ -35,10 +35,10 @@ export function OrderRequestSheet({item, currentUser, onSubmit, onClose}) {
       <Inp value={note} onChange={e=>setNote(e.target.value)} placeholder="예: 재고 급하게 필요합니다" style={{marginBottom:16}}/>
       <div style={{display:"flex", alignItems:"center", gap:8, padding:"14px 18px", background:T.grey50, borderRadius:12, marginBottom:20, border:`1px solid ${T.grey200}`}}>
         <Avatar name={currentUser.name} role={currentUser.role} size={28}/>
-        <p style={{margin:0, fontSize: 16, color:T.grey600}}><span style={{fontWeight:600, color:T.grey900}}>{currentUser.name}</span> · 장바구니 확인 후 일괄 발주 요청</p>
+        <p style={{margin:0, fontSize: 16, color:T.grey600}}><span style={{fontWeight:600, color:T.grey900}}>{currentUser.name}</span> · 발주 요청 즉시 전송</p>
       </div>
       <button onClick={()=>onSubmit(item,qty,note)} style={{width:"100%", padding:"16px 0", borderRadius:9999, border:"none", cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:600, color:T.white, background:T.blue500}}>
-        장바구니에 담기
+        발주 요청 보내기
       </button>
     </div>
   );

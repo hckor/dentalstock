@@ -76,7 +76,7 @@ describe('OrderRequestSheet', () => {
         onClose={vi.fn()}
       />
     );
-    const submitBtn = screen.getByRole('button', { name: /장바구니에 담기/ });
+    const submitBtn = screen.getByRole('button', { name: /발주 요청 보내기/ });
     await user.click(submitBtn);
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledWith(mockItem, 2, '');

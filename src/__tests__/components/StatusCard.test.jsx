@@ -4,16 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { ClipboardList, Package } from 'lucide-react';
 import { StatusCard } from '../../components/shared/StatusCard';
 
-// 테마 컨텍스트 제공을 위한 래퍼
-function renderWithTheme(component) {
-  // StatusCard는 내부적으로 useTheme을 사용하므로, 실제 App 컨텍스트 없이
-  // 직접 render할 수 없음. 대신 theme 토큰 모킹이 필요하지만,
-  // 통합 테스트로 전체 App 컨텍스트를 포함하지 않는 한
-  // useTheme이 정상 작동하지 않을 수 있음.
-  // 여기서는 기본적인 props 렌더링을 테스트함
-  return render(component);
-}
-
 describe('StatusCard', () => {
   const mockOnClick = vi.fn();
   const mockIcon = ClipboardList;
@@ -167,7 +157,7 @@ describe('StatusCard', () => {
     });
 
     it('actionBgColor가 액션 버튼 배경으로 적용', () => {
-      const { container } = render(
+      render(
         <StatusCard
           icon={mockIcon}
           iconBgColor="#fff5e0"
@@ -221,7 +211,7 @@ describe('StatusCard', () => {
 
   describe('레이아웃', () => {
     it('버튼이 flex 레이아웃으로 구성됨 (아이콘 + 텍스트 + 액션)', () => {
-      const { container } = render(
+      render(
         <StatusCard
           icon={mockIcon}
           iconBgColor="#fff5e0"
@@ -239,7 +229,7 @@ describe('StatusCard', () => {
     });
 
     it('제목은 19px 폰트 사이즈', () => {
-      const { container } = render(
+      render(
         <StatusCard
           icon={mockIcon}
           iconBgColor="#fff5e0"
@@ -255,7 +245,7 @@ describe('StatusCard', () => {
     });
 
     it('subtitle은 16px 폰트 사이즈', () => {
-      const { container } = render(
+      render(
         <StatusCard
           icon={mockIcon}
           iconBgColor="#fff5e0"
@@ -274,7 +264,7 @@ describe('StatusCard', () => {
 
   describe('엣지 케이스', () => {
     it('긴 제목과 서브텍스트가 ellipsis로 자름', () => {
-      const { container } = render(
+      render(
         <StatusCard
           icon={mockIcon}
           iconBgColor="#fff5e0"

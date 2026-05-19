@@ -113,8 +113,7 @@ describe('ShippingInfo', () => {
       expect(mockOnLinkClick).toHaveBeenCalledTimes(1);
     });
 
-    it('showLink=false일 때 trackingNumber 클릭해도 onLinkClick 호출되지 않음', async () => {
-      const user = userEvent.setup();
+    it('showLink=false일 때 trackingNumber 클릭해도 onLinkClick 호출되지 않음', () => {
       const mockOnLinkClick = vi.fn();
       render(
         <ShippingInfo
@@ -133,7 +132,7 @@ describe('ShippingInfo', () => {
 
   describe('showLink prop', () => {
     it('showLink=true일 때 trackingNumber가 버튼으로 렌더링 (파란색)', () => {
-      const { container } = render(
+      render(
         <ShippingInfo
           carrier="CJ대한통운"
           trackingNumber="1234567890"
@@ -148,7 +147,7 @@ describe('ShippingInfo', () => {
     });
 
     it('showLink=false일 때 trackingNumber가 span으로 렌더링 (회색)', () => {
-      const { container } = render(
+      render(
         <ShippingInfo
           carrier="CJ대한통운"
           trackingNumber="1234567890"

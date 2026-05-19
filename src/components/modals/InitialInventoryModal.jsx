@@ -47,7 +47,7 @@ export function InitialInventoryModal({ items, onSave, onClose }) {
 
       {/* 스크롤 가능한 품목 리스트 */}
       <div style={{ maxHeight: "50vh", overflowY: "auto", marginBottom: 20 }}>
-        {items.map((item, idx) => (
+        {items.map((item) => (
           <div key={item.id} style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <label style={{ fontSize: 16, fontWeight: 600, color: T.grey900, margin: 0 }}>

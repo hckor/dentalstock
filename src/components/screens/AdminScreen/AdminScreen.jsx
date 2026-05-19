@@ -1,20 +1,18 @@
-import { useState, useMemo } from "react";
-import { LogOut, RotateCcw, ClipboardList } from "lucide-react";
+import { useState } from "react";
+import { LogOut, RotateCcw, ClipboardList, PackagePlus } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
 import { T, font } from "../../../constants/colors";
 import { ROLE_META } from "../../../constants/permissions";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
-import { Chip } from "../../shared/Chip";
 import { Avatar } from "../../shared/Avatar";
-import { Inp } from "../../shared/Inp";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { SurgeryAdminTab } from "./SurgeryAdminTab";
 import { VendorSettingsTab } from "./VendorSettingsTab";
 import { BottomSheet } from "../../shared/BottomSheet";
 import { InitialInventoryModal } from "../../modals/InitialInventoryModal";
 
-export function AdminScreen({users, setUsers, currentUser, orders, items, setItems, txs, surgeries, addSurgery, onLogout, openItemsEditor, updateSurgeryItems}) {
+export function AdminScreen({users, setUsers, currentUser, orders, items, setItems, txs, surgeries, addSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast}) {
   const [adminTab, setAdminTab] = useState("surgery");
   const [showInitialInventory, setShowInitialInventory] = useState(false);
 
@@ -109,6 +107,11 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
             </Card>
 
             <button
+              onClick={() => openModal("add_item")}
+              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:8}}>
+              <PackagePlus size={18}/> 품목 추가
+            </button>
+            <button
               onClick={() => setShowInitialInventory(true)}
               style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.blue500}33`, background:T.blue50, color:T.blue500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:8}}>
               <ClipboardList size={18}/> 초기 재고 일괄 입력
@@ -130,7 +133,7 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
           </>
         )}
 
-        {adminTab === "vendor" && <VendorSettingsTab/>}
+        {adminTab === "vendor" && <VendorSettingsTab showToast={showToast}/>}
       </div>
 
       {showInitialInventory && (

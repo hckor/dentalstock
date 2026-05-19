@@ -3,13 +3,12 @@ import { renderHook, act } from '@testing-library/react';
 import { useOrderActions } from '../hooks/useOrderActions';
 
 describe('useOrderActions', () => {
-  let mockSetOrders, mockSetItems, mockSetCart, mockSetTxs, mockSetNotifs, mockShowToast, mockSetModal;
+  let mockSetOrders, mockSetItems, mockSetTxs, mockSetNotifs, mockShowToast, mockSetModal;
   let orders, items, currentUser;
 
   beforeEach(() => {
     mockSetOrders = vi.fn();
     mockSetItems = vi.fn();
-    mockSetCart = vi.fn();
     mockSetTxs = vi.fn();
     mockSetNotifs = vi.fn();
     mockShowToast = vi.fn();
@@ -34,15 +33,13 @@ describe('useOrderActions', () => {
     currentUser = { name: '박위생사', role: 'hygienist' };
   });
 
-  it('submitOrder: 장바구니에 새 항목 추가', () => {
+  it('submitOrder: 새 pending 발주 생성 + 알림', () => {
     const { result } = renderHook(() =>
       useOrderActions({
         orders: [], // no active orders
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -55,17 +52,29 @@ describe('useOrderActions', () => {
       result.current.submitOrder(items[0], 5, '급함');
     });
 
-    expect(mockSetCart).toHaveBeenCalledOnce();
-    const cartUpdater = mockSetCart.mock.calls[0][0];
-    const newCart = cartUpdater([]);
-    expect(newCart).toHaveLength(1);
-    expect(newCart[0]).toEqual({ item_id: '1', qty: 5, note: '급함' });
+    expect(mockSetOrders).toHaveBeenCalledOnce();
+    const ordersUpdater = mockSetOrders.mock.calls[0][0];
+    const newOrders = ordersUpdater([]);
+    expect(newOrders).toHaveLength(1);
+    expect(newOrders[0]).toMatchObject({
+      item_id: '1',
+      qty: 5,
+      note: '급함',
+      status: 'pending',
+      requested_by: '박위생사',
+    });
 
-    expect(mockShowToast).toHaveBeenCalledWith('거즈 장바구니에 담았어요');
+    expect(mockSetNotifs).toHaveBeenCalledOnce();
+    const notifsUpdater = mockSetNotifs.mock.calls[0][0];
+    const newNotifs = notifsUpdater([]);
+    expect(newNotifs[0].type).toBe('order_req');
+    expect(newNotifs[0].message).toContain('거즈');
+
+    expect(mockShowToast).toHaveBeenCalledWith('거즈 발주 요청 완료');
     expect(mockSetModal).toHaveBeenCalledWith(null);
   });
 
-  it('submitOrder: 이미 active order가 있으면 토스트만 띄우고 추가 안 함', () => {
+  it('submitOrder: 이미 active order가 있으면 토스트만 띄우고 생성 안 함', () => {
     const { result } = renderHook(() =>
       useOrderActions({
         orders: [
@@ -81,8 +90,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -95,34 +102,8 @@ describe('useOrderActions', () => {
       result.current.submitOrder(items[0], 5, '');
     });
 
-    expect(mockSetCart).not.toHaveBeenCalled();
+    expect(mockSetOrders).not.toHaveBeenCalled();
     expect(mockShowToast).toHaveBeenCalledWith('이미 진행 중인 발주가 있습니다.');
-    expect(mockSetModal).toHaveBeenCalledWith(null);
-  });
-
-  it('submitOrder: 이미 장바구니에 담겨 있으면 토스트만 띄우고 추가 안 함', () => {
-    const { result } = renderHook(() =>
-      useOrderActions({
-        orders: [], // no active orders
-        setOrders: mockSetOrders,
-        items,
-        setItems: mockSetItems,
-        cart: [{ item_id: '1', qty: 3, note: '' }],
-        setCart: mockSetCart,
-        setTxs: mockSetTxs,
-        setNotifs: mockSetNotifs,
-        currentUser,
-        showToast: mockShowToast,
-        setModal: mockSetModal
-      })
-    );
-
-    act(() => {
-      result.current.submitOrder(items[0], 5, '');
-    });
-
-    expect(mockSetCart).not.toHaveBeenCalled();
-    expect(mockShowToast).toHaveBeenCalledWith('이미 장바구니에 담긴 품목입니다.');
     expect(mockSetModal).toHaveBeenCalledWith(null);
   });
 
@@ -133,8 +114,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -172,8 +151,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -197,8 +174,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -222,8 +197,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -261,8 +234,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -286,8 +257,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -339,8 +308,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -365,8 +332,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,
@@ -390,8 +355,6 @@ describe('useOrderActions', () => {
         setOrders: mockSetOrders,
         items,
         setItems: mockSetItems,
-        cart: [],
-        setCart: mockSetCart,
         setTxs: mockSetTxs,
         setNotifs: mockSetNotifs,
         currentUser,

@@ -4,7 +4,6 @@ import { T, font } from "../../constants/colors";
 import { ORDER_ST } from "../../constants/orderStates";
 import { Card } from "./Card";
 import { Chip } from "./Chip";
-import { Divider } from "./Divider";
 
 export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, stage, onActionClick }) {
   const os = ORDER_ST[order.status];

@@ -1,20 +1,37 @@
 import { getActiveOrder } from "../utils/helpers";
 
-export function useOrderActions({ orders, setOrders, items, setItems, cart, setCart, setTxs, setNotifs, currentUser, showToast, setModal }) {
-  // ── 발주 요청 → 장바구니 담기 ───────────────────────
+export function useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal }) {
+  // ── 발주 요청 → pending 주문 즉시 생성 ───────────────
   const submitOrder = (item, qty, note) => {
     if (getActiveOrder(orders, item.id)) {
       showToast("이미 진행 중인 발주가 있습니다.");
       setModal(null);
       return;
     }
-    if (cart.some(c => c.item_id === item.id)) {
-      showToast("이미 장바구니에 담긴 품목입니다.");
-      setModal(null);
-      return;
-    }
-    setCart(p => [...p, { item_id: item.id, qty, note }]);
-    showToast(`${item.name} 장바구니에 담았어요`);
+    const now = new Date().toISOString();
+    const newOrder = {
+      id: `o${Date.now()}`,
+      item_id: item.id,
+      requested_by: currentUser.name,
+      requested_at: now,
+      qty,
+      note,
+      status: "pending",
+      reviewed_by: null,
+      reviewed_at: null,
+      review_note: "",
+    };
+    setOrders(p => [newOrder, ...p]);
+    setNotifs(p => [{
+      id: `n${Date.now()}`,
+      type: "order_req",
+      item_id: item.id,
+      message: `${item.name} 발주 요청이 도착했습니다`,
+      sub: `${currentUser.name} · ${qty}${item.unit}`,
+      is_read: false,
+      created_at: now,
+    }, ...p]);
+    showToast(`${item.name} 발주 요청 완료`);
     setModal(null);
   };
 

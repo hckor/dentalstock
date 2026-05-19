@@ -1,9 +1,22 @@
 import { useMemo, useState } from "react";
 import { Truck, Package, PackageCheck, AlertCircle } from "lucide-react";
 import { T, font } from "../../constants/colors";
-import { ORDER_ST } from "../../constants/orderStates";
 import { Card } from "../shared/Card";
 import { ShippingOrderCard } from "../shared/ShippingOrderCard";
+
+const CARRIERS = ["CJ대한통운", "한진택배", "롯데택배", "우체국택배"];
+
+function hashOrderId(orderId) {
+  return String(orderId).split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+}
+
+function makeDemoTracking(orderId) {
+  const hash = hashOrderId(orderId);
+  return {
+    carrier: CARRIERS[hash % CARRIERS.length],
+    trackingNumber: String(1000000000 + (hash * 2654435761) % 9000000000),
+  };
+}
 
 export function ShippingTrackingScreen({orders, allItems, currentUser, openModal, showToast, startTracking, confirmReceipt}) {
   const [trackingTab, setTrackingTab] = useState("auto_wait");
@@ -41,9 +54,7 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, openModal
       showToast("도매 사이트에서 직접 주문해주세요");
     } else if (actionType === "tracking_start") {
       // 더미 송장번호로 즉시 배송 추적 시작 (실제는 사용자가 입력)
-      const carriers = ["CJ대한통운", "한진택배", "롯데택배", "우체국택배"];
-      const carrier = carriers[Math.floor(Math.random() * carriers.length)];
-      const trackingNumber = String(Math.floor(Math.random() * 9000000000) + 1000000000);
+      const { carrier, trackingNumber } = makeDemoTracking(order.id);
       startTracking(order.id, carrier, trackingNumber);
       setTrackingTab("in_transit");
     } else if (actionType === "tracking_detail") {

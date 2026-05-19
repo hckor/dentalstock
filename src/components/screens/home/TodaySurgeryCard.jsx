@@ -1,7 +1,9 @@
 import { CalendarDays, ClipboardCheck, Edit2 } from "lucide-react";
 import { T, font, CS } from "../../../constants/colors";
+import { SURGERY_PRESETS } from "../../../constants/surgeryPresets";
 
 export function TodaySurgeryCard({ surgery, items, confirmSurgeryPrep, openItemsEditor, updateSurgeryItems }) {
+  const typeLabel = surgery.type && SURGERY_PRESETS[surgery.type]?.label;
   const reqItems = surgery.required_items.map(req => {
     const item = items.find(i => i.id === req.item_id);
     const ok = item && item.current_qty >= req.qty;
@@ -29,9 +31,9 @@ export function TodaySurgeryCard({ surgery, items, confirmSurgeryPrep, openItems
           <div style={{flex:1, minWidth:0}}>
             <div style={{display:"flex", alignItems:"center", gap:6, flexWrap:"wrap"}}>
               <p style={{margin:0, fontSize: 20, fontWeight:700, color:T.grey900}}>{surgery.title}</p>
-              {surgery.surgery_type && (
+              {typeLabel && (
                 <span style={{fontSize: 16, fontWeight:600, color:T.blue500, background:T.blue50, padding:"2px 8px", borderRadius:9999, flexShrink:0}}>
-                  {surgery.surgery_type}
+                  {typeLabel}
                 </span>
               )}
               {!surgery.prep_confirmed && (
