@@ -15,12 +15,12 @@ import { BottomNav } from "./layout/BottomNav";
 import { ModalRoot } from "./layout/ModalRoot";
 import { OverlayRoot } from "./layout/OverlayRoot";
 
-const HomeScreen      = lazy(() => import("./screens/HomeScreen").then(m => ({ default: m.HomeScreen })));
-const InventoryScreen = lazy(() => import("./screens/InventoryScreen").then(m => ({ default: m.InventoryScreen })));
-const InOutScreen     = lazy(() => import("./screens/InOutScreen").then(m => ({ default: m.InOutScreen })));
-const AlertsScreen    = lazy(() => import("./screens/AlertsScreen").then(m => ({ default: m.AlertsScreen })));
-const OrderScreen     = lazy(() => import("./screens/OrderScreen").then(m => ({ default: m.OrderScreen })));
-const AdminScreen     = lazy(() => import("./screens/AdminScreen/AdminScreen").then(m => ({ default: m.AdminScreen })));
+const HomeScreen           = lazy(() => import("./screens/HomeScreen").then(m => ({ default: m.HomeScreen })));
+const InventoryScreen      = lazy(() => import("./screens/InventoryScreen").then(m => ({ default: m.InventoryScreen })));
+const InOutScreen          = lazy(() => import("./screens/InOutScreen").then(m => ({ default: m.InOutScreen })));
+const AlertsScreen         = lazy(() => import("./screens/AlertsScreen").then(m => ({ default: m.AlertsScreen })));
+const ShippingTrackingScreen = lazy(() => import("./screens/ShippingTrackingScreen").then(m => ({ default: m.ShippingTrackingScreen })));
+const AdminScreen          = lazy(() => import("./screens/AdminScreen/AdminScreen").then(m => ({ default: m.AdminScreen })));
 
 export function MainApp({currentUser, users, setUsers, items, setItems, txs, setTxs, orders, setOrders, surgeries, setSurgeries, notifs, setNotifs, cart, setCart, unread, pendingOrders, onLogout}) {
   const [tab,     setTab]     = useState("home");
@@ -73,11 +73,13 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     [items, search, cat]
   );
 
+  const myOrders = orders.filter(o => o.requested_by === currentUser.name);
+
   const navItems = [
     {id:"home",      Icon:Home,            label:"홈"},
     {id:"inventory", Icon:Package,         label:"재고"},
     {id:"inout",     Icon:ArrowDownToLine, label:"입출고"},
-    {id:"order",     Icon:ShoppingCart,    label:"발주", badge:cart.length},
+    {id:"shipping",  Icon:ShoppingCart,    label:"배송추적", badge:myOrders.filter(o => o.status === "pending").length},
     ...(canApprove ? [{id:"admin", Icon:Users, label:"관리", badge:adminBadge}] : []),
   ];
 
@@ -102,7 +104,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
           {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast} onItemClick={openDetail} onExpiryClick={openExpiry} onBarcodeClick={openBarcode}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
-          {tab==="order"     && <OrderScreen cart={cart} allItems={items} orders={orders} currentUser={currentUser} updateCartQty={updateCartQty} removeFromCart={removeFromCart} submitCart={submitCart} clearCart={clearCart}/>}
+          {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} openModal={openModal} showToast={showToast}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs}/>}
           {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} approveOrder={approveOrder} rejectOrder={rejectOrder} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
         </Suspense>
