@@ -13,7 +13,7 @@ const ATTEMPTS_KEY = "auth_attempts"; // { userId: { count, lockUntil } }
 // ─── PIN 해시 마이그레이션 ────────────────────────────
 // 동시 호출은 promise 캐시로 합치되, 실제 마이그레이션 필요 여부는 매번 storage 기준으로 확인
 let migrationPromise = null;
-export function migratePinsIfNeeded() {
+function migratePinsIfNeeded() {
   if (migrationPromise) return migrationPromise;
   migrationPromise = (async () => {
     const users = usersApi.list();
