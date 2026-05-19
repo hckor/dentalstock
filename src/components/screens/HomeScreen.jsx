@@ -1,18 +1,13 @@
 import { useMemo } from "react";
 import {
   ArrowDownToLine, ArrowUpFromLine, ChevronRight,
-  AlertTriangle, ShoppingCart, PackageCheck,
-  CalendarDays, ClipboardCheck, ClipboardList, Edit2
+  AlertTriangle, PackageCheck, CalendarDays, ClipboardCheck,
+  ClipboardList, Edit2
 } from "lucide-react";
 import { T, font, CS } from "../../constants/colors";
-import { ROLE_META } from "../../constants/permissions";
-import { ORDER_ST } from "../../constants/orderStates";
-import { ST } from "../../constants/itemStates";
-import { SURGERY_PRESETS } from "../../constants/surgeryPresets";
-import { getStatus, todayKey, fmtDate, getActiveOrder } from "../../utils/helpers";
+import { getStatus, todayKey, fmtDate } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
-import { Chip } from "../shared/Chip";
 import { SecTitle } from "../shared/SecTitle";
 
 export function HomeScreen({items, txs, orders, surgeries, setTab, openModal, currentUser, canApprove, confirmSurgeryPrep, openItemsEditor, updateSurgeryItems}) {
@@ -78,39 +73,125 @@ export function HomeScreen({items, txs, orders, surgeries, setTab, openModal, cu
         </div>
       )}
 
-      {/* ── 오늘 수술 (compact) ── */}
-      {todaySurgeries.map(surgery => {
-        const shortages = surgery.required_items.filter(req => {
-          const item = items.find(i => i.id === req.item_id);
-          return !item || item.current_qty < req.qty;
-        });
-        const allOk = shortages.length === 0;
-        return (
-          <div key={surgery.id} style={{padding:"12px 16px 0"}}>
-            <button
-              onClick={() => openItemsEditor(surgery.required_items, (newItems) => updateSurgeryItems(surgery.id, newItems), `${surgery.scheduled_time} · ${surgery.title}`)}
-              style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderRadius:14, background:surgery.prep_confirmed ? T.green50 : T.white, boxShadow:CS, border:"none", cursor:"pointer", fontFamily:font, textAlign:"left"}}
-            >
-              <div style={{width:36, height:36, borderRadius:9999, background:surgery.prep_confirmed?T.green500:allOk?T.blue500:T.orange500, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                {surgery.prep_confirmed ? <ClipboardCheck size={17} color={T.white}/> : <CalendarDays size={17} color={T.white}/>}
-              </div>
-              <div style={{flex:1, minWidth:0}}>
-                <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey900}}>{surgery.patient}님</p>
-                <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-                  {surgery.scheduled_time} · {surgery.title} · 준비 품목 {surgery.required_items.length}종 {allOk?"모두 충분":`${shortages.length}종 부족`}
-                </p>
-              </div>
-              {!surgery.prep_confirmed && (
-                <button
-                  onClick={e=>{e.stopPropagation(); confirmSurgeryPrep(surgery.id);}}
-                  style={{flexShrink:0, padding:"7px 14px", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:font}}
-                >확인</button>
-              )}
-              {surgery.prep_confirmed && <ChevronRight size={16} color={T.grey400}/>}
-            </button>
+      {/* ── 오늘 수술 준비 ── */}
+      {todaySurgeries.length > 0 && (
+        <div style={{padding:"16px 16px 0"}}>
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10}}>
+            <SecTitle>오늘 수술 준비</SecTitle>
           </div>
-        );
-      })}
+          {todaySurgeries.map(surgery => {
+            const reqItems = surgery.required_items.map(req => {
+              const item = items.find(i => i.id === req.item_id);
+              const ok = item && item.current_qty >= req.qty;
+              return { req, item, ok };
+            });
+            const allOk    = reqItems.every(r => r.ok);
+            const shortage = reqItems.filter(r => !r.ok).length;
+
+            return (
+              <div key={surgery.id} style={{background:T.white, borderRadius:16, boxShadow:CS, marginBottom:10, overflow:"hidden"}}>
+
+                {/* 카드 헤더 */}
+                <div style={{padding:"16px 16px 12px"}}>
+                  <div style={{display:"flex", alignItems:"flex-start", gap:12, marginBottom:12}}>
+                    {/* 달력 아이콘 */}
+                    <div style={{width:42, height:42, borderRadius:12, background:T.blue50, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                      {surgery.prep_confirmed
+                        ? <ClipboardCheck size={20} color={T.green500}/>
+                        : <CalendarDays size={20} color={T.blue500}/>
+                      }
+                    </div>
+                    <div style={{flex:1, minWidth:0}}>
+                      <div style={{display:"flex", alignItems:"center", gap:6, flexWrap:"wrap"}}>
+                        <p style={{margin:0, fontSize:15, fontWeight:700, color:T.grey900}}>{surgery.title}</p>
+                        {surgery.surgery_type && (
+                          <span style={{fontSize:11, fontWeight:600, color:T.blue500, background:T.blue50, padding:"2px 8px", borderRadius:9999, flexShrink:0}}>
+                            {surgery.surgery_type}
+                          </span>
+                        )}
+                        {/* 전체 상태 칩 */}
+                        {!surgery.prep_confirmed && (
+                          <span style={{fontSize:11, fontWeight:700,
+                            color: allOk ? T.green500 : T.orange500,
+                            background: allOk ? T.green50 : T.orange50,
+                            padding:"2px 8px", borderRadius:9999, flexShrink:0}}>
+                            {allOk ? "준비 완료" : `부족 ${shortage}종`}
+                          </span>
+                        )}
+                        {surgery.prep_confirmed && (
+                          <span style={{fontSize:11, fontWeight:700, color:T.green500, background:T.green50, padding:"2px 8px", borderRadius:9999, flexShrink:0}}>
+                            확인 완료
+                          </span>
+                        )}
+                      </div>
+                      <p style={{margin:"3px 0 0", fontSize:12, color:T.grey500}}>
+                        {surgery.scheduled_time} · 환자 {surgery.patient}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 준비 품목 리스트 */}
+                  <div style={{background:T.grey50, borderRadius:12, overflow:"hidden"}}>
+                    {reqItems.map(({req, item, ok}, i) => (
+                      <div key={req.item_id}>
+                        <div style={{display:"flex", alignItems:"center", padding:"11px 14px", gap:10}}>
+                          <div style={{flex:1, minWidth:0}}>
+                            <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                              {item?.name || "알 수 없는 품목"}
+                            </p>
+                            <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>
+                              필요 {req.qty}{item?.unit || "개"} · 현재 {item?.current_qty ?? 0}{item?.unit || "개"}
+                            </p>
+                          </div>
+                          <span style={{flexShrink:0, fontSize:12, fontWeight:700,
+                            color: ok ? T.green500 : T.red500,
+                            background: ok ? T.green50 : T.red50,
+                            padding:"4px 10px", borderRadius:9999}}>
+                            {ok ? "가능" : "부족"}
+                          </span>
+                        </div>
+                        {i < reqItems.length - 1 && <div style={{height:1, background:T.grey100, marginLeft:14}}/>}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 메모 */}
+                  {surgery.note && (
+                    <p style={{margin:"10px 0 0", fontSize:12, color:T.grey500}}>
+                      메모: {surgery.note}
+                    </p>
+                  )}
+                </div>
+
+                {/* 하단 버튼 */}
+                {!surgery.prep_confirmed ? (
+                  <div style={{borderTop:`1px solid ${T.grey100}`, padding:"10px 12px 12px", display:"flex", gap:8}}>
+                    <button
+                      onClick={() => openItemsEditor(surgery.required_items, (newItems) => updateSurgeryItems(surgery.id, newItems), `${surgery.scheduled_time} · ${surgery.title}`)}
+                      style={{flex:1, padding:"11px 0", borderRadius:10, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
+                      <Edit2 size={14}/> 품목 편집
+                    </button>
+                    <button
+                      onClick={() => confirmSurgeryPrep(surgery.id)}
+                      style={{flex:2, padding:"11px 0", borderRadius:10, border:"none", background:T.blue500, color:T.white, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:font}}>
+                      준비 확인 완료
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{borderTop:`1px solid ${T.grey100}`, padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+                    <p style={{margin:0, fontSize:13, fontWeight:600, color:T.green500}}>✓ 준비 확인 완료</p>
+                    <button
+                      onClick={() => openItemsEditor(surgery.required_items, (newItems) => updateSurgeryItems(surgery.id, newItems), `${surgery.scheduled_time} · ${surgery.title}`)}
+                      style={{padding:"7px 14px", borderRadius:9999, border:`1px solid ${T.grey200}`, background:T.white, color:T.grey600, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5}}>
+                      <Edit2 size={13}/> 편집
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── 재고 통계 ── */}
       <div style={{padding:"16px 16px 0"}}>

@@ -1,18 +1,16 @@
-import { X, ChevronRight, User, Bell, Moon, HelpCircle, LogOut } from "lucide-react";
+import { X, ChevronRight, User, Bell, HelpCircle, LogOut } from "lucide-react";
 import { T, font } from "../../constants/colors";
 import { ROLE_META } from "../../constants/permissions";
 import { Avatar } from "../shared/Avatar";
-import { useTheme } from "../../contexts/ThemeContext";
 import { Divider } from "../shared/Divider";
 
 export function ProfileSheet({currentUser, onClose, onLogout}) {
-  const { mode, toggle, tokens: dynamicT } = useTheme();
   const m = ROLE_META[currentUser.role];
 
   const menuItems = [
-    {Icon:User,   label:"내 계정",      sub:"비밀번호 · 연락처",  chevron:true,  onClick:()=>{}},
-    {Icon:Bell,   label:"알림 설정",    sub:"앱 알림 · 이메일",   chevron:true,  onClick:()=>{}},
-    {Icon:HelpCircle, label:"도움말 · 문의", sub:null,            chevron:true,  onClick:()=>{}},
+    {Icon:User,       label:"내 계정",      sub:"비밀번호 · 연락처", onClick:()=>{}},
+    {Icon:Bell,       label:"알림 설정",    sub:"앱 알림 · 이메일",  onClick:()=>{}},
+    {Icon:HelpCircle, label:"도움말 · 문의", sub:null,               onClick:()=>{}},
   ];
 
   return (
@@ -41,7 +39,7 @@ export function ProfileSheet({currentUser, onClose, onLogout}) {
         </div>
 
         {/* 메뉴 항목 */}
-        <div style={{margin:"0 16px 12px", background:T.white, borderRadius:14, border:`1px solid ${T.grey200}`, overflow:"hidden"}}>
+        <div style={{margin:"0 16px 16px", background:T.white, borderRadius:14, border:`1px solid ${T.grey200}`, overflow:"hidden"}}>
           {menuItems.map((item, i) => {
             const Icon = item.Icon;
             return (
@@ -54,34 +52,12 @@ export function ProfileSheet({currentUser, onClose, onLogout}) {
                     <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900}}>{item.label}</p>
                     {item.sub && <p style={{margin:"1px 0 0", fontSize:12, color:T.grey500}}>{item.sub}</p>}
                   </div>
-                  {item.chevron && <ChevronRight size={16} color={T.grey300}/>}
+                  <ChevronRight size={16} color={T.grey300}/>
                 </button>
                 {i < menuItems.length-1 && <Divider/>}
               </div>
             );
           })}
-
-          {/* 다크 모드 토글 */}
-          <Divider/>
-          <div style={{display:"flex", alignItems:"center", gap:14, padding:"14px 16px"}}>
-            <div style={{width:34, height:34, borderRadius:9999, background:T.grey100, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-              <Moon size={16} color={T.grey600}/>
-            </div>
-            <div style={{flex:1}}>
-              <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900}}>화면 테마</p>
-            </div>
-            {/* 토글 스위치 */}
-            <div style={{display:"flex", background:T.grey100, borderRadius:9999, padding:3, gap:2}}>
-              {["밝게","어둠게"].map(label => {
-                const active = label==="밝게" ? mode==="light" : mode==="dark";
-                return (
-                  <button key={label} onClick={toggle} style={{padding:"5px 12px", borderRadius:9999, border:"none", background:active?T.white:"transparent", boxShadow:active?"0px 1px 3px rgba(0,0,0,0.1)":"none", cursor:"pointer", fontFamily:font, fontSize:12, fontWeight:active?700:500, color:active?T.grey900:T.grey500, transition:"all 120ms"}}>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         {/* 로그아웃 */}
