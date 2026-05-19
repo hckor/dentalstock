@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Minus, Plus } from "lucide-react";
-import { T, font } from "../../constants/colors";
+import { T, font, monoFont } from "../../constants/colors";
 import { ST } from "../../constants/itemStates";
 import { getStatus, catColor } from "../../utils/helpers";
 import { Inp } from "../shared/Inp";
@@ -28,7 +28,7 @@ export function OrderRequestSheet({item, currentUser, onSubmit, onClose}) {
       <p style={{margin:"0 0 8px", fontSize: 16, fontWeight:600, color:T.grey700}}>요청 수량</p>
       <div style={{display:"flex", alignItems:"center", gap:16, marginBottom:20}}>
         <button onClick={()=>setQty(q=>Math.max(1,q-1))} style={{width:52, height:52, borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}><Minus size={22} color={T.grey700}/></button>
-        <p style={{flex:1, textAlign:"center", margin:0, fontSize: 28, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{qty}</p>
+        <p style={{flex:1, textAlign:"center", margin:0, fontSize: 30, fontWeight:700, color:T.grey900, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{qty}</p>
         <button onClick={()=>setQty(q=>q+1)} style={{width:52, height:52, borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}><Plus size={22} color={T.white}/></button>
       </div>
       <p style={{margin:"0 0 8px", fontSize: 16, fontWeight:600, color:T.grey700}}>메모 <span style={{fontWeight:400, color:T.grey400}}>(선택)</span></p>

@@ -82,22 +82,23 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
   return (
     <div style={{ padding: "16px" }}>
       {/* ── 탭 네비게이션 ── */}
-      <div style={{ background: T.white, borderRadius: 12, padding: "6px", marginBottom: 16, display: "flex", gap: 4 }}>
+      <div style={{ background: T.grey100, borderRadius: 12, padding: 4, marginBottom: 16, display: "flex", gap: 2 }}>
         {tabDefs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setTrackingTab(tab.id)}
             style={{
               flex: 1,
-              padding: "8px 10px",
+              padding: "12px 8px",
               border: "none",
               borderRadius: 9999,
               cursor: "pointer",
               fontFamily: font,
               fontSize: 14,
               fontWeight: 600,
-              background: trackingTab === tab.id ? T.grey900 : T.grey100,
-              color: trackingTab === tab.id ? T.white : T.grey600,
+              background: trackingTab === tab.id ? T.white : "transparent",
+              boxShadow: trackingTab === tab.id ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
+              color: trackingTab === tab.id ? T.grey900 : T.grey500,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

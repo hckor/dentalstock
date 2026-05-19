@@ -37,12 +37,12 @@ export function InventoryScreen({ items, search, setSearch, cat, setCat, orders,
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="품목명 검색"
-              style={{ width: "100%", padding: "11px 13px 11px 38px", borderRadius: 10, border: `1px solid ${T.grey200}`, background: T.grey50, fontSize: 16, color: T.grey800, fontFamily: font, outline: "none", boxSizing: "border-box" }}
+              style={{ width: "100%", height: 44, padding: "10px 16px 10px 40px", borderRadius: 12, border: `1px solid rgba(2,32,71,0.05)`, background: "rgba(0,23,51,0.02)", fontSize: 16, color: T.grey800, fontFamily: font, outline: "none", boxSizing: "border-box" }}
             />
           </div>
           <button
             onClick={onExpiryClick}
-            style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 5, padding: "11px 14px", borderRadius: 10, border: `1px solid ${T.grey200}`, background: T.white, color: T.grey700, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: font, whiteSpace: "nowrap" }}
+            style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 5, height: 44, padding: "10px 14px", borderRadius: 12, border: `1px solid ${T.grey200}`, background: T.white, color: T.grey700, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: font, whiteSpace: "nowrap" }}
           >
             <CalendarClock size={18} color={T.grey600} /> 유통기한
           </button>
@@ -58,10 +58,10 @@ export function InventoryScreen({ items, search, setSearch, cat, setCat, orders,
                 onClick={() => setCat(c.id)}
                 style={{
                   flexShrink: 0,
-                  padding: "6px 14px",
-                  borderRadius: 9999,
+                  padding: "7px 14px",
+                  borderRadius: 12,
                   border: active ? "none" : `1px solid ${T.grey200}`,
-                  background: active ? c.color : T.white,
+                  background: active ? T.blue500 : T.white,
                   color: active ? T.white : T.grey600,
                   fontSize: 14,
                   fontWeight: 600,

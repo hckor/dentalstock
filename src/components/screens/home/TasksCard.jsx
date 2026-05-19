@@ -3,7 +3,7 @@ import { ClipboardList, Package } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
-import { font } from "../../../constants/colors";
+import { font, monoFont } from "../../../constants/colors";
 
 export function TasksCard({
   canApprove,
@@ -27,7 +27,7 @@ export function TasksCard({
         title: item?.name || "-",
         subtitle: `발주 승인 대기 · ${priceLabel}`,
         actionLabel: "검토하기",
-        actionBg: T.red500,
+        actionBg: T.blue500,
       };
     }) : [];
 
@@ -63,10 +63,10 @@ export function TasksCard({
             padding: "14px 16px 10px",
           }}
         >
-          <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey700 }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: T.grey800 }}>
             오늘 해야 할 일
           </p>
-          <span style={{ fontSize: 16, fontWeight: 700, color: T.blue500 }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.blue500, fontFamily: monoFont }}>
             {workItems.length}건
           </span>
         </div>
@@ -93,7 +93,7 @@ export function TasksCard({
                   style={{
                     width: 44,
                     height: 44,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     background: task.iconBg,
                     display: "flex",
                     alignItems: "center",
@@ -104,7 +104,7 @@ export function TasksCard({
                   <Icon size={20} color={task.iconColor} />
                 </div>
                 <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: T.grey900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {task.title}
                   </p>
                   <p style={{ margin: "2px 0 0", fontSize: 16, color: T.grey500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

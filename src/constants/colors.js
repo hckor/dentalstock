@@ -2,23 +2,23 @@
 
 const lightTokens = {
   // ── Accent: Blue (primary) & Red (danger) ──
-  blue500:"#2563eb",   blue600:"#1d54d4",   blue50:"#eaf2ff",
+  blue500:"#2563eb",   blue600:"#2272eb",   blue50:"#e8f3ff",
   white:"#ffffff",
 
-  // ── Monochrome scale (crisp, neutral) ──
-  grey900:"#0f172a",   grey800:"#1f2937",   grey700:"#374151",
-  grey600:"#52606d",   grey500:"#7b8794",   grey400:"#9aa5b1",
-  grey300:"#cbd2d9",   grey200:"#e4e7eb",   grey100:"#f1f3f5",  grey50:"#f7f8fa",
+  // ── Monochrome scale (Toss warm grey) ──
+  grey900:"#191f28",   grey800:"#333d4b",   grey700:"#4e5968",
+  grey600:"#6b7684",   grey500:"#8b95a1",   grey400:"#b0b8c1",
+  grey300:"#d1d6db",   grey200:"#e5e8eb",   grey100:"#f2f4f6",  grey50:"#f9fafb",
 
   // ── Red (danger only) ──
   red500:"#f04452",    red50:"#ffeef0",
 
   // ── Status tints (used sparingly, very desaturated) ──
-  green500:"#16a34a",  green50:"#e8f7ee",
-  orange500:"#f59e0b", orange50:"#fff5e0",
-  yellow500:"#eab308", yellow50:"#fff8db",
-  purple500:"#7c3aed", purple50:"#f1ebff",
-  teal500:"#0d9488",   teal50:"#e2f5f2",
+  green500:"#03b26c",  green50:"#e6f8f0",
+  orange500:"#fe9800", orange50:"#fff3df",
+  yellow500:"#ffc342", yellow50:"#fff8df",
+  purple500:"#a234c7", purple50:"#f7eafd",
+  teal500:"#18a5a5",   teal50:"#e5f7f7",
 };
 
 // 다크모드 토큰: 명도 반전 + 채도 약간 조정
@@ -42,5 +42,6 @@ export const themeTokens = { light: lightTokens, dark: darkTokens };
 export const T = lightTokens;
 
 export const font = `"Toss Product Sans","Tossface","SF Pro KR","SF Pro Display",-apple-system,BlinkMacSystemFont,"Basier Square","Apple SD Gothic Neo",Roboto,"Noto Sans KR",sans-serif`;
+export const monoFont = `"SF Mono",SFMono-Regular,Menlo,Consolas,monospace`;
 
-export const CS = "0px 1px 2px rgba(15,23,42,0.04), 0px 4px 16px rgba(15,23,42,0.04)";
+export const CS = "0px 2px 8px rgba(0,0,0,0.08)";

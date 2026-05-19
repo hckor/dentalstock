@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { ChevronLeft, ArrowUpFromLine } from "lucide-react";
-import { T, font } from "../../constants/colors";
+import { T, font, monoFont } from "../../constants/colors";
 import { catName, daysUntil } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
@@ -29,7 +29,7 @@ function ExpirySection({title, items, dotColor, textColor, onOut}) {
                   {days !== null && days <= 0 ? (
                     <span style={{fontSize: 16, fontWeight:700, color:T.red500}}>만료됨</span>
                   ) : (
-                    <span style={{fontSize: 16, fontWeight:700, color:textColor}}>D-{days}</span>
+                    <span style={{fontSize: 16, fontWeight:700, color:textColor, fontFamily:monoFont}}>D-{days}</span>
                   )}
                 </div>
                 <button onClick={()=>onOut(item)} style={{flexShrink:0, padding:"12px 16px", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey600, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:4}}>
@@ -78,7 +78,7 @@ export function ExpiryManagementScreen({items, onClose, openModal}) {
           {stats.map(s => (
             <div key={s.label} style={{flex:1, background:T.grey50, borderRadius:10, padding:"14px 16px", border:`1px solid ${T.grey200}`}}>
               <p style={{margin:"0 0 2px", fontSize: 16, color:T.grey500}}>{s.label}</p>
-              <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}<span style={{fontSize: 16, fontWeight:400, color:T.grey500}}>건</span></p>
+              <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{s.value}<span style={{fontSize: 16, fontWeight:400, color:T.grey500, fontFamily:font}}>건</span></p>
             </div>
           ))}
         </div>

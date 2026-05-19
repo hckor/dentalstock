@@ -13,14 +13,14 @@ export function AppHeader({ tab, currentUser, unread, setTab, onOpenProfile }) {
   const role = currentUser.role;
 
   return (
-    <div style={{background:dynamicT.white, paddingTop:"max(12px, env(safe-area-inset-top))", paddingBottom:14, paddingLeft:20, paddingRight:20, borderBottom:`1px solid ${dynamicT.grey100}`}}>
+    <div style={{background:dynamicT.white, paddingTop:"max(12px, env(safe-area-inset-top))", paddingBottom:14, paddingLeft:20, paddingRight:20, borderBottom:`1px solid ${dynamicT.grey200}`}}>
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
         <div>
           <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:2}}>
-            <p style={{margin:0, fontSize: 16, color:dynamicT.grey400}}>DentalStock</p>
-            <span style={{fontSize: 16, fontWeight:600, color:ROLE_META[role].color, background:ROLE_META[role].bg, padding:"1px 8px", borderRadius:9999}}>{currentUser.name}</span>
+            <p style={{margin:0, fontSize: 13, lineHeight:"20px", color:dynamicT.grey500}}>DentalStock</p>
+            <span style={{fontSize: 12, lineHeight:"18px", fontWeight:700, color:ROLE_META[role].color, background:ROLE_META[role].bg, padding:"3px 7px", borderRadius:12}}>{currentUser.name}</span>
           </div>
-          <h1 style={{margin:0, fontSize: 24, fontWeight:700, color:dynamicT.grey900}}>{TAB_TITLES[tab] || "대시보드"}</h1>
+          <h1 style={{margin:0, fontSize: 26, lineHeight:"36px", fontWeight:700, color:dynamicT.grey900}}>{TAB_TITLES[tab] || "대시보드"}</h1>
         </div>
         <div style={{display:"flex", alignItems:"center", gap:2}}>
           <button onClick={()=>setTab("alerts")}

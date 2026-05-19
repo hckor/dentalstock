@@ -91,3 +91,14 @@
 - 입출고 시트의 입고/출고 색상 분기를 `accent` 값으로 모아 같은 삼항식이 여러 번 반복되지 않게 했습니다.
 - 실제로 쓰지 않는 `AdminScreen`, `OrderRequestSheet`, `ReceiptConfirmSheet` props 전달을 제거했습니다.
 - 최종 정리 후 `npm run lint`, `npm test`, `npm run build`, Playwright 21개 실제 흐름 검증을 모두 다시 통과했습니다.
+
+## Toss 디자인 시스템 적용
+
+제공된 Toss/TDS 문서 기준으로 현재 앱에 적용 가능한 디자인 디테일을 새 브랜치에서 반영했습니다.
+
+- Toss 토큰 값을 문서 기준에 맞춰 조정했습니다: `blue600`, `blue50`, warm grey scale, green/orange/yellow/teal/purple semantic 색상.
+- 카드, 배지, 입력, segmented tab, toast, bottom navigation의 radius, shadow, padding, font weight를 TDS Mobile 규칙에 맞게 다듬었습니다.
+- 재고 수량, 입출고 수량, 통계 값, 분석 숫자 등 데이터성 숫자에 monospace + tabular numeral 표현을 적용했습니다.
+- 카테고리/탭 선택처럼 사용자가 누르는 인터랙션은 Toss Blue 중심으로 정리하고, red/orange/green은 상태와 위험 의미에 집중하도록 조정했습니다.
+- 입출고, 재고 상세, 알림, 배송, 홈 업무 카드, 관리자 분석 화면의 버튼과 요약 카드 밀도를 모바일 375px 기준에 맞게 재정렬했습니다.
+- 적용 후 `npm run lint`, `npm test`, `npm run build`, Playwright 21개 실제 흐름 검증을 모두 통과했습니다.

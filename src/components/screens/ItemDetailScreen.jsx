@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { ChevronLeft, ArrowDownToLine, ArrowUpFromLine, ShoppingCart, Pencil } from "lucide-react";
-import { T, font, CS } from "../../constants/colors";
+import { T, font, CS, monoFont } from "../../constants/colors";
 import { ST } from "../../constants/itemStates";
 import { ORDER_ST } from "../../constants/orderStates";
 import { catName, fmtDate, fmtFull, getStatus, getActiveOrder } from "../../utils/helpers";
@@ -103,19 +103,19 @@ export function ItemDetailScreen({item, txs, orders, onClose, onIn, onOut, onOrd
 
       <div style={{flex:1, overflowY:"auto", padding:"16px"}}>
         {/* 현재 재고 */}
-        <div style={{background:T.white, borderRadius:14, boxShadow:CS, padding:"18px 20px", marginBottom:12, display:"flex", alignItems:"baseline", justifyContent:"space-between"}}>
+        <div style={{background:T.white, borderRadius:12, boxShadow:CS, padding:"20px", marginBottom:12, display:"flex", alignItems:"baseline", justifyContent:"space-between"}}>
           <div>
-            <p style={{margin:"0 0 4px", fontSize: 16, color:T.grey500}}>현재 재고</p>
-            <p style={{margin:0, fontSize: 32, fontWeight:700, color:sc.text, fontVariantNumeric:"tabular-nums", lineHeight:1}}>
+            <p style={{margin:"0 0 4px", fontSize: 14, lineHeight:"22px", color:T.grey500}}>현재 재고</p>
+            <p style={{margin:0, fontSize: 34, fontWeight:700, color:sc.text, fontFamily:monoFont, fontVariantNumeric:"tabular-nums", lineHeight:1}}>
               {item.current_qty}
-              <span style={{fontSize: 24, fontWeight:500, color:T.grey500, marginLeft:6}}>{item.unit}</span>
+              <span style={{fontSize: 20, fontWeight:400, color:T.grey500, marginLeft:6, fontFamily:font}}>{item.unit}</span>
             </p>
           </div>
           <p style={{margin:0, fontSize: 16, color:T.grey400}}>최소 {item.min_qty}{item.unit}</p>
         </div>
 
         {/* 품목 정보 */}
-        <div style={{background:T.white, borderRadius:14, boxShadow:CS, marginBottom:12, overflow:"hidden"}}>
+        <div style={{background:T.white, borderRadius:12, boxShadow:CS, marginBottom:12, overflow:"hidden"}}>
           {infoRows.map((row, i) => (
             <div key={row.label}>
               <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"18px 20px"}}>
@@ -129,7 +129,7 @@ export function ItemDetailScreen({item, txs, orders, onClose, onIn, onOut, onOrd
 
         {/* 재고 추이 그래프 */}
         {itemTxs.length > 0 && (
-          <div style={{background:T.white, borderRadius:14, boxShadow:CS, padding:"16px", marginBottom:12}}>
+          <div style={{background:T.white, borderRadius:12, boxShadow:CS, padding:"16px", marginBottom:12}}>
             <p style={{margin:"0 0 12px", fontSize: 16, fontWeight:700, color:T.grey900}}>최근 30일 재고 추이</p>
             <StockSparkline txs={txs} itemId={item.id} minQty={item.min_qty}/>
           </div>
@@ -154,7 +154,7 @@ export function ItemDetailScreen({item, txs, orders, onClose, onIn, onOut, onOrd
                       <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900}}>{tx.note || (tx.type==="in"?"입고":"출고")}</p>
                       <p style={{margin:"1px 0 0", fontSize: 16, color:T.grey500}}>{tx.user} · {fmtFull(tx.created_at)}</p>
                     </div>
-                    <span style={{fontSize: 20, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</span>
+                    <span style={{fontSize: 16, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</span>
                   </div>
                   {i < Math.min(itemTxs.length,10)-1 && <Divider/>}
                 </div>
@@ -166,9 +166,9 @@ export function ItemDetailScreen({item, txs, orders, onClose, onIn, onOut, onOrd
 
       {/* 고정 하단 버튼 */}
       <div style={{position:"sticky", bottom:0, background:T.white, borderTop:`1px solid ${T.grey100}`, padding:"12px 16px 28px", display:"flex", gap:8}}>
-        <button onClick={onIn} style={{flex:1, padding:"18px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font}}>입고</button>
-        <button onClick={onOut} style={{flex:1, padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font}}>출고</button>
-        <button onClick={onOrder} disabled={!!ao} style={{flex:1, padding:"18px 0", borderRadius:9999, border:"none", background:ao?T.grey100:T.blue50, color:ao?T.grey400:T.blue500, fontSize: 16, fontWeight:700, cursor:ao?"not-allowed":"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:4}}>
+        <button onClick={onIn} style={{flex:1, padding:"16px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font}}>입고</button>
+        <button onClick={onOut} style={{flex:1, padding:"16px 0", borderRadius:9999, border:"none", background:T.grey100, color:T.red500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font}}>출고</button>
+        <button onClick={onOrder} disabled={!!ao} style={{flex:1, padding:"16px 0", borderRadius:9999, border:"none", background:ao?T.grey100:T.blue50, color:ao?T.grey400:T.blue500, fontSize: 16, fontWeight:600, cursor:ao?"not-allowed":"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:4}}>
           <ShoppingCart size={18}/> 발주
         </button>
       </div>

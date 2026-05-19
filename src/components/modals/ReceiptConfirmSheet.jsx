@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Minus, Plus, CircleDot } from "lucide-react";
-import { T, font } from "../../constants/colors";
+import { T, font, monoFont } from "../../constants/colors";
 import { Inp } from "../shared/Inp";
 
 export function ReceiptConfirmSheet({item, orders, onConfirm, onClose}) {
@@ -33,7 +33,7 @@ export function ReceiptConfirmSheet({item, orders, onConfirm, onClose}) {
           <Minus size={22} color={T.grey700}/>
         </button>
         <div style={{flex:1, textAlign:"center"}}>
-          <p style={{margin:0, fontSize: 28, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{qty}</p>
+          <p style={{margin:0, fontSize: 30, fontWeight:700, color:T.grey900, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{qty}</p>
           {qty !== order.qty && <p style={{margin:"2px 0 0", fontSize: 16, color:T.orange500, fontWeight:600}}>발주량({order.qty})과 다릅니다</p>}
         </div>
         <button onClick={()=>setQty(q=>q+1)} style={{width:52, height:52, borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>

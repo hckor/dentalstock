@@ -62,7 +62,7 @@ export function AlertsScreen({notifs, setNotifs, setTab}) {
         </div>
       ) : grouped.map(([dateLabel, dayNotifs]) => (
         <div key={dateLabel} style={{marginBottom:20}}>
-          <p style={{margin:"0 0 8px", fontSize: 16, fontWeight:700, color:T.grey500}}>{dateLabel}</p>
+          <p style={{margin:"0 0 8px", fontSize: 16, fontWeight:600, color:T.grey600}}>{dateLabel}</p>
           <Card>
             {dayNotifs.map((n, i) => {
               const m = TYPE_META[n.type] || TYPE_META.order_req;
@@ -75,7 +75,7 @@ export function AlertsScreen({notifs, setNotifs, setTab}) {
                       {!n.is_read && (
                         <div style={{position:"absolute", left:0, top:0, bottom:0, width:3, background:m.color, borderRadius:"0 2px 2px 0"}}/>
                       )}
-                      <div style={{width:48, height:48, borderRadius:10, background:m.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                      <div style={{width:48, height:48, borderRadius:12, background:m.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                         <Icon size={22} color={m.color}/>
                       </div>
                       <div style={{flex:1, minWidth:0}}>
@@ -88,7 +88,7 @@ export function AlertsScreen({notifs, setNotifs, setTab}) {
 
                     {/* 액션 버튼 (읽지 않은 중요 알림에만) */}
                     {!n.is_read && m.actionLabel && (
-                      <button onClick={()=>handleAction(n, m.targetTab)} style={{alignSelf:"flex-start", marginLeft:50, padding:"12px 20px", borderRadius:9999, border:"none", background:m.color, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5}}>
+                      <button onClick={()=>handleAction(n, m.targetTab)} style={{alignSelf:"flex-start", marginLeft:50, padding:"12px 20px", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5}}>
                         {m.actionLabel} <ChevronRight size={16}/>
                       </button>
                     )}

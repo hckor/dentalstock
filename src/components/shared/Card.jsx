@@ -8,7 +8,7 @@ export const Card = memo(function Card({ children, style = {} }) {
     <div
       style={{
         background: T.white,
-        borderRadius: 14,
+        borderRadius: 12,
         border: "none",
         boxShadow: CS,
         ...style,

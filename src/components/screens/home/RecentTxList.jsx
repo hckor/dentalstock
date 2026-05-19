@@ -1,5 +1,5 @@
 import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
-import { T } from "../../../constants/colors";
+import { T, monoFont } from "../../../constants/colors";
 import { fmtDate } from "../../../utils/helpers";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
@@ -32,7 +32,7 @@ export function RecentTxList({ txs, items, setTab }) {
                   <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item?.name}</p>
                   <p style={{margin:"1px 0 0", fontSize: 16, color:T.grey500}}>{tx.user} · {fmtDate(tx.created_at)}</p>
                 </div>
-                <span style={{fontSize: 20, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</span>
+                <span style={{fontSize: 16, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</span>
               </div>
               {i < recent.length - 1 && <Divider/>}
             </div>

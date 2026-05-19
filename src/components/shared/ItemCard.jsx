@@ -1,5 +1,5 @@
 import { Clock } from "lucide-react";
-import { T, CS } from "../../constants/colors";
+import { T, CS, monoFont } from "../../constants/colors";
 import { getStatus, catName, daysUntil } from "../../utils/helpers";
 
 export function ItemCard({ item, isOrdered, ao, onCardClick }) {
@@ -11,9 +11,9 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
     <div
       style={{
         background: T.white,
-        borderRadius: 16,
+        borderRadius: 12,
         boxShadow: CS,
-        marginBottom: 16,
+        marginBottom: 12,
         overflow: "hidden",
         cursor: "pointer",
       }}
@@ -38,12 +38,12 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
             {item.name}
           </p>
           {isOrdered && (
-            <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: T.blue500, background: "#dbeafe", padding: "2px 8px", borderRadius: 9999 }}>
+            <span style={{ flexShrink: 0, fontSize: 13, lineHeight: "20px", fontWeight: 700, color: T.blue500, background: T.blue50, padding: "3px 7px", borderRadius: 12 }}>
               입고대기
             </span>
           )}
           {!ao && !isOk && (
-            <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: T.red500, background: T.red50, padding: "2px 8px", borderRadius: 9999 }}>
+            <span style={{ flexShrink: 0, fontSize: 13, lineHeight: "20px", fontWeight: 700, color: T.red500, background: T.red50, padding: "3px 7px", borderRadius: 12 }}>
               발주필요
             </span>
           )}
@@ -65,9 +65,9 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
               transition: "width 300ms",
             }} />
           </div>
-          <span style={{ flexShrink: 0, fontSize: 16, fontWeight: 700, color: T.grey800, fontVariantNumeric: "tabular-nums" }}>
+          <span style={{ flexShrink: 0, fontSize: 16, fontWeight: 700, color: T.grey900, fontFamily: monoFont, fontVariantNumeric: "tabular-nums" }}>
             {item.current_qty}
-            <span style={{ fontSize: 12, fontWeight: 400, color: T.grey400 }}>
+            <span style={{ fontSize: 12, fontWeight: 400, color: T.grey500, fontFamily: "inherit" }}>
               {item.unit} / 최소 {item.min_qty}
             </span>
           </span>

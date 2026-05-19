@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { T, font } from "../../../constants/colors";
+import { T, font, monoFont, CS } from "../../../constants/colors";
 import { CATEGORIES } from "../../../constants/categories";
 import { pct } from "../../../utils/helpers";
 import { Card } from "../../shared/Card";
@@ -128,9 +128,9 @@ export function AnalyticsTab({items, txs, orders}) {
       {/* 3개 통계 카드 */}
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:16}}>
         {stats.map(s => (
-          <div key={s.label} style={{background:T.white, borderRadius:14, padding:"14px 12px", boxShadow:"0px 1px 2px rgba(15,23,42,0.04), 0px 4px 16px rgba(15,23,42,0.04)"}}>
+          <div key={s.label} style={{background:T.white, borderRadius:12, padding:"14px 12px", boxShadow:CS}}>
             <p style={{margin:"0 0 6px", fontSize: 16, color:T.grey500, fontWeight:500}}>{s.label}</p>
-            <p style={{margin:0, fontSize: 24, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums", lineHeight:"1"}}>{s.value}<span style={{fontSize: 16, fontWeight:400, color:T.grey400}}>{s.unit}</span></p>
+            <p style={{margin:0, fontSize: 24, fontWeight:700, color:T.grey900, fontFamily:monoFont, fontVariantNumeric:"tabular-nums", lineHeight:"1"}}>{s.value}<span style={{fontSize: 16, fontWeight:400, color:T.grey400, fontFamily:font}}>{s.unit}</span></p>
             {s.delta && <div style={{marginTop:6}}>{s.delta}</div>}
           </div>
         ))}
@@ -153,7 +153,7 @@ export function AnalyticsTab({items, txs, orders}) {
                 <div key={cat.id} style={{display:"flex", alignItems:"center", gap:5}}>
                   <div style={{width:8, height:8, borderRadius:9999, background:cat.color, flexShrink:0}}/>
                   <span style={{fontSize: 16, color:T.grey600, fontWeight:500}}>{cat.name}</span>
-                  <span style={{fontSize: 16, fontWeight:700, color:T.grey800, fontVariantNumeric:"tabular-nums"}}>{cat.used}</span>
+                  <span style={{fontSize: 16, fontWeight:700, color:T.grey800, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{cat.used}</span>
                 </div>
               ))}
             </div>
@@ -173,12 +173,12 @@ export function AnalyticsTab({items, txs, orders}) {
             <div key={item.id}>
               <div style={{padding:"18px 20px"}}>
                 <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
-                  <span style={{fontSize: 16, fontWeight:700, color:T.grey300, minWidth:16, fontVariantNumeric:"tabular-nums"}}>{i + 1}</span>
+                  <span style={{fontSize: 16, fontWeight:700, color:T.grey300, minWidth:16, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{i + 1}</span>
                   <div style={{flex:1, minWidth:0}}>
                     <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
                     <p style={{margin:"1px 0 0", fontSize: 16, color:T.grey500}}>예상 소진 {item.expectedDays}일</p>
                   </div>
-                  <p style={{margin:0, fontSize: 16, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{item.used}<span style={{fontSize: 16, fontWeight:400, color:T.grey500}}>{item.unit}</span></p>
+                  <p style={{margin:0, fontSize: 16, fontWeight:700, color:T.grey900, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{item.used}<span style={{fontSize: 16, fontWeight:400, color:T.grey500, fontFamily:font}}>{item.unit}</span></p>
                 </div>
                 <div style={{height:6, borderRadius:9999, background:T.grey100, overflow:"hidden"}}>
                   <div style={{height:"100%", width:`${pct(item.used, maxUsed)}%`, background:T.blue500, borderRadius:9999, transition:"width 300ms"}}/>

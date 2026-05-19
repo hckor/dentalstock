@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
-import { T, font, CS } from "../../constants/colors";
+import { T, font, CS, monoFont } from "../../constants/colors";
 import { dateKey, todayKey } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
@@ -48,10 +48,10 @@ export function InOutScreen({items, txs, openModal}) {
     <div>
       {/* 상단 액션 버튼 */}
       <div style={{padding:"12px 16px 0", display:"flex", gap:8}}>
-        <button onClick={()=>openModal("in")} style={{flex:1, padding:"16px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
+        <button onClick={()=>openModal("in")} style={{flex:1, minHeight:56, padding:"14px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
           <ArrowDownToLine size={18}/> 입고 등록
         </button>
-        <button onClick={()=>openModal("out")} style={{flex:1, padding:"16px 0", borderRadius:9999, border:"none", background:T.red500, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
+        <button onClick={()=>openModal("out")} style={{flex:1, minHeight:56, padding:"14px 0", borderRadius:9999, border:"none", background:T.grey100, color:T.red500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
           <ArrowUpFromLine size={18}/> 출고 등록
         </button>
       </div>
@@ -59,18 +59,18 @@ export function InOutScreen({items, txs, openModal}) {
       {/* 오늘 요약 카드 */}
       {todayTxs.length > 0 && (
         <div style={{padding:"12px 16px 0"}}>
-          <div style={{background:T.white, borderRadius:14, boxShadow:CS, padding:"14px 20px", display:"flex", alignItems:"center", gap:0}}>
-            <div style={{flex:1, textAlign:"center", borderRight:`1px solid ${T.grey100}`}}>
-              <p style={{margin:0, fontSize: 16, color:T.grey500, marginBottom:3}}>입고</p>
-              <p style={{margin:0, fontSize: 24, fontWeight:700, color:T.blue500, fontVariantNumeric:"tabular-nums"}}>+{todayIn}</p>
+          <div style={{background:T.white, borderRadius:12, boxShadow:CS, padding:"16px 20px", display:"flex", alignItems:"center", gap:0}}>
+            <div style={{flex:1, textAlign:"center", borderRight:`1px solid ${T.grey200}`}}>
+              <p style={{margin:0, fontSize: 13, lineHeight:"20px", color:T.grey500, marginBottom:2}}>입고</p>
+              <p style={{margin:0, fontSize: 30, lineHeight:"36px", fontWeight:700, color:T.blue500, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>+{todayIn}</p>
             </div>
-            <div style={{flex:1, textAlign:"center", borderRight:`1px solid ${T.grey100}`}}>
-              <p style={{margin:0, fontSize: 16, color:T.grey500, marginBottom:3}}>출고</p>
-              <p style={{margin:0, fontSize: 24, fontWeight:700, color:T.red500, fontVariantNumeric:"tabular-nums"}}>-{todayOut}</p>
+            <div style={{flex:1, textAlign:"center", borderRight:`1px solid ${T.grey200}`}}>
+              <p style={{margin:0, fontSize: 13, lineHeight:"20px", color:T.grey500, marginBottom:2}}>출고</p>
+              <p style={{margin:0, fontSize: 30, lineHeight:"36px", fontWeight:700, color:T.red500, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>-{todayOut}</p>
             </div>
             <div style={{flex:1, textAlign:"center"}}>
-              <p style={{margin:0, fontSize: 16, color:T.grey500, marginBottom:3}}>순증감</p>
-              <p style={{margin:0, fontSize: 24, fontWeight:700, color:todayIn-todayOut>=0?T.blue500:T.red500, fontVariantNumeric:"tabular-nums"}}>{todayIn-todayOut>=0?"+":""}{todayIn-todayOut}</p>
+              <p style={{margin:0, fontSize: 13, lineHeight:"20px", color:T.grey500, marginBottom:2}}>순증감</p>
+              <p style={{margin:0, fontSize: 30, lineHeight:"36px", fontWeight:700, color:todayIn-todayOut>=0?T.blue500:T.red500, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{todayIn-todayOut>=0?"+":""}{todayIn-todayOut}</p>
             </div>
           </div>
         </div>
@@ -78,9 +78,9 @@ export function InOutScreen({items, txs, openModal}) {
 
       {/* 필터 탭 */}
       <div style={{padding:"12px 16px 0"}}>
-        <div style={{display:"flex", background:T.grey100, borderRadius:10, padding:4, gap:2}}>
+        <div style={{display:"flex", background:T.grey100, borderRadius:12, padding:4, gap:2}}>
           {[{id:"all",label:"전체"},{id:"in",label:"입고"},{id:"out",label:"출고"}].map(f=>(
-            <button key={f.id} onClick={()=>setTypeFilter(f.id)} style={{flex:1, padding:"14px 0", border:"none", borderRadius:8, background:typeFilter===f.id?T.white:"transparent", boxShadow:typeFilter===f.id?"0px 1px 3px rgba(0,0,0,0.08)":"none", cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:typeFilter===f.id?700:500, color:typeFilter===f.id?T.grey900:T.grey500, transition:"all 120ms"}}>
+            <button key={f.id} onClick={()=>setTypeFilter(f.id)} style={{flex:1, padding:"12px 0", border:"none", borderRadius:8, background:typeFilter===f.id?T.white:"transparent", boxShadow:typeFilter===f.id?"0px 2px 4px rgba(0,0,0,0.06)":"none", cursor:"pointer", fontFamily:font, fontSize: 14, fontWeight:600, color:typeFilter===f.id?T.grey900:T.grey500, transition:"all 120ms"}}>
               {f.label}
             </button>
           ))}
@@ -100,7 +100,7 @@ export function InOutScreen({items, txs, openModal}) {
             <div key={date} style={{marginBottom:20}}>
               {/* 날짜 헤더 */}
               <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8}}>
-                <p style={{margin:0, fontSize: 16, fontWeight:700, color:T.grey700}}>{formatDateHeader(date)}</p>
+                <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey700}}>{formatDateHeader(date)}</p>
                 <div style={{display:"flex", gap:8}}>
                   {dayIn>0  && <span style={{fontSize: 16, fontWeight:600, color:T.blue500}}>입고 +{dayIn}</span>}
                   {dayOut>0 && <span style={{fontSize: 16, fontWeight:600, color:T.red500}}>출고 -{dayOut}</span>}
@@ -123,7 +123,7 @@ export function InOutScreen({items, txs, openModal}) {
                           </p>
                         </div>
                         <div style={{textAlign:"right", flexShrink:0}}>
-                          <p style={{margin:0, fontSize: 20, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</p>
+                          <p style={{margin:0, fontSize: 16, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</p>
                           <p style={{margin:"1px 0 0", fontSize: 16, color:T.grey400}}>{formatTime(tx.created_at)}</p>
                         </div>
                       </div>

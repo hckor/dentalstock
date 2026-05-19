@@ -19,7 +19,7 @@ export function TodaySurgeryCard({ surgery, items, confirmSurgeryPrep, openItems
   );
 
   return (
-    <div style={{background:T.white, borderRadius:16, boxShadow:CS, marginBottom:10, overflow:"hidden"}}>
+    <div style={{background:T.white, borderRadius:12, boxShadow:CS, marginBottom:10, overflow:"hidden"}}>
       <div style={{padding:"16px 16px 12px"}}>
         <div style={{display:"flex", alignItems:"flex-start", gap:12, marginBottom:12}}>
           <div style={{width:52, height:52, borderRadius:12, background:T.blue50, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
@@ -32,20 +32,20 @@ export function TodaySurgeryCard({ surgery, items, confirmSurgeryPrep, openItems
             <div style={{display:"flex", alignItems:"center", gap:6, flexWrap:"wrap"}}>
               <p style={{margin:0, fontSize: 20, fontWeight:700, color:T.grey900}}>{surgery.title}</p>
               {typeLabel && (
-                <span style={{fontSize: 16, fontWeight:600, color:T.blue500, background:T.blue50, padding:"2px 8px", borderRadius:9999, flexShrink:0}}>
+                <span style={{fontSize: 13, lineHeight:"20px", fontWeight:700, color:T.blue500, background:T.blue50, padding:"3px 7px", borderRadius:12, flexShrink:0}}>
                   {typeLabel}
                 </span>
               )}
               {!surgery.prep_confirmed && (
-                <span style={{fontSize: 16, fontWeight:700,
+                <span style={{fontSize: 13, lineHeight:"20px", fontWeight:700,
                   color: allOk ? T.green500 : T.orange500,
                   background: allOk ? T.green50 : T.orange50,
-                  padding:"2px 8px", borderRadius:9999, flexShrink:0}}>
+                  padding:"3px 7px", borderRadius:12, flexShrink:0}}>
                   {allOk ? "준비 완료" : `부족 ${shortage}종`}
                 </span>
               )}
               {surgery.prep_confirmed && (
-                <span style={{fontSize: 16, fontWeight:700, color:T.green500, background:T.green50, padding:"2px 8px", borderRadius:9999, flexShrink:0}}>
+                <span style={{fontSize: 13, lineHeight:"20px", fontWeight:700, color:T.green500, background:T.green50, padding:"3px 7px", borderRadius:12, flexShrink:0}}>
                   확인 완료
                 </span>
               )}
@@ -68,10 +68,10 @@ export function TodaySurgeryCard({ surgery, items, confirmSurgeryPrep, openItems
                     필요 {req.qty}{item?.unit || "개"} · 현재 {item?.current_qty ?? 0}{item?.unit || "개"}
                   </p>
                 </div>
-                <span style={{flexShrink:0, fontSize: 16, fontWeight:700,
+                <span style={{flexShrink:0, fontSize: 13, lineHeight:"20px", fontWeight:700,
                   color: ok ? T.green500 : T.red500,
                   background: ok ? T.green50 : T.red50,
-                  padding:"4px 10px", borderRadius:9999}}>
+                  padding:"3px 7px", borderRadius:12}}>
                   {ok ? "가능" : "부족"}
                 </span>
               </div>
@@ -90,11 +90,11 @@ export function TodaySurgeryCard({ surgery, items, confirmSurgeryPrep, openItems
       {!surgery.prep_confirmed ? (
         <div style={{borderTop:`1px solid ${T.grey100}`, padding:"10px 12px 12px", display:"flex", gap:8}}>
           <button onClick={openEditor}
-            style={{flex:1, padding:"16px 0", borderRadius:10, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
+            style={{flex:1, padding:"16px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
             <Edit2 size={18}/> 품목 편집
           </button>
           <button onClick={() => confirmSurgeryPrep(surgery.id)}
-            style={{flex:2, padding:"16px 0", borderRadius:10, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font}}>
+            style={{flex:2, padding:"16px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font}}>
             준비 확인 완료
           </button>
         </div>

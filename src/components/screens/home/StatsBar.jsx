@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { T, font, CS } from "../../../constants/colors";
+import { T, font, CS, monoFont } from "../../../constants/colors";
 import { getStatus } from "../../../utils/helpers";
 
 export function StatsBar({ items, setTab }) {
@@ -12,12 +12,12 @@ export function StatsBar({ items, setTab }) {
 
   return (
     <div style={{padding:"16px 16px 0"}}>
-      <div style={{display:"flex", background:T.white, borderRadius:14, boxShadow:CS, overflow:"hidden"}}>
+      <div style={{display:"flex", background:T.white, borderRadius:12, boxShadow:CS, overflow:"hidden"}}>
         {stats.map((s, i) => (
           <button key={s.label} onClick={()=>setTab("inventory")}
-            style={{flex:1, padding:"16px 0", border:"none", background:"none", cursor:"pointer", fontFamily:font, textAlign:"center", borderRight:i<stats.length-1?`1px solid ${T.grey100}`:"none"}}>
-            <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
-            <p style={{margin:"3px 0 0", fontSize: 16, color:T.grey500}}>{s.label}</p>
+            style={{flex:1, padding:"18px 0", border:"none", background:"none", cursor:"pointer", fontFamily:font, textAlign:"center", borderRight:i<stats.length-1?`1px solid ${T.grey200}`:"none"}}>
+            <p style={{margin:0, fontSize: 30, lineHeight:"36px", fontWeight:700, color:s.color, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
+            <p style={{margin:"2px 0 0", fontSize: 13, lineHeight:"20px", color:T.grey500}}>{s.label}</p>
           </button>
         ))}
       </div>

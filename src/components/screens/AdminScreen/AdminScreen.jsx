@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LogOut, RotateCcw, ClipboardList, PackagePlus } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
-import { T, font } from "../../../constants/colors";
+import { T, font, monoFont } from "../../../constants/colors";
 import { ROLE_META } from "../../../constants/permissions";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
@@ -35,13 +35,14 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
   return (
     <div style={{flex:1, display:"flex", flexDirection:"column"}}>
       {/* 서브탭 */}
-      <div style={{background:T.white, borderBottom:`1px solid ${T.grey100}`, padding:"10px 16px"}}>
+      <div style={{background:T.white, borderBottom:`1px solid ${T.grey200}`, padding:"10px 16px"}}>
         <div style={{display:"flex", gap:6, overflowX:"auto", scrollbarWidth:"none"}}>
           {tabs.map(t => (
             <button key={t.id} onClick={()=>setAdminTab(t.id)}
-              style={{flexShrink:0, padding:"8px 16px", border:"none", borderRadius:9999, cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:600,
-                background:adminTab===t.id ? T.grey900 : T.grey100,
-                color:adminTab===t.id ? T.white : T.grey600,
+              style={{flexShrink:0, padding:"10px 16px", border:"none", borderRadius:12, cursor:"pointer", fontFamily:font, fontSize: 14, fontWeight:600,
+                background:adminTab===t.id ? T.white : T.grey100,
+                color:adminTab===t.id ? T.grey900 : T.grey500,
+                boxShadow:adminTab===t.id ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
                 display:"flex", alignItems:"center", gap:5, transition:"all 150ms"}}>
               {t.label}
               {t.badge>0 && (
@@ -73,7 +74,7 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
               ].map(s => (
                 <Card key={s.label} style={{padding:"12px 10px"}}>
                   <p style={{margin:"0 0 4px", fontSize: 16, color:T.grey500}}>{s.label}</p>
-                  <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
+                  <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
                 </Card>
               ))}
             </div>
@@ -124,7 +125,7 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
               ].map(s => (
                 <Card key={s.label} style={{padding:"12px 10px"}}>
                   <p style={{margin:"0 0 4px", fontSize: 16, color:T.grey500}}>{s.label}</p>
-                  <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
+                  <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
                 </Card>
               ))}
             </div>
