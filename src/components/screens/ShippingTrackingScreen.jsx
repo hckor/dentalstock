@@ -5,12 +5,15 @@ import { ORDER_ST } from "../../constants/orderStates";
 import { Card } from "../shared/Card";
 import { ShippingOrderCard } from "../shared/ShippingOrderCard";
 
-export function ShippingTrackingScreen({orders, allItems, currentUser, openModal, showToast}) {
+export function ShippingTrackingScreen({orders, allItems, currentUser, openModal, showToast, startTracking, confirmReceipt}) {
   const [trackingTab, setTrackingTab] = useState("auto_wait");
 
+  const isManager = currentUser.role === "owner" || currentUser.role === "manager";
+
   const myOrders = useMemo(() => {
-    return orders.filter(o => o.requested_by === currentUser.name);
-  }, [orders, currentUser.name]);
+    // 관리자/원장은 전체 주문, 위생사는 본인 주문만
+    return isManager ? orders : orders.filter(o => o.requested_by === currentUser.name);
+  }, [orders, currentUser.name, isManager]);
 
   // 상태별 그룹핑
   // pending → auto_wait (자동대기: 주문 승인 필요)
@@ -34,15 +37,20 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, openModal
   const currentOrders = groupedOrders[trackingTab];
 
   const handleActionClick = (order, actionType) => {
-    // actionType: 'order_link', 'tracking_start', 'tracking_detail', 'confirm_receipt'
     if (actionType === "order_link") {
-      showToast("주문 링크 기능 준비 중입니다");
+      showToast("도매 사이트에서 직접 주문해주세요");
     } else if (actionType === "tracking_start") {
-      showToast("추적 시작 기능 준비 중입니다");
+      // 더미 송장번호로 즉시 배송 추적 시작 (실제는 사용자가 입력)
+      const carriers = ["CJ대한통운", "한진택배", "롯데택배", "우체국택배"];
+      const carrier = carriers[Math.floor(Math.random() * carriers.length)];
+      const trackingNumber = String(Math.floor(Math.random() * 9000000000) + 1000000000);
+      startTracking(order.id, carrier, trackingNumber);
+      setTrackingTab("in_transit");
     } else if (actionType === "tracking_detail") {
-      showToast("송장 상세 기능 준비 중입니다");
+      openModal("shipping_detail", order);
     } else if (actionType === "confirm_receipt") {
-      openModal("confirm_receipt", {order});
+      confirmReceipt(order.id, order.qty, "");
+      setTrackingTab("completed");
     }
   };
 

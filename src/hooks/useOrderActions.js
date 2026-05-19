@@ -73,5 +73,23 @@ export function useOrderActions({ orders, setOrders, items, setItems, cart, setC
     setModal(null);
   };
 
-  return { submitOrder, approveOrder, rejectOrder, confirmReceipt };
+  // ── 배송 추적 시작 (pending → ordered + 송장 정보 저장) ──
+  const startTracking = (orderId, carrier, trackingNumber) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order || order.status !== "pending") {
+      showToast("추적 시작할 주문을 찾을 수 없습니다.");
+      return;
+    }
+    const item = items.find(i => i.id === order.item_id);
+    setOrders(p => p.map(o => o.id === orderId
+      ? { ...o, status: "ordered", carrier, tracking_number: trackingNumber, reviewed_by: currentUser.name, reviewed_at: new Date().toISOString() }
+      : o
+    ));
+    if (item) {
+      setNotifs(p => [{ id: `n${Date.now()}`, type: "ordered", item_id: item.id, message: `${item.name} 배송 추적이 시작됐습니다`, sub: `${carrier} · ${trackingNumber}`, is_read: false, created_at: new Date().toISOString() }, ...p]);
+    }
+    showToast("배송 추적이 시작됐습니다");
+  };
+
+  return { submitOrder, approveOrder, rejectOrder, confirmReceipt, startTracking };
 }

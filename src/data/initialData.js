@@ -80,7 +80,7 @@ export const INIT_TXS = [
 // 데모용 — ordered 상태 1건 포함 (입고 대기 시뮬레이션)
 export const INIT_ORDERS = [
   { id:"o1", item_id:"1", requested_by:"박위생사", requested_at:"2026-05-16T08:10:00", qty:10, note:"재고 급하게 필요합니다", status:"pending",  reviewed_by:null,     reviewed_at:null,                    review_note:"" },
-  { id:"o2", item_id:"6", requested_by:"최위생사", requested_at:"2026-05-15T16:30:00", qty:5,  note:"보철 작업용",          status:"ordered",  reviewed_by:"이매니저", reviewed_at:"2026-05-15T17:00:00",  review_note:"승인합니다" },
+  { id:"o2", item_id:"6", requested_by:"최위생사", requested_at:"2026-05-15T16:30:00", qty:5,  note:"보철 작업용",          status:"ordered",  reviewed_by:"이매니저", reviewed_at:"2026-05-15T17:00:00",  review_note:"승인합니다", carrier:"CJ대한통운", tracking_number:"1234567890" },
   { id:"o3", item_id:"2", requested_by:"정위생사", requested_at:"2026-05-14T10:00:00", qty:3,  note:"마취 시술 예정",       status:"received", reviewed_by:"김원장",  reviewed_at:"2026-05-14T11:00:00",  review_note:"" },
   { id:"o4", item_id:"5", requested_by:"박위생사", requested_at:"2026-05-13T09:00:00", qty:4,  note:"거즈 부족",            status:"rejected", reviewed_by:"이매니저", reviewed_at:"2026-05-13T14:00:00",  review_note:"이번달 예산 초과" },
 ];
