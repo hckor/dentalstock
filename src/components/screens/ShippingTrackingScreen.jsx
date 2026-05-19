@@ -21,27 +21,19 @@ function makeDemoTracking(orderId) {
 export function ShippingTrackingScreen({orders, allItems, currentUser, canApprove, openModal, showToast, approveOrder, rejectOrder, startTracking, confirmReceipt}) {
   const [trackingTab, setTrackingTab] = useState("auto_wait");
 
-  const isManager = currentUser.role === "owner" || currentUser.role === "manager";
+  const visibleOrders = useMemo(
+    () => canApprove ? orders : orders.filter(o => o.requested_by === currentUser.name),
+    [canApprove, currentUser.name, orders]
+  );
 
-  const myOrders = useMemo(() => {
-    // 관리자/원장은 전체 주문, 위생사는 본인 주문만
-    return isManager ? orders : orders.filter(o => o.requested_by === currentUser.name);
-  }, [orders, currentUser.name, isManager]);
-
-  // 상태별 그룹핑
-  // pending → auto_wait (승인 필요)
-  // ordered → in_transit (주문/배송 진행)
-  // received → completed (입고 완료)
-  // rejected → rejected (반려)
   const groupedOrders = useMemo(() => {
-    const groups = {
-      auto_wait: myOrders.filter(o => o.status === "pending"),
-      in_transit: myOrders.filter(o => o.status === "ordered"),
-      completed: myOrders.filter(o => o.status === "received"),
-      rejected: myOrders.filter(o => o.status === "rejected"),
+    return {
+      auto_wait: visibleOrders.filter(o => o.status === "pending"),
+      in_transit: visibleOrders.filter(o => o.status === "ordered"),
+      completed: visibleOrders.filter(o => o.status === "received"),
+      rejected: visibleOrders.filter(o => o.status === "rejected"),
     };
-    return groups;
-  }, [myOrders]);
+  }, [visibleOrders]);
 
   const tabDefs = [
     {id: "auto_wait", label: "승인대기", icon: AlertCircle, count: groupedOrders.auto_wait.length},

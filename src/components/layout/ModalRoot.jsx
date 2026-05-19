@@ -26,10 +26,10 @@ export function ModalRoot({
             <InOutSheet modal={modal} selItem={selItem} form={form} setForm={setForm} onCommit={()=>commit(modal, selItem, form)} onClose={()=>setModal(null)}/>
           )}
           {modal==="order_req" && selItem && (
-            <OrderRequestSheet item={selItem} currentUser={currentUser} onSubmit={submitOrder} onClose={()=>setModal(null)} orders={orders}/>
+            <OrderRequestSheet item={selItem} currentUser={currentUser} onSubmit={submitOrder} onClose={()=>setModal(null)}/>
           )}
           {modal==="confirm_receipt" && selItem && canApprove && (
-            <ReceiptConfirmSheet item={selItem} orders={orders} currentUser={currentUser} onConfirm={confirmReceipt} onClose={()=>setModal(null)}/>
+            <ReceiptConfirmSheet item={selItem} orders={orders} onConfirm={confirmReceipt} onClose={()=>setModal(null)}/>
           )}
           {modal==="add_item" && (
             <AddItemModal setItems={setItems} onClose={()=>setModal(null)} showToast={showToast}/>
