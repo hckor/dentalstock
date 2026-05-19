@@ -11,16 +11,16 @@ function ExpirySection({title, items, dotColor, textColor, onOut}) {
     <div style={{marginBottom:20}}>
       <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:8}}>
         <div style={{width:7, height:7, borderRadius:9999, background:dotColor}}/>
-        <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey700}}>{title}</p>
+        <p style={{margin:0, fontSize:13, fontWeight:700, color:T.grey700}}>{title}</p>
       </div>
       <Card>
         {items.map((item, i) => {
           const days = daysUntil(item.expiry);
           return (
             <div key={item.id}>
-              <div style={{display:"flex", alignItems:"center", gap:12, padding:"16px 16px"}}>
+              <div style={{display:"flex", alignItems:"center", gap:12, padding:"13px 16px"}}>
                 <div style={{flex:1, minWidth:0}}>
-                  <p style={{margin:0, fontSize:16, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
+                  <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
                   <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>
                     {catName(item.category_id)} · {item.current_qty}{item.unit} · {item.expiry}
                   </p>
@@ -29,11 +29,11 @@ function ExpirySection({title, items, dotColor, textColor, onOut}) {
                   {days !== null && days <= 0 ? (
                     <span style={{fontSize:12, fontWeight:700, color:T.red500}}>만료됨</span>
                   ) : (
-                    <span style={{fontSize:14, fontWeight:700, color:textColor}}>D-{days}</span>
+                    <span style={{fontSize:13, fontWeight:700, color:textColor}}>D-{days}</span>
                   )}
                 </div>
-                <button onClick={()=>onOut(item)} style={{flexShrink:0, padding:"16px 16px", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey600, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:4}}>
-                  <ArrowUpFromLine size={14}/> 출고
+                <button onClick={()=>onOut(item)} style={{flexShrink:0, padding:"7px 12px", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey600, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:4}}>
+                  <ArrowUpFromLine size={12}/> 출고
                 </button>
               </div>
               {i < items.length-1 && <Divider/>}
@@ -67,18 +67,18 @@ export function ExpiryManagementScreen({items, onClose, openModal}) {
       {/* 헤더 */}
       <div style={{background:T.white, padding:"14px 16px 16px", borderBottom:`1px solid ${T.grey100}`}}>
         <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:12}}>
-          <button onClick={onClose} style={{border:"none", background:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", gap:4, color:T.grey600, fontFamily:font, fontSize:16}}>
-            <ChevronLeft size={20} color={T.grey600}/> 뒤로
+          <button onClick={onClose} style={{border:"none", background:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", gap:4, color:T.grey600, fontFamily:font, fontSize:14}}>
+            <ChevronLeft size={18} color={T.grey600}/> 뒤로
           </button>
         </div>
-        <h1 style={{margin:"0 0 14px", fontSize:24, fontWeight:700, color:T.grey900}}>유통기한 관리</h1>
+        <h1 style={{margin:"0 0 14px", fontSize:22, fontWeight:700, color:T.grey900}}>유통기한 관리</h1>
 
         {/* 요약 통계 */}
         <div style={{display:"flex", gap:8}}>
           {stats.map(s => (
-            <div key={s.label} style={{flex:1, background:T.grey50, borderRadius:10, padding:"16px 16px", border:`1px solid ${T.grey200}`}}>
+            <div key={s.label} style={{flex:1, background:T.grey50, borderRadius:10, padding:"10px 12px", border:`1px solid ${T.grey200}`}}>
               <p style={{margin:"0 0 2px", fontSize:11, color:T.grey500}}>{s.label}</p>
-              <p style={{margin:0, fontSize:24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}<span style={{fontSize:12, fontWeight:400, color:T.grey500}}>건</span></p>
+              <p style={{margin:0, fontSize:20, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}<span style={{fontSize:12, fontWeight:400, color:T.grey500}}>건</span></p>
             </div>
           ))}
         </div>
@@ -87,8 +87,8 @@ export function ExpiryManagementScreen({items, onClose, openModal}) {
       <div style={{flex:1, overflowY:"auto", padding:"16px"}}>
         {expiryItems.length === 0 ? (
           <div style={{textAlign:"center", padding:"60px 0"}}>
-            <p style={{margin:0, fontSize:16, fontWeight:600, color:T.grey700}}>유통기한 정보가 없어요</p>
-            <p style={{margin:"6px 0 0", fontSize:14, color:T.grey500}}>품목 편집에서 유통기한을 등록해보세요</p>
+            <p style={{margin:0, fontSize:15, fontWeight:600, color:T.grey700}}>유통기한 정보가 없어요</p>
+            <p style={{margin:"6px 0 0", fontSize:13, color:T.grey500}}>품목 편집에서 유통기한을 등록해보세요</p>
           </div>
         ) : (
           <>
@@ -96,21 +96,21 @@ export function ExpiryManagementScreen({items, onClose, openModal}) {
               <div style={{marginBottom:20}}>
                 <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:8}}>
                   <div style={{width:7, height:7, borderRadius:9999, background:T.red500}}/>
-                  <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey700}}>이미 만료됨 · 사용 금지</p>
+                  <p style={{margin:0, fontSize:13, fontWeight:700, color:T.grey700}}>이미 만료됨 · 사용 금지</p>
                 </div>
                 <Card style={{border:`1.5px solid ${T.red500}22`}}>
                   {expired.map((item, i) => (
                     <div key={item.id}>
-                      <div style={{display:"flex", alignItems:"center", gap:12, padding:"16px 16px"}}>
+                      <div style={{display:"flex", alignItems:"center", gap:12, padding:"13px 16px"}}>
                         <div style={{flex:1, minWidth:0}}>
-                          <p style={{margin:0, fontSize:16, fontWeight:600, color:T.red500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
+                          <p style={{margin:0, fontSize:14, fontWeight:600, color:T.red500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
                           <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>
                             {catName(item.category_id)} · {item.current_qty}{item.unit} · {item.expiry}
                           </p>
                         </div>
                         <span style={{flexShrink:0, fontSize:12, fontWeight:700, color:T.red500, marginRight:8}}>만료됨</span>
-                        <button onClick={()=>handleOut(item)} style={{flexShrink:0, padding:"16px 16px", borderRadius:9999, border:"none", background:T.red500, color:T.white, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:4}}>
-                          <ArrowUpFromLine size={14}/> 폐기
+                        <button onClick={()=>handleOut(item)} style={{flexShrink:0, padding:"7px 12px", borderRadius:9999, border:"none", background:T.red500, color:T.white, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:4}}>
+                          <ArrowUpFromLine size={12}/> 폐기
                         </button>
                       </div>
                       {i < expired.length-1 && <Divider/>}

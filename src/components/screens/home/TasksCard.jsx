@@ -27,7 +27,7 @@ export function TasksCard({ canApprove, pendingOrders, alertItems, waitingOrders
     <div style={{padding:"16px 16px 0"}}>
       <Card style={{overflow:"hidden", padding:0}}>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 16px 10px"}}>
-          <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey700}}>오늘 해야 할 일</p>
+          <p style={{margin:0, fontSize:13, fontWeight:700, color:T.grey700}}>오늘 해야 할 일</p>
           <span style={{fontSize:12, fontWeight:700, color:T.blue500}}>{tasks.length}건</span>
         </div>
         {tasks.map((task, i) => {
@@ -35,15 +35,15 @@ export function TasksCard({ canApprove, pendingOrders, alertItems, waitingOrders
           return (
             <div key={task.id}>
               {i > 0 && <Divider/>}
-              <button onClick={task.onClick} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"16px 16px", background:"none", border:"none", cursor:"pointer", fontFamily:font}}>
-                <div style={{width:48, height:48, borderRadius:10, background:task.iconBg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                  <Icon size={20} color={task.iconColor}/>
+              <button onClick={task.onClick} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"11px 16px", background:"none", border:"none", cursor:"pointer", fontFamily:font}}>
+                <div style={{width:36, height:36, borderRadius:10, background:task.iconBg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <Icon size={17} color={task.iconColor}/>
                 </div>
                 <div style={{flex:1, textAlign:"left", minWidth:0}}>
-                  <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900}}>{task.title}</p>
+                  <p style={{margin:0, fontSize:13, fontWeight:600, color:T.grey900}}>{task.title}</p>
                   {task.sub && <p style={{margin:"2px 0 0", fontSize:11, color:T.grey500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{task.sub}</p>}
                 </div>
-                <span style={{flexShrink:0, padding:"16px 16px", borderRadius:9999, background:task.actionBg, color:T.white, fontSize:12, fontWeight:700}}>{task.action}</span>
+                <span style={{flexShrink:0, padding:"6px 14px", borderRadius:9999, background:task.actionBg, color:T.white, fontSize:12, fontWeight:700}}>{task.action}</span>
               </button>
             </div>
           );

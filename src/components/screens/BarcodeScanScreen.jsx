@@ -124,16 +124,16 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
         {!camReady && !camError && (
           <div style={{position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"#0a0e14"}}>
             <div style={{textAlign:"center"}}>
-              <div style={{width:48, height:48, border:"3px solid rgba(255,255,255,0.2)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 12px"}}/>
-              <p style={{color:"rgba(255,255,255,0.7)", fontSize:14, margin:0}}>카메라 연결 중...</p>
+              <div style={{width:36, height:36, border:"3px solid rgba(255,255,255,0.2)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 12px"}}/>
+              <p style={{color:"rgba(255,255,255,0.7)", fontSize:13, margin:0}}>카메라 연결 중...</p>
             </div>
           </div>
         )}
         {camError && (
           <div style={{position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", background:"#0a0e14"}}>
             <div style={{textAlign:"center", padding:"0 32px"}}>
-              <p style={{color:"#f87171", fontSize:16, fontWeight:600, margin:"0 0 6px"}}>{camError}</p>
-              <p style={{color:"rgba(255,255,255,0.5)", fontSize:14, margin:0}}>아래 검색을 이용해주세요</p>
+              <p style={{color:"#f87171", fontSize:15, fontWeight:600, margin:"0 0 6px"}}>{camError}</p>
+              <p style={{color:"rgba(255,255,255,0.5)", fontSize:13, margin:0}}>아래 검색을 이용해주세요</p>
             </div>
           </div>
         )}
@@ -159,27 +159,27 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
 
         {/* 상단 컨트롤 바 */}
         <div style={{position:"absolute", top:0, left:0, right:0, padding:"54px 16px 16px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-          <button onClick={onClose} style={{width:48, height:48, borderRadius:9999, border:"none", background:"rgba(0,0,0,0.4)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
-            <X size={20} color="#fff"/>
+          <button onClick={onClose} style={{width:36, height:36, borderRadius:9999, border:"none", background:"rgba(0,0,0,0.4)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
+            <X size={18} color="#fff"/>
           </button>
           <p style={{margin:0, fontSize:16, fontWeight:700, color:"#fff"}}>바코드 스캔</p>
           <div style={{display:"flex", gap:8}}>
             {devices.length > 1 && (
-              <button onClick={switchCamera} style={{width:48, height:48, borderRadius:9999, border:"none", background:"rgba(0,0,0,0.4)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
+              <button onClick={switchCamera} style={{width:36, height:36, borderRadius:9999, border:"none", background:"rgba(0,0,0,0.4)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
                 <RotateCcw size={16} color="#fff"/>
               </button>
             )}
             <button onClick={()=>setShowInput(v=>!v)} style={{height:36, padding:"0 12px", borderRadius:9999, border:"none", background:showInput?"#2563eb":"rgba(0,0,0,0.4)", cursor:"pointer", fontFamily:font, fontSize:12, fontWeight:600, color:"#fff", display:"flex", alignItems:"center", gap:5}}>
-              <Keyboard size={16}/> 직접 입력
+              <Keyboard size={13}/> 직접 입력
             </button>
           </div>
         </div>
 
         {/* 스캔된 결과 표시 */}
         {scanResult && !selected && (
-          <div style={{position:"absolute", bottom:170, left:16, right:16, background:"rgba(0,0,0,0.75)", borderRadius:12, padding:"16px 16px", textAlign:"center"}}>
+          <div style={{position:"absolute", bottom:170, left:16, right:16, background:"rgba(0,0,0,0.75)", borderRadius:12, padding:"10px 14px", textAlign:"center"}}>
             <p style={{margin:0, fontSize:12, color:"rgba(255,255,255,0.6)"}}>스캔됨</p>
-            <p style={{margin:"2px 0 0", fontSize:16, fontWeight:700, color:"#fff"}}>{scanResult}</p>
+            <p style={{margin:"2px 0 0", fontSize:14, fontWeight:700, color:"#fff"}}>{scanResult}</p>
             <p style={{margin:"2px 0 0", fontSize:12, color:"#f87171"}}>품목을 찾을 수 없어요 — 아래에서 검색해주세요</p>
           </div>
         )}
@@ -187,7 +187,7 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
         {/* 하단 안내 */}
         {camReady && !selected && !scanResult && (
           <div style={{position:"absolute", bottom:170, left:0, right:0, textAlign:"center"}}>
-            <p style={{margin:0, fontSize:14, color:"rgba(255,255,255,0.7)"}}>바코드를 사각 영역에 맞춰주세요</p>
+            <p style={{margin:0, fontSize:13, color:"rgba(255,255,255,0.7)"}}>바코드를 사각 영역에 맞춰주세요</p>
             <p style={{margin:"4px 0 0", fontSize:11, color:"rgba(255,255,255,0.4)"}}>자동으로 인식됩니다</p>
           </div>
         )}
@@ -207,7 +207,7 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
               onChange={e=>setQuery(e.target.value)}
               placeholder="품목명으로 검색"
               autoFocus={showInput}
-              style={{width:"100%", padding:"16px 16px", borderRadius:10, border:`1px solid ${T.grey200}`, background:T.grey50, fontSize:16, color:T.grey800, fontFamily:font, outline:"none", boxSizing:"border-box"}}
+              style={{width:"100%", padding:"12px 14px", borderRadius:10, border:`1px solid ${T.grey200}`, background:T.grey50, fontSize:14, color:T.grey800, fontFamily:font, outline:"none", boxSizing:"border-box"}}
             />
           </div>
         )}
@@ -220,9 +220,9 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
               const sc = ST[st];
               return (
                 <div key={item.id}>
-                  <button onClick={()=>handleSelect(item)} style={{width:"100%", padding:"16px 16px", border:"none", background:"none", cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:10, textAlign:"left"}}>
+                  <button onClick={()=>handleSelect(item)} style={{width:"100%", padding:"12px 14px", border:"none", background:"none", cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:10, textAlign:"left"}}>
                     <div style={{flex:1, minWidth:0}}>
-                      <p style={{margin:0, fontSize:16, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
+                      <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
                       <p style={{margin:"1px 0 0", fontSize:12, color:T.grey500}}>현재 {item.current_qty}{item.unit}</p>
                     </div>
                     <span style={{flexShrink:0, fontSize:11, fontWeight:600, color:sc.text, background:sc.bg, padding:"3px 8px", borderRadius:9999}}>{sc.label}</span>
@@ -244,27 +244,27 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
                 <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>현재 재고 <span style={{fontWeight:700, color:T.blue500}}>{selected.current_qty}{selected.unit}</span></p>
               </div>
               <button onClick={()=>{setSelected(null); setScanResult(null); startCamera(readerRef.current, devices[deviceIdx]?.deviceId);}} style={{border:"none", background:T.grey100, borderRadius:8, padding:6, cursor:"pointer"}}>
-                <X size={18} color={T.grey600}/>
+                <X size={15} color={T.grey600}/>
               </button>
             </div>
 
             <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:16}}>
-              <p style={{margin:0, fontSize:14, color:T.grey600}}>수량</p>
+              <p style={{margin:0, fontSize:13, color:T.grey600}}>수량</p>
               <div style={{flex:1}}/>
-              <button onClick={()=>setQty(q=>Math.max(1,q-1))} style={{width:40, height:40, borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
-                <Minus size={18} color={T.grey700}/>
+              <button onClick={()=>setQty(q=>Math.max(1,q-1))} style={{width:34, height:34, borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                <Minus size={15} color={T.grey700}/>
               </button>
-              <p style={{margin:0, fontSize:24, fontWeight:700, color:T.grey900, minWidth:36, textAlign:"center", fontVariantNumeric:"tabular-nums"}}>{qty}</p>
-              <button onClick={()=>setQty(q=>q+1)} style={{width:40, height:40, borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
-                <Plus size={18} color={T.white}/>
+              <p style={{margin:0, fontSize:22, fontWeight:700, color:T.grey900, minWidth:36, textAlign:"center", fontVariantNumeric:"tabular-nums"}}>{qty}</p>
+              <button onClick={()=>setQty(q=>q+1)} style={{width:34, height:34, borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                <Plus size={15} color={T.white}/>
               </button>
             </div>
 
             <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
-              <button onClick={()=>handleAction("in")} style={{padding:"16px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:font}}>
+              <button onClick={()=>handleAction("in")} style={{padding:"14px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:font}}>
                 입고 +{qty}
               </button>
-              <button onClick={()=>handleAction("out")} style={{padding:"16px 0", borderRadius:9999, border:"none", background:T.red500, color:T.white, fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:font}}>
+              <button onClick={()=>handleAction("out")} style={{padding:"14px 0", borderRadius:9999, border:"none", background:T.red500, color:T.white, fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:font}}>
                 출고 -{qty}
               </button>
             </div>
@@ -272,7 +272,7 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
         )}
 
         {!selected && results.length === 0 && !query && (
-          <p style={{margin:0, fontSize:14, color:T.grey400, textAlign:"center", padding:"8px 0"}}>
+          <p style={{margin:0, fontSize:13, color:T.grey400, textAlign:"center", padding:"8px 0"}}>
             {camError ? "품목명을 검색하세요" : "바코드 스캔 또는 품목명을 검색하세요"}
           </p>
         )}

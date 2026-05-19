@@ -118,7 +118,7 @@ export function AnalyticsTab({items, txs, orders}) {
         {PERIODS.map(p => {
           const active = p.id === period;
           return (
-            <button key={p.id} onClick={() => setPeriod(p.id)} style={{flex:1, padding:"8px 0", borderRadius:9, border:"none", background:active ? T.white : "transparent", boxShadow:active ? "0px 1px 3px rgba(0,0,0,0.1)" : "none", cursor:"pointer", fontFamily:font, fontSize:14, fontWeight:active ? 700 : 500, color:active ? T.grey900 : T.grey500, transition:"all 120ms"}}>
+            <button key={p.id} onClick={() => setPeriod(p.id)} style={{flex:1, padding:"8px 0", borderRadius:9, border:"none", background:active ? T.white : "transparent", boxShadow:active ? "0px 1px 3px rgba(0,0,0,0.1)" : "none", cursor:"pointer", fontFamily:font, fontSize:13, fontWeight:active ? 700 : 500, color:active ? T.grey900 : T.grey500, transition:"all 120ms"}}>
               {p.label}
             </button>
           );
@@ -128,9 +128,9 @@ export function AnalyticsTab({items, txs, orders}) {
       {/* 3개 통계 카드 */}
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:16}}>
         {stats.map(s => (
-          <div key={s.label} style={{background:T.white, borderRadius:14, padding:"16px 16px", boxShadow:"0px 1px 2px rgba(15,23,42,0.04), 0px 4px 16px rgba(15,23,42,0.04)"}}>
+          <div key={s.label} style={{background:T.white, borderRadius:14, padding:"14px 12px", boxShadow:"0px 1px 2px rgba(15,23,42,0.04), 0px 4px 16px rgba(15,23,42,0.04)"}}>
             <p style={{margin:"0 0 6px", fontSize:11, color:T.grey500, fontWeight:500}}>{s.label}</p>
-            <p style={{margin:0, fontSize:24, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums", lineHeight:"1"}}>{s.value}<span style={{fontSize:11, fontWeight:400, color:T.grey400}}>{s.unit}</span></p>
+            <p style={{margin:0, fontSize:22, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums", lineHeight:"1"}}>{s.value}<span style={{fontSize:11, fontWeight:400, color:T.grey400}}>{s.unit}</span></p>
             {s.delta && <div style={{marginTop:6}}>{s.delta}</div>}
           </div>
         ))}
@@ -165,17 +165,17 @@ export function AnalyticsTab({items, txs, orders}) {
       <SecTitle>많이 사용한 품목</SecTitle>
       {byItem.length === 0 ? (
         <Card>
-          <p style={{margin:0, padding:"24px 16px", fontSize:16, color:T.grey500, textAlign:"center"}}>이 기간에 출고 기록이 없어요.</p>
+          <p style={{margin:0, padding:"24px 16px", fontSize:14, color:T.grey500, textAlign:"center"}}>이 기간에 출고 기록이 없어요.</p>
         </Card>
       ) : (
         <Card style={{marginBottom:16}}>
           {byItem.slice(0, 5).map((item, i) => (
             <div key={item.id}>
-              <div style={{padding:"16px 16px"}}>
+              <div style={{padding:"14px 16px"}}>
                 <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
-                  <span style={{fontSize:14, fontWeight:700, color:T.grey300, minWidth:16, fontVariantNumeric:"tabular-nums"}}>{i + 1}</span>
+                  <span style={{fontSize:13, fontWeight:700, color:T.grey300, minWidth:16, fontVariantNumeric:"tabular-nums"}}>{i + 1}</span>
                   <div style={{flex:1, minWidth:0}}>
-                    <p style={{margin:0, fontSize:16, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
+                    <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
                     <p style={{margin:"1px 0 0", fontSize:11, color:T.grey500}}>예상 소진 {item.expectedDays}일</p>
                   </div>
                   <p style={{margin:0, fontSize:16, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{item.used}<span style={{fontSize:11, fontWeight:400, color:T.grey500}}>{item.unit}</span></p>

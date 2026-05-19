@@ -48,29 +48,29 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, openItemsEditor, 
     <>
       <SecTitle>수술 일정 등록</SecTitle>
       <Card style={{padding:16, marginBottom:16}}>
-        <p style={{margin:"0 0 8px",fontSize:14,fontWeight:600,color:T.grey700}}>수술 유형</p>
+        <p style={{margin:"0 0 8px",fontSize:13,fontWeight:600,color:T.grey700}}>수술 유형</p>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
           {Object.entries(SURGERY_PRESETS).map(([id,p])=>(
-            <button key={id} onClick={()=>{setType(id); setTitle(p.label);}} style={{padding:"16px 0",borderRadius:9999,border:"none",background:type===id?T.blue500:T.grey100,color:type===id?T.white:T.grey700,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:font}}>{p.label}</button>
+            <button key={id} onClick={()=>{setType(id); setTitle(p.label);}} style={{padding:"9px 0",borderRadius:9999,border:"none",background:type===id?T.blue500:T.grey100,color:type===id?T.white:T.grey700,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:font}}>{p.label}</button>
           ))}
         </div>
-        <p style={{margin:"0 0 6px",fontSize:14,fontWeight:600,color:T.grey700}}>수술명</p>
+        <p style={{margin:"0 0 6px",fontSize:13,fontWeight:600,color:T.grey700}}>수술명</p>
         <Inp value={title} onChange={e=>setTitle(e.target.value)} placeholder="예: 오전 임플란트 수술" style={{marginBottom:10}}/>
-        <p style={{margin:"0 0 6px",fontSize:14,fontWeight:600,color:T.grey700}}>환자명</p>
+        <p style={{margin:"0 0 6px",fontSize:13,fontWeight:600,color:T.grey700}}>환자명</p>
         <Inp value={patient} onChange={e=>setPatient(e.target.value)} placeholder="예: 홍길동" style={{marginBottom:10}}/>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-          <div><p style={{margin:"0 0 6px",fontSize:14,fontWeight:600,color:T.grey700}}>날짜</p><Inp value={date} onChange={e=>setDate(e.target.value)} type="date"/></div>
-          <div><p style={{margin:"0 0 6px",fontSize:14,fontWeight:600,color:T.grey700}}>시간</p><Inp value={time} onChange={e=>setTime(e.target.value)} type="time"/></div>
+          <div><p style={{margin:"0 0 6px",fontSize:13,fontWeight:600,color:T.grey700}}>날짜</p><Inp value={date} onChange={e=>setDate(e.target.value)} type="date"/></div>
+          <div><p style={{margin:"0 0 6px",fontSize:13,fontWeight:600,color:T.grey700}}>시간</p><Inp value={time} onChange={e=>setTime(e.target.value)} type="time"/></div>
         </div>
-        <p style={{margin:"0 0 6px",fontSize:14,fontWeight:600,color:T.grey700}}>메모</p>
+        <p style={{margin:"0 0 6px",fontSize:13,fontWeight:600,color:T.grey700}}>메모</p>
         <Inp value={note} onChange={e=>setNote(e.target.value)} placeholder="예: 픽스처 사이즈 확인" style={{marginBottom:14}}/>
 
-        <div style={{background:T.grey50,borderRadius:12,padding:"16px 16px",marginBottom:14}}>
+        <div style={{background:T.grey50,borderRadius:12,padding:"10px 12px",marginBottom:14}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,gap:8}}>
             <p style={{margin:0,fontSize:12,fontWeight:700,color:T.grey700}}>예상 준비 품목{draftCustomized&&<span style={{marginLeft:6,fontSize:11,fontWeight:600,color:T.blue500}}>· 사용자 편집</span>}</p>
             <div style={{display:"flex",gap:8}}>
               {draftCustomized&&<button onClick={resetDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:T.grey500,fontFamily:font,fontWeight:600}}>기본값</button>}
-              <button onClick={editDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:T.blue500,fontFamily:font,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><Edit2 size={14}/>편집</button>
+              <button onClick={editDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:T.blue500,fontFamily:font,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><Edit2 size={12}/>편집</button>
             </div>
           </div>
           {draftItems.length===0 ? (
@@ -86,19 +86,19 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, openItemsEditor, 
             );
           })}
         </div>
-        <button onClick={submit} style={{width:"100%",padding:"16px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize:16,fontWeight:600,cursor:"pointer",fontFamily:font}}>수술 일정 등록</button>
+        <button onClick={submit} style={{width:"100%",padding:"14px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:font}}>수술 일정 등록</button>
       </Card>
 
       <SecTitle>예정 수술</SecTitle>
       <Card>
         {sortedSurgeries.map((s,i)=>(
           <div key={s.id}>
-            <div style={{display:"flex",alignItems:"center",gap:12,padding:"16px 16px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px"}}>
               <div style={{width:36,height:36,borderRadius:10,background:s.prep_confirmed?T.green50:T.blue50,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 {s.prep_confirmed?<ClipboardCheck size={16} color={T.green500}/>:<CalendarDays size={16} color={T.blue500}/>}
               </div>
               <div style={{flex:1,minWidth:0}}>
-                <p style={{margin:0,fontSize:16,fontWeight:600,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.title}</p>
+                <p style={{margin:0,fontSize:14,fontWeight:600,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.title}</p>
                 <p style={{margin:"2px 0 0",fontSize:12,color:T.grey500}}>{s.scheduled_date} {s.scheduled_time} · {s.patient} · 품목 {s.required_items.length}개</p>
               </div>
               <Chip label={s.prep_confirmed?"준비완료":"준비전"} color={s.prep_confirmed?T.green500:T.orange500} bg={s.prep_confirmed?T.green50:T.orange50} border={T.grey200}/>
@@ -107,7 +107,7 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, openItemsEditor, 
                   onClick={()=>openItemsEditor(s.required_items, (newItems)=>updateSurgeryItems(s.id, newItems), `${s.scheduled_date} ${s.scheduled_time} · ${s.title}`)}
                   title="품목 편집"
                   style={{border:"none",background:T.grey100,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
-                ><Edit2 size={16} color={T.grey700}/></button>
+                ><Edit2 size={14} color={T.grey700}/></button>
               )}
             </div>
             {i<sortedSurgeries.length-1&&<Divider/>}

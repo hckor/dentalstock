@@ -20,12 +20,12 @@ export function AppHeader({ tab, currentUser, unread, setTab, onOpenProfile }) {
             <p style={{margin:0, fontSize:12, color:dynamicT.grey400}}>DentalStock</p>
             <span style={{fontSize:11, fontWeight:600, color:ROLE_META[role].color, background:ROLE_META[role].bg, padding:"1px 8px", borderRadius:9999}}>{currentUser.name}</span>
           </div>
-          <h1 style={{margin:0, fontSize:24, fontWeight:700, color:dynamicT.grey900}}>{TAB_TITLES[tab] || "대시보드"}</h1>
+          <h1 style={{margin:0, fontSize:20, fontWeight:700, color:dynamicT.grey900}}>{TAB_TITLES[tab] || "대시보드"}</h1>
         </div>
         <div style={{display:"flex", alignItems:"center", gap:2}}>
           <button onClick={()=>setTab("alerts")}
             style={{position:"relative", background:"none", border:"none", cursor:"pointer", padding:8}}>
-            <Bell size={24} color={dynamicT.grey700}/>
+            <Bell size={22} color={dynamicT.grey700}/>
             {unread > 0 && (
               <span style={{position:"absolute", top:4, right:4, background:T.red500, color:T.white, borderRadius:9999, fontSize:10, fontWeight:700, width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center"}}>
                 {unread}
@@ -33,7 +33,7 @@ export function AppHeader({ tab, currentUser, unread, setTab, onOpenProfile }) {
             )}
           </button>
           <button onClick={onOpenProfile}
-            style={{width:40, height:40, borderRadius:9999, border:"none", background:ROLE_META[role].bg, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:700, color:ROLE_META[role].color, fontFamily:font}}>
+            style={{width:32, height:32, borderRadius:9999, border:"none", background:ROLE_META[role].bg, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:ROLE_META[role].color, fontFamily:font}}>
             {currentUser.name.slice(0,1)}
           </button>
         </div>
