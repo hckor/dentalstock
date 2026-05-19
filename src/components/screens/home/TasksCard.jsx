@@ -1,53 +1,235 @@
 import { useMemo } from "react";
-import { AlertTriangle, PackageCheck, ClipboardList } from "lucide-react";
-import { T, font } from "../../../constants/colors";
+import { ClipboardList, Package } from "lucide-react";
+import { useTheme } from "../../../contexts/ThemeContext";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
+import { font } from "../../../constants/colors";
 
-export function TasksCard({ canApprove, pendingOrders, alertItems, waitingOrders, items, setTab }) {
+export function TasksCard({
+  canApprove,
+  approvalOrders = [],
+  shippingOrders = [],
+  items,
+  setTab,
+}) {
+  const { tokens: T } = useTheme();
+
   const tasks = useMemo(() => {
     const list = [];
-    if (canApprove && pendingOrders.length > 0) {
-      const first = pendingOrders[0];
-      const itemName = items.find(i => i.id === first.item_id)?.name || "";
-      list.push({id:"pending", Icon:ClipboardList, iconBg:T.orange50, iconColor:T.orange500, title:`발주 승인 대기 ${pendingOrders.length}건`, sub:`${itemName} · ${first.requested_by} 요청`, action:"검토", actionBg:T.red500, onClick:()=>setTab("admin")});
+
+    // 주문 승인 대기 (관리자만)
+    if (canApprove && approvalOrders.length > 0) {
+      list.push({
+        id: "approval",
+        type: "approval",
+        data: approvalOrders,
+      });
     }
-    if (!canApprove && alertItems.length > 0) {
-      list.push({id:"alerts", Icon:AlertTriangle, iconBg:T.red50, iconColor:T.red500, title:`재고 부족 품목 ${alertItems.length}건`, sub:`${alertItems[0]?.name} · 발주 요청 필요`, action:"발주", actionBg:T.red500, onClick:()=>setTab("order")});
+
+    // 배송 완료 (모든 사용자)
+    if (shippingOrders.length > 0) {
+      list.push({
+        id: "shipping",
+        type: "shipping",
+        data: shippingOrders,
+      });
     }
-    if (waitingOrders.length > 0) {
-      list.push({id:"waiting", Icon:PackageCheck, iconBg:T.blue50, iconColor:T.blue500, title:`배송 도착 ${waitingOrders.length}건`, sub:"재고에 등록해주세요", action:"확인", actionBg:T.blue500, onClick:()=>setTab("inventory")});
-    }
+
     return list;
-  }, [canApprove, pendingOrders, alertItems, waitingOrders, items, setTab]);
+  }, [canApprove, approvalOrders, shippingOrders]);
 
   if (tasks.length === 0) return null;
 
   return (
-    <div style={{padding:"16px 16px 0"}}>
-      <Card style={{overflow:"hidden", padding:0}}>
-        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 16px 10px"}}>
-          <p style={{margin:0, fontSize:19, fontWeight:700, color:T.grey700}}>오늘 해야 할 일</p>
-          <span style={{fontSize:18, fontWeight:700, color:T.blue500}}>{tasks.length}건</span>
+    <div style={{ padding: "16px 16px 0" }}>
+      <Card style={{ overflow: "hidden", padding: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "14px 16px 10px",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: T.grey700 }}>
+            오늘 해야 할 일
+          </p>
+          <span style={{ fontSize: 18, fontWeight: 700, color: T.blue500 }}>
+            {tasks.length}건
+          </span>
         </div>
-        {tasks.map((task, i) => {
-          const Icon = task.Icon;
-          return (
-            <div key={task.id}>
-              {i > 0 && <Divider/>}
-              <button onClick={task.onClick} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"11px 16px", background:"none", border:"none", cursor:"pointer", fontFamily:font}}>
-                <div style={{width:48, height:48, borderRadius:10, background:task.iconBg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                  <Icon size={20} color={task.iconColor}/>
-                </div>
-                <div style={{flex:1, textAlign:"left", minWidth:0}}>
-                  <p style={{margin:0, fontSize:19, fontWeight:600, color:T.grey900}}>{task.title}</p>
-                  {task.sub && <p style={{margin:"2px 0 0", fontSize:16, color:T.grey500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{task.sub}</p>}
-                </div>
-                <span style={{flexShrink:0, padding:"12px 18px", borderRadius:9999, background:task.actionBg, color:T.white, fontSize:18, fontWeight:700}}>{task.action}</span>
-              </button>
-            </div>
-          );
-        })}
+        {tasks.map((task, i) => (
+          <div key={task.id}>
+            {i > 0 && <Divider />}
+            {task.type === "approval" && (
+              <div>
+                {task.data.map((order, idx) => {
+                  const itemName =
+                    items.find(it => it.id === order.item_id)?.name || "-";
+                  const price =
+                    items.find(it => it.id === order.item_id)?.price || 0;
+                  return (
+                    <div key={`approval-${order.id}`}>
+                      {idx > 0 && <Divider />}
+                      <button
+                        onClick={() => {
+                          // 모달 열기 핸들러는 나중에 구현
+                        }}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "11px 16px",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontFamily: font,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 10,
+                            background: T.orange50,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <ClipboardList size={20} color={T.orange500} />
+                        </div>
+                        <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 19,
+                              fontWeight: 600,
+                              color: T.grey900,
+                            }}
+                          >
+                            🔴 주문 승인 대기 {task.data.length}건
+                          </p>
+                          <p
+                            style={{
+                              margin: "2px 0 0",
+                              fontSize: 16,
+                              color: T.grey500,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {itemName} · {price.toLocaleString()}원
+                          </p>
+                        </div>
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            padding: "12px 18px",
+                            borderRadius: 9999,
+                            background: T.red500,
+                            color: T.white,
+                            fontSize: 18,
+                            fontWeight: 700,
+                          }}
+                        >
+                          주문 링크
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {task.type === "shipping" && (
+              <div>
+                {task.data.map((order, idx) => {
+                  const itemName =
+                    items.find(it => it.id === order.item_id)?.name || "-";
+                  const carrier = order.carrier || "-";
+                  const trackingNumber = order.tracking_number || "-";
+                  return (
+                    <div key={`shipping-${order.id}`}>
+                      {idx > 0 && <Divider />}
+                      <button
+                        onClick={() => {
+                          // 모달 열기 핸들러는 나중에 구현
+                        }}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "11px 16px",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontFamily: font,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 10,
+                            background: T.teal50,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Package size={20} color={T.teal500} />
+                        </div>
+                        <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 19,
+                              fontWeight: 600,
+                              color: T.grey900,
+                            }}
+                          >
+                            📦 배송 완료 {task.data.length}건
+                          </p>
+                          <p
+                            style={{
+                              margin: "2px 0 0",
+                              fontSize: 16,
+                              color: T.grey500,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {itemName} · {carrier}
+                            {trackingNumber && trackingNumber !== "-" ? ` · ${trackingNumber}` : ""}
+                          </p>
+                        </div>
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            padding: "12px 18px",
+                            borderRadius: 9999,
+                            background: T.blue500,
+                            color: T.white,
+                            fontSize: 18,
+                            fontWeight: 700,
+                          }}
+                        >
+                          입고 확인
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ))}
       </Card>
     </div>
   );

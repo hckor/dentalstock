@@ -7,8 +7,8 @@ import { StatsBar } from "./home/StatsBar";
 import { RecentTxList } from "./home/RecentTxList";
 
 export function HomeScreen({items, txs, orders, surgeries, setTab, canApprove, confirmSurgeryPrep, openItemsEditor, updateSurgeryItems}) {
-  const pendingOrders  = useMemo(() => orders.filter(o => o.status === "pending"),  [orders]);
-  const waitingOrders  = useMemo(() => orders.filter(o => o.status === "ordered"),  [orders]);
+  const approvalOrders = useMemo(() => orders.filter(o => o.status === "pending"),  [orders]);
+  const shippingOrders = useMemo(() => orders.filter(o => o.status === "ordered"),  [orders]);
   const alertItems     = useMemo(() => items.filter(i => getStatus(i) !== "ok"),    [items]);
   const todaySurgeries = useMemo(
     () => surgeries
@@ -21,9 +21,8 @@ export function HomeScreen({items, txs, orders, surgeries, setTab, canApprove, c
     <div style={{paddingBottom:24}}>
       <TasksCard
         canApprove={canApprove}
-        pendingOrders={pendingOrders}
-        alertItems={alertItems}
-        waitingOrders={waitingOrders}
+        approvalOrders={approvalOrders}
+        shippingOrders={shippingOrders}
         items={items}
         setTab={setTab}
       />
