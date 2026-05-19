@@ -64,7 +64,7 @@ export function AlertsScreen({notifs, setNotifs}) {
               const Icon = m.Icon;
               return (
                 <div key={n.id}>
-                  <div style={{padding:"18px 20px", opacity:n.is_read ? 0.5 : 1, display:"flex", flexDirection:"column", gap:10}}>
+                  <div style={{padding:"18px 20px", opacity:n.is_read ? 0.5 : 1, display:"flex", flexDirection:"column", gap:10, position:"relative"}}>
                     <div style={{display:"flex", alignItems:"flex-start", gap:12}}>
                       {/* 읽음 상태 인디케이터 */}
                       {!n.is_read && (

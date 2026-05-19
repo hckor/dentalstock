@@ -72,9 +72,7 @@ export function TasksCard({
                     <div key={`approval-${order.id}`}>
                       {idx > 0 && <Divider />}
                       <button
-                        onClick={() => {
-                          // 모달 열기 핸들러는 나중에 구현
-                        }}
+                        onClick={() => setTab("admin")}
                         style={{
                           width: "100%",
                           display: "flex",
@@ -155,9 +153,7 @@ export function TasksCard({
                     <div key={`shipping-${order.id}`}>
                       {idx > 0 && <Divider />}
                       <button
-                        onClick={() => {
-                          // 모달 열기 핸들러는 나중에 구현
-                        }}
+                        onClick={() => setTab("shipping")}
                         style={{
                           width: "100%",
                           display: "flex",

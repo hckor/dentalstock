@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { ChevronRight, Link as LinkIcon, Navigation, FileText, CheckCircle2 } from "lucide-react";
+import { ChevronRight, Link as LinkIcon, Navigation, FileText } from "lucide-react";
 import { T, font } from "../../constants/colors";
 import { ORDER_ST } from "../../constants/orderStates";
 import { Card } from "./Card";
@@ -100,7 +100,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                   </p>
                   <p style={{ margin: "4px 0 0", fontSize: 16, color: T.grey500 }}>
                     <span style={{ fontWeight: 600, color: T.teal500 }}>배송 중</span>
-                    {order.shipping_company && ` · ${order.shipping_company}`}
+                    {order.carrier && ` · ${order.carrier}`}
                   </p>
                   {order.tracking_number && (
                     <p
@@ -157,48 +157,28 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
       }
 
       case "completed": {
-        // 완료: 배달 완료 시간 + [입고 확인]
+        // 완료: 입고 처리 완료된 주문 이력 표시
         return (
           <>
             <div style={{ padding: "18px 20px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900 }}>
                     {item.name}
                   </p>
                   <p style={{ margin: "4px 0 0", fontSize: 16, color: T.grey500 }}>
-                    <span style={{ fontWeight: 600, color: T.green500 }}>배달 완료</span>
-                    {order.received_at && ` · ${new Date(order.received_at).toLocaleDateString("ko-KR")}`}
+                    수량 <span style={{ fontWeight: 600, color: T.grey700 }}>{order.qty}{item.unit}</span>
+                    {order.requested_by && ` · 요청자: ${order.requested_by}`}
                   </p>
+                  {order.reviewed_by && (
+                    <p style={{ margin: "4px 0 0", fontSize: 16, color: T.grey500 }}>
+                      <span style={{ fontWeight: 600, color: T.green500 }}>✓ 입고 완료</span>
+                      {` · ${order.reviewed_by}`}
+                    </p>
+                  )}
                 </div>
                 <Chip label={os.label} color={os.text} bg={os.bg} />
               </div>
-
-              <button
-                onClick={() => onActionClick("confirm_receipt")}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  borderRadius: 9999,
-                  border: "none",
-                  background: T.green500,
-                  cursor: "pointer",
-                  fontFamily: font,
-                  fontSize: 16,
-                  fontWeight: 600,
-                  color: T.white,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                  transition: "all 150ms",
-                }}
-                onMouseEnter={(e) => (e.target.style.opacity = 0.85)}
-                onMouseLeave={(e) => (e.target.style.opacity = 1)}
-              >
-                <CheckCircle2 size={18} />
-                입고 확인
-              </button>
             </div>
           </>
         );

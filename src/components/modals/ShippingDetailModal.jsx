@@ -40,7 +40,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
       {/* 배송사 정보 */}
       <div style={{ background: T.grey50, borderRadius: 12, padding: "14px 16px", marginBottom: 20, border: `1px solid ${T.grey200}` }}>
         <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: T.grey600, marginBottom: 4 }}>
-          {order.shipping_company || "CJ대한통운"}
+          {order.carrier || "배송사 미지정"}
         </p>
         <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900, fontFamily: "monospace" }}>
           {order.tracking_number || "1234567890"}
@@ -105,7 +105,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
 
       {/* 입고 확인 버튼 */}
       <button
-        onClick={() => openModal("confirm_receipt", { order, item })}
+        onClick={() => openModal("confirm_receipt", item)}
         style={{
           width: "100%",
           padding: "16px 0",
