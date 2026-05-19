@@ -84,15 +84,8 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
 
   return (
     <>
-      {/* 상태바 */}
-      <div style={{background:dynamicT.white, padding:"14px 24px 8px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${dynamicT.grey100}`}}>
-        <span style={{fontSize:13, fontWeight:700, color:dynamicT.grey900}}>9:41</span>
-        <div style={{width:110, height:24, background:dynamicT.grey900, borderRadius:12}}/>
-        <span style={{fontSize:12, color:dynamicT.grey600}}>100%</span>
-      </div>
-
-      {/* 헤더 */}
-      <div style={{background:dynamicT.white, padding:"12px 20px 14px", borderBottom:`1px solid ${dynamicT.grey100}`}}>
+      {/* 헤더 — safe-area-inset-top으로 노치/Dynamic Island 회피 */}
+      <div style={{background:dynamicT.white, paddingTop:"max(12px, env(safe-area-inset-top))", paddingBottom:14, paddingLeft:20, paddingRight:20, borderBottom:`1px solid ${dynamicT.grey100}`}}>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
           <div>
             <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:2}}>
@@ -126,8 +119,8 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         </Suspense>
       </div>
 
-      {/* 하단 탭 */}
-      <div style={{background:dynamicT.white, borderTop:`1px solid ${dynamicT.grey100}`, display:"flex", padding:"6px 0 18px"}}>
+      {/* 하단 탭 — safe-area-inset-bottom으로 홈 인디케이터 회피 */}
+      <div style={{background:dynamicT.white, borderTop:`1px solid ${dynamicT.grey100}`, display:"flex", paddingTop:6, paddingBottom:"max(18px, env(safe-area-inset-bottom))"}}>
         {navItems.map(({id,Icon,label,badge}) => {
           const a = tab===id;
           return (
