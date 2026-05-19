@@ -98,7 +98,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       />
 
       <div style={{flex:1, overflowY:"auto", background:dynamicT.grey50}}>
-        <Suspense fallback={<div style={{padding:40, textAlign:"center", color:T.grey500, fontSize:13}}>로딩 중...</div>}>
+        <Suspense fallback={<div style={{padding:40, textAlign:"center", color:T.grey500, fontSize:19}}>로딩 중...</div>}>
           {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
           {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast} onItemClick={openDetail} onExpiryClick={openExpiry} onBarcodeClick={openBarcode}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
@@ -140,7 +140,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       />
 
       {toast && (
-        <div style={{position:"absolute", bottom:86, left:20, right:20, background:T.grey900, color:T.white, padding:"12px 16px", borderRadius:12, fontSize:14, fontWeight:400, zIndex:999, boxShadow:"0px 4px 12px rgba(0,0,0,0.12)", animation:"fadeUp 150ms"}}>
+        <div style={{position:"absolute", bottom:86, left:20, right:20, background:T.grey900, color:T.white, padding:"18px 20px", borderRadius:12, fontSize:20, fontWeight:400, zIndex:999, boxShadow:"0px 4px 12px rgba(0,0,0,0.12)", animation:"fadeUp 150ms"}}>
           {toast}
         </div>
       )}

@@ -43,48 +43,48 @@ export function AlertsScreen({notifs, setNotifs}) {
   return (
     <div style={{padding:16}}>
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16}}>
-        <p style={{margin:0, fontSize:13, color:T.grey500}}>
+        <p style={{margin:0, fontSize:19, color:T.grey500}}>
           액션 필요 <span style={{fontWeight:700, color:T.red500}}>{unread}건</span>
         </p>
-        <button onClick={markAllRead} style={{fontSize:13, color:T.blue500, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600}}>
+        <button onClick={markAllRead} style={{fontSize:19, color:T.blue500, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600}}>
           모두 읽음
         </button>
       </div>
 
       {notifs.length === 0 ? (
         <div style={{textAlign:"center", padding:"40px 0"}}>
-          <p style={{margin:0, fontSize:14, color:T.grey400}}>새로운 알림이 없어요</p>
+          <p style={{margin:0, fontSize:20, color:T.grey400}}>새로운 알림이 없어요</p>
         </div>
       ) : grouped.map(([dateLabel, dayNotifs]) => (
         <div key={dateLabel} style={{marginBottom:20}}>
-          <p style={{margin:"0 0 8px", fontSize:12, fontWeight:700, color:T.grey500}}>{dateLabel}</p>
+          <p style={{margin:"0 0 8px", fontSize:18, fontWeight:700, color:T.grey500}}>{dateLabel}</p>
           <Card>
             {dayNotifs.map((n, i) => {
               const m = TYPE_META[n.type] || TYPE_META.order_req;
               const Icon = m.Icon;
               return (
                 <div key={n.id}>
-                  <div style={{padding:"14px 16px", opacity:n.is_read ? 0.5 : 1, display:"flex", flexDirection:"column", gap:10}}>
+                  <div style={{padding:"18px 20px", opacity:n.is_read ? 0.5 : 1, display:"flex", flexDirection:"column", gap:10}}>
                     <div style={{display:"flex", alignItems:"flex-start", gap:12}}>
                       {/* 읽음 상태 인디케이터 */}
                       {!n.is_read && (
                         <div style={{position:"absolute", left:0, top:0, bottom:0, width:3, background:m.color, borderRadius:"0 2px 2px 0"}}/>
                       )}
-                      <div style={{width:38, height:38, borderRadius:10, background:m.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                        <Icon size={18} color={m.color}/>
+                      <div style={{width:48, height:48, borderRadius:10, background:m.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                        <Icon size={22} color={m.color}/>
                       </div>
                       <div style={{flex:1, minWidth:0}}>
-                        <p style={{margin:0, fontSize:14, fontWeight:n.is_read?400:600, color:T.grey900, lineHeight:1.45}}>{n.message}</p>
-                        {n.sub && <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>{n.sub}</p>}
-                        <p style={{margin:"4px 0 0", fontSize:11, color:T.grey400}}>{fmtFull(n.created_at)}</p>
+                        <p style={{margin:0, fontSize:20, fontWeight:n.is_read?400:600, color:T.grey900, lineHeight:1.45}}>{n.message}</p>
+                        {n.sub && <p style={{margin:"2px 0 0", fontSize:18, color:T.grey500}}>{n.sub}</p>}
+                        <p style={{margin:"4px 0 0", fontSize:16, color:T.grey400}}>{fmtFull(n.created_at)}</p>
                       </div>
                       {!n.is_read && <div style={{width:8, height:8, borderRadius:9999, background:T.red500, flexShrink:0, marginTop:4}}/>}
                     </div>
 
                     {/* 액션 버튼 (읽지 않은 중요 알림에만) */}
                     {!n.is_read && m.actionLabel && (
-                      <button onClick={()=>markRead(n.id)} style={{alignSelf:"flex-start", marginLeft:50, padding:"7px 16px", borderRadius:9999, border:"none", background:m.color, color:T.white, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5}}>
-                        {m.actionLabel} <ChevronRight size={13}/>
+                      <button onClick={()=>markRead(n.id)} style={{alignSelf:"flex-start", marginLeft:50, padding:"12px 20px", borderRadius:9999, border:"none", background:m.color, color:T.white, fontSize:19, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5}}>
+                        {m.actionLabel} <ChevronRight size={16}/>
                       </button>
                     )}
                     {n.is_read && (
