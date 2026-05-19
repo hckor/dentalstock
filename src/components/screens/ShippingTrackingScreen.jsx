@@ -57,41 +57,41 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, openModal
   return (
     <div style={{ padding: "16px" }}>
       {/* ── 탭 네비게이션 ── */}
-      <div style={{ background: T.white, borderRadius: 14, padding: "10px", marginBottom: 16, display: "flex", gap: 6 }}>
+      <div style={{ background: T.white, borderRadius: 12, padding: "6px", marginBottom: 16, display: "flex", gap: 4 }}>
         {tabDefs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setTrackingTab(tab.id)}
             style={{
               flex: 1,
-              padding: "12px 14px",
+              padding: "8px 10px",
               border: "none",
               borderRadius: 9999,
               cursor: "pointer",
               fontFamily: font,
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: 600,
               background: trackingTab === tab.id ? T.grey900 : T.grey100,
               color: trackingTab === tab.id ? T.white : T.grey600,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 5,
+              gap: 4,
               transition: "all 150ms",
             }}
           >
-            <tab.icon size={18} />
+            <tab.icon size={14} />
             {tab.label}
             {tab.count > 0 && (
               <span
                 style={{
-                  background: trackingTab === tab.id ? T.red500 : T.red500,
+                  background: T.red500,
                   color: T.white,
                   borderRadius: 9999,
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 700,
-                  padding: "2px 6px",
-                  marginLeft: 4,
+                  padding: "1px 5px",
+                  marginLeft: 2,
                 }}
               >
                 {tab.count}
