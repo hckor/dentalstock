@@ -7,8 +7,6 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
   const days = daysUntil(item.expiry);
   const isOk = st === "ok";
 
-  const borderColor = isOk ? T.green500 : T.red500;
-
   return (
     <div
       style={{
@@ -18,14 +16,14 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
         marginBottom: 16,
         overflow: "hidden",
         cursor: "pointer",
-        borderLeft: `4px solid ${borderColor}`,
       }}
       onClick={() => onCardClick?.(item)}
     >
-      <div style={{ flex: 1, padding: "16px", minWidth: 0 }}>
+      <div style={{ padding: "16px", minWidth: 0 }}>
 
         {/* 품목명 + 상태칩 */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div style={{ width: 9, height: 9, borderRadius: 9999, background: isOk ? T.green500 : T.red500, flexShrink: 0 }} />
           <p style={{
             margin: 0,
             fontSize: 20,
