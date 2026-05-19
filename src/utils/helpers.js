@@ -7,7 +7,17 @@ export const getStatus = (i) => i.current_qty<=0?"danger":i.current_qty<i.min_qt
 export const catName  = (id) => CATEGORIES.find(c=>c.id===id)?.name  || "-";
 export const catColor = (id) => CATEGORIES.find(c=>c.id===id)?.color || T.grey400;
 export const daysUntil = (d) => d ? Math.ceil((new Date(d)-new Date())/86400000) : null;
-export const todayKey = () => new Date().toISOString().slice(0,10);
+export const dateKey = (date = new Date(), timeZone = "Asia/Seoul") => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type) => parts.find(p => p.type === type)?.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+};
+export const todayKey = () => dateKey();
 export const fmtDate  = (s) => new Date(s).toLocaleDateString("ko-KR",{month:"2-digit",day:"2-digit"});
 export const fmtFull  = (s) => new Date(s).toLocaleDateString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
 export const initials = (n) => n.slice(0,1);

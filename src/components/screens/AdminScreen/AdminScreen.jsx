@@ -28,6 +28,7 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
     {id:"surgery",   label:"수술 준비"},
     {id:"analytics", label:"소비 분석"},
     {id:"staff",     label:"직원 관리"},
+    {id:"items",     label:"품목 관리"},
     {id:"vendor",    label:"도매 설정"},
   ];
 
@@ -106,6 +107,27 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
               })}
             </Card>
 
+            <button onClick={onLogout}
+              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+              <LogOut size={20} color={T.grey600}/> 로그아웃
+            </button>
+          </>
+        )}
+
+        {adminTab === "items" && (
+          <>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:16}}>
+              {[
+                {label:"전체 품목", value:items.length, color:T.blue500},
+                {label:"부족 품목", value:items.filter(i=>i.current_qty<i.min_qty).length, color:T.orange500},
+                {label:"소진 품목", value:items.filter(i=>i.current_qty<=0).length, color:T.red500},
+              ].map(s => (
+                <Card key={s.label} style={{padding:"12px 10px"}}>
+                  <p style={{margin:"0 0 4px", fontSize: 16, color:T.grey500}}>{s.label}</p>
+                  <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
+                </Card>
+              ))}
+            </div>
             <button
               onClick={() => openModal("add_item")}
               style={{width:"100%", padding:"18px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:8}}>
@@ -125,10 +147,6 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
               }}
               style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.orange500}33`, background:T.orange50, color:T.orange500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:8}}>
               <RotateCcw size={18}/> 초기 데이터로 리셋 (데모용)
-            </button>
-            <button onClick={onLogout}
-              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
-              <LogOut size={20} color={T.grey600}/> 로그아웃
             </button>
           </>
         )}

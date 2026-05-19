@@ -67,7 +67,8 @@ export function TasksCard({
                   const itemName =
                     items.find(it => it.id === order.item_id)?.name || "-";
                   const price =
-                    items.find(it => it.id === order.item_id)?.price || 0;
+                    items.find(it => it.id === order.item_id)?.price;
+                  const priceLabel = price ? `${price.toLocaleString()}원` : "가격 미등록";
                   return (
                     <div key={`approval-${order.id}`}>
                       {idx > 0 && <Divider />}
@@ -108,7 +109,7 @@ export function TasksCard({
                               color: T.grey900,
                             }}
                           >
-                            🔴 주문 승인 대기 {task.data.length}건
+                            발주 승인 대기 {task.data.length}건
                           </p>
                           <p
                             style={{
@@ -120,7 +121,7 @@ export function TasksCard({
                               whiteSpace: "nowrap",
                             }}
                           >
-                            {itemName} · {price.toLocaleString()}원
+                            {itemName} · {priceLabel}
                           </p>
                         </div>
                         <span
@@ -134,7 +135,7 @@ export function TasksCard({
                             fontWeight: 700,
                           }}
                         >
-                          주문 링크
+                          검토하기
                         </span>
                       </button>
                     </div>
@@ -189,7 +190,7 @@ export function TasksCard({
                               color: T.grey900,
                             }}
                           >
-                            📦 배송 완료 {task.data.length}건
+                            입고 대기 {task.data.length}건
                           </p>
                           <p
                             style={{
@@ -216,7 +217,7 @@ export function TasksCard({
                             fontWeight: 700,
                           }}
                         >
-                          입고 확인
+                          확인하기
                         </span>
                       </button>
                     </div>

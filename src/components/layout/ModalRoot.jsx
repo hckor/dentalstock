@@ -12,6 +12,7 @@ export function ModalRoot({
   modal, setModal, selItem, setSelItem, form, setForm,
   items, setItems, orders, currentUser,
   commit, submitOrder, confirmReceipt, showToast,
+  canApprove,
   editItemsState, setEditItemsState, openModal,
 }) {
   return (
@@ -27,7 +28,7 @@ export function ModalRoot({
           {modal==="order_req" && selItem && (
             <OrderRequestSheet item={selItem} currentUser={currentUser} onSubmit={submitOrder} onClose={()=>setModal(null)} orders={orders}/>
           )}
-          {modal==="confirm_receipt" && selItem && (
+          {modal==="confirm_receipt" && selItem && canApprove && (
             <ReceiptConfirmSheet item={selItem} orders={orders} currentUser={currentUser} onConfirm={confirmReceipt} onClose={()=>setModal(null)}/>
           )}
           {modal==="add_item" && (
@@ -42,6 +43,7 @@ export function ModalRoot({
               item={items.find(i => i.id === selItem.item_id)}
               onClose={()=>setModal(null)}
               openModal={openModal}
+              canApprove={canApprove}
             />
           )}
         </BottomSheet>

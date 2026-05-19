@@ -1,16 +1,23 @@
 import { X, Check, Circle } from "lucide-react";
 import { T, font } from "../../constants/colors";
 
-export function ShippingDetailModal({ order, item, onClose, openModal }) {
+export function ShippingDetailModal({ order, item, onClose, openModal, canApprove }) {
   if (!order || !item) return null;
 
-  // 배송 타임라인 더미 데이터
-  const shippingTimeline = order.shipping_timeline || [
-    { status: "배달완료", timestamp: "05/19 14:32", location: "수령처에 도착", completed: true },
-    { status: "배송중", timestamp: "05/19 08:15", location: "서울 배송센터", completed: true },
-    { status: "집하완료", timestamp: "05/18 23:41", location: "출발지 창고", completed: false },
-    { status: "주문접수", timestamp: "05/18 15:00", location: "덴올", completed: false },
-  ];
+  const hasPrice = Number.isFinite(order.price) && order.price > 0;
+  const shippingTimeline = order.shipping_timeline || (
+    order.status === "received"
+      ? [
+          { status: "배달완료", timestamp: "입고 확인됨", location: "수령처", completed: true },
+          { status: "배송중", timestamp: "배송 진행", location: order.carrier || "배송사", completed: true },
+          { status: "주문접수", timestamp: "발주 승인", location: "도매 사이트", completed: true },
+        ]
+      : [
+          { status: "배송중", timestamp: "배송 진행", location: order.carrier || "배송사", completed: true },
+          { status: "집하완료", timestamp: "상품 이동 시작", location: "출발지", completed: true },
+          { status: "주문접수", timestamp: "발주 승인", location: "도매 사이트", completed: true },
+        ]
+  );
 
   return (
     <div style={{ padding: "16px 20px 0" }}>
@@ -80,7 +87,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
                 <span style={{ fontSize: 16, fontWeight: 600, color: T.grey900 }}>{event.status}</span>
                 <span style={{ fontSize: 16, color: T.grey500 }}>— {event.timestamp}</span>
               </div>
-              <p style={{ margin: 0, fontSize: 16, color: T.grey600 }}>📍 {event.location}</p>
+              <p style={{ margin: 0, fontSize: 16, color: T.grey600 }}>{event.location}</p>
             </div>
           </div>
         ))}
@@ -96,32 +103,34 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
           <span style={{ fontSize: 16, color: T.grey600 }}>덴올</span>
           <span style={{ fontSize: 16, fontWeight: 700, color: T.teal500 }}>{order.qty}{item.unit}</span>
-          <span style={{ fontSize: 16, color: T.grey600 }}>·</span>
-          <span style={{ fontSize: 16, fontWeight: 700, color: T.grey900 }}>{order.price?.toLocaleString()}원</span>
+          {hasPrice && <span style={{ fontSize: 16, color: T.grey600 }}>·</span>}
+          {hasPrice && <span style={{ fontSize: 16, fontWeight: 700, color: T.grey900 }}>{order.price.toLocaleString()}원</span>}
         </div>
         <p style={{ margin: "8px 0", fontSize: 16, color: T.grey600 }}>주문번호 {order.id}</p>
         <p style={{ margin: "4px 0", fontSize: 16, color: T.grey600 }}>요청자 {order.requested_by}</p>
       </div>
 
       {/* 입고 확인 버튼 */}
-      <button
-        onClick={() => openModal("confirm_receipt", item)}
-        style={{
-          width: "100%",
-          padding: "16px 0",
-          borderRadius: 9999,
-          border: "none",
-          background: T.blue500,
-          color: T.white,
-          fontSize: 16,
-          fontWeight: 600,
-          cursor: "pointer",
-          fontFamily: font,
-          marginBottom: 20,
-        }}
-      >
-        입고 확인 완료
-      </button>
+      {canApprove && order.status === "ordered" && (
+        <button
+          onClick={() => openModal("confirm_receipt", item)}
+          style={{
+            width: "100%",
+            padding: "16px 0",
+            borderRadius: 9999,
+            border: "none",
+            background: T.blue500,
+            color: T.white,
+            fontSize: 16,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: font,
+            marginBottom: 20,
+          }}
+        >
+          입고 확인 완료
+        </button>
+      )}
     </div>
   );
 }

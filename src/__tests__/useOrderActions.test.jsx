@@ -30,7 +30,7 @@ describe('useOrderActions', () => {
       }
     ];
 
-    currentUser = { name: '박위생사', role: 'hygienist' };
+    currentUser = { name: '이매니저', role: 'manager' };
   });
 
   it('submitOrder: 새 pending 발주 생성 + 알림', () => {
@@ -61,7 +61,7 @@ describe('useOrderActions', () => {
       qty: 5,
       note: '급함',
       status: 'pending',
-      requested_by: '박위생사',
+      requested_by: '이매니저',
     });
 
     expect(mockSetNotifs).toHaveBeenCalledOnce();
@@ -131,7 +131,7 @@ describe('useOrderActions', () => {
     const newOrders = ordersUpdater(orders);
     const updated = newOrders.find(o => o.id === 'o1');
     expect(updated.status).toBe('ordered');
-    expect(updated.reviewed_by).toBe('박위생사');
+    expect(updated.reviewed_by).toBe('이매니저');
     expect(updated.review_note).toBe('승인합니다');
     expect(updated.reviewed_at).toBeDefined();
 
@@ -214,7 +214,7 @@ describe('useOrderActions', () => {
     const newOrders = ordersUpdater(orders);
     const updated = newOrders.find(o => o.id === 'o1');
     expect(updated.status).toBe('rejected');
-    expect(updated.reviewed_by).toBe('박위생사');
+    expect(updated.reviewed_by).toBe('이매니저');
     expect(updated.review_note).toBe('재고 없음');
 
     expect(mockSetNotifs).toHaveBeenCalledOnce();

@@ -22,6 +22,10 @@ export function VendorSettingsTab({ showToast }) {
     setVendors(p => p.map(v => v.id === id ? { ...v, connected: !v.connected } : v));
   };
 
+  const updateVendorField = (id, field, value) => {
+    setVendors(p => p.map(v => v.id === id ? { ...v, [field]: value } : v));
+  };
+
   const handleSave = () => {
     const next = { vendors, preferredVendor, maxOrderAmount };
     settingsApi.save(next);
@@ -76,6 +80,23 @@ export function VendorSettingsTab({ showToast }) {
                 </button>
               </div>
             </div>
+            {vendor.connected && (
+              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, padding:"0 0 18px"}}>
+                <Inp
+                  value={vendor.username || ""}
+                  onChange={e=>updateVendorField(vendor.id, "username", e.target.value)}
+                  placeholder={`${vendor.name} ID`}
+                  style={{fontSize:16}}
+                />
+                <Inp
+                  type="password"
+                  value={vendor.password || ""}
+                  onChange={e=>updateVendorField(vendor.id, "password", e.target.value)}
+                  placeholder="비밀번호"
+                  style={{fontSize:16}}
+                />
+              </div>
+            )}
             {idx < vendors.length - 1 && <Divider />}
           </div>
         ))}
@@ -144,8 +165,7 @@ export function VendorSettingsTab({ showToast }) {
       {/* 안내 텍스트 */}
       <div style={{ marginTop: 24, padding: "16px", background: T.blue50, borderRadius: 12 }}>
         <p style={{ margin: 0, fontSize: 16, color: T.grey700, lineHeight: 1.5 }}>
-          도매 사이트와 연결되면 자동으로 가장 저렴한 가격의 상품을 선택하여 발주합니다.
-          나중에 설정을 변경할 수 있습니다.
+          계정 정보는 현재 기기 저장소에만 보관됩니다. 실제 자동주문 서버 연동 전에는 테스트용으로만 사용하세요.
         </p>
       </div>
 

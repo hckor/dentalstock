@@ -2,11 +2,11 @@ export function useStockActions({ items, setItems, setTxs, setNotifs, currentUse
   const commit = (type, selItem, form) => {
     if (!selItem) return;
     const requestedQty = Math.max(1, parseInt(form.qty)||1);
-    const qty   = type==="out" ? Math.min(requestedQty, selItem.current_qty) : requestedQty;
-    if (type==="out" && qty < requestedQty) {
+    if (type==="out" && requestedQty > selItem.current_qty) {
       showToast(`현재 재고는 ${selItem.current_qty}${selItem.unit}입니다.`);
+      return;
     }
-    if (type==="out" && qty === 0) return;
+    const qty = requestedQty;
     const after = type==="in" ? selItem.current_qty+qty : selItem.current_qty-qty;
     const upd   = items.map(i=>i.id===selItem.id?{...i,current_qty:after}:i);
     setItems(upd);

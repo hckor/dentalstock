@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { T, font, CS } from "../../constants/colors";
-import { todayKey } from "../../utils/helpers";
+import { dateKey, todayKey } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
 
@@ -17,7 +17,7 @@ function groupByDate(txs) {
 
 function formatDateHeader(dateStr) {
   const today = todayKey();
-  const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const yesterday = dateKey(new Date(Date.now()-86400000));
   if (dateStr === today) return `오늘 · ${dateStr.slice(5).replace("-",".")}`;
   if (dateStr === yesterday) return `어제 · ${dateStr.slice(5).replace("-",".")}`;
   return dateStr.slice(5).replace("-",".");

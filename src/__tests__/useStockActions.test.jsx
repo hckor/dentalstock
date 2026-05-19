@@ -99,7 +99,7 @@ describe('useStockActions', () => {
     expect(mockSetModal).toHaveBeenCalledWith(null);
   });
 
-  it('commit("out"): qty > current_qty일 때 clamping 적용 + 토스트', () => {
+  it('commit("out"): qty > current_qty일 때 출고를 막고 토스트', () => {
     const { result } = renderHook(() =>
       useStockActions({
         items,
@@ -116,19 +116,10 @@ describe('useStockActions', () => {
       result.current.commit('out', items[0], { qty: 50, note: '진료실' });
     });
 
-    // setItems: 현재 재고 10개만 출고됨
-    const updatedItems = mockSetItems.mock.calls[0][0];
-    expect(updatedItems.find(i => i.id === '1').current_qty).toBe(0);
-
-    // setTxs: qty는 clamped된 10
-    const txsUpdater = mockSetTxs.mock.calls[0][0];
-    const newTxs = txsUpdater([]);
-    expect(newTxs[0].qty).toBe(10);
-
-    // Clamping 안내 토스트
+    expect(mockSetItems).not.toHaveBeenCalled();
+    expect(mockSetTxs).not.toHaveBeenCalled();
     expect(mockShowToast).toHaveBeenCalledWith('현재 재고는 10박스입니다.');
-    // 실제 완료 토스트
-    expect(mockShowToast).toHaveBeenCalledWith('출고 10박스 완료');
+    expect(mockSetModal).not.toHaveBeenCalled();
   });
 
   it('commit("out"): qty=0이면 아무것도 하지 않음', () => {

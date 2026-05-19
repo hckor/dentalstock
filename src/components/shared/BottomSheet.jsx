@@ -3,7 +3,7 @@ import { T } from "../../constants/colors";
 export function BottomSheet({ onClose, children }) {
   return (
     <div
-      style={{position:"absolute", inset:0, background:"rgba(2,9,19,0.5)", zIndex:99, display:"flex", justifyContent:"center", alignItems:"flex-end"}}
+      style={{position:"absolute", inset:0, background:"rgba(2,9,19,0.5)", zIndex:300, display:"flex", justifyContent:"center", alignItems:"flex-end"}}
       onClick={onClose}
     >
       <div

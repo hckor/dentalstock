@@ -33,8 +33,8 @@ describe('TasksCard', () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it('approvalOrders가 있으면 "주문 승인 대기" 텍스트 렌더링 (canApprove=true)', () => {
-      // approvalOrders에 1개가 있으면, "주문 승인 대기 1건"이 1번 렌더링됨 (order마다)
+    it('approvalOrders가 있으면 "발주 승인 대기" 텍스트 렌더링 (canApprove=true)', () => {
+      // approvalOrders에 1개가 있으면, "발주 승인 대기 1건"이 1번 렌더링됨 (order마다)
       const singleApproval = [mockApprovalOrders[0]];
       render(
         <TasksCard
@@ -45,7 +45,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/주문 승인 대기 1건/)).toBeInTheDocument();
+      expect(screen.getByText(/발주 승인 대기 1건/)).toBeInTheDocument();
       expect(screen.getByText('오늘 해야 할 일')).toBeInTheDocument();
     });
 
@@ -59,10 +59,10 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.queryByText(/주문 승인 대기/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/발주 승인 대기/)).not.toBeInTheDocument();
     });
 
-    it('shippingOrders가 있으면 "배송 완료" 텍스트 렌더링', () => {
+    it('shippingOrders가 있으면 "입고 대기" 텍스트 렌더링', () => {
       const singleShipping = [mockShippingOrders[0]];
       render(
         <TasksCard
@@ -73,7 +73,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/배송 완료 1건/)).toBeInTheDocument();
+      expect(screen.getByText(/입고 대기 1건/)).toBeInTheDocument();
       expect(screen.getByText('오늘 해야 할 일')).toBeInTheDocument();
     });
 
@@ -89,8 +89,8 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/주문 승인 대기/)).toBeInTheDocument();
-      expect(screen.getByText(/배송 완료/)).toBeInTheDocument();
+      expect(screen.getByText(/발주 승인 대기/)).toBeInTheDocument();
+      expect(screen.getByText(/입고 대기/)).toBeInTheDocument();
       // 헤더에서 "2건" 확인 (span에만 있음)
       const span = screen.getAllByText(/2건/).find(el => el.tagName === 'SPAN');
       expect(span).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/주문 승인 대기 1건/)).toBeInTheDocument();
+      expect(screen.getByText(/발주 승인 대기 1건/)).toBeInTheDocument();
       expect(screen.getByText(/라텍스 장갑 \(M\) · 5,000/)).toBeInTheDocument();
     });
 
@@ -123,7 +123,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/- · 0/)).toBeInTheDocument();
+      expect(screen.getByText(/- · 가격 미등록/)).toBeInTheDocument();
     });
 
     it('shippingOrders: 아이콘, 제목, 서브텍스트(상품명·배송사·송장번호) 정확히 렌더링', () => {
@@ -136,7 +136,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/배송 완료 1건/)).toBeInTheDocument();
+      expect(screen.getByText(/입고 대기 1건/)).toBeInTheDocument();
       expect(screen.getByText(/라텍스 장갑 \(M\)/)).toBeInTheDocument();
       expect(screen.getByText(/CJ대한통운/)).toBeInTheDocument();
       expect(screen.getByText(/1234567890/)).toBeInTheDocument();
@@ -159,7 +159,7 @@ describe('TasksCard', () => {
   });
 
   describe('액션 버튼', () => {
-    it('approvalOrders: 버튼에 "주문 링크" 레이블 렌더링', () => {
+    it('approvalOrders: 버튼에 "검토하기" 레이블 렌더링', () => {
       render(
         <TasksCard
           canApprove={true}
@@ -170,11 +170,11 @@ describe('TasksCard', () => {
         />
       );
       const buttons = screen.getAllByRole('button');
-      const linkButton = buttons.find(btn => btn.textContent.includes('주문 링크'));
+      const linkButton = buttons.find(btn => btn.textContent.includes('검토하기'));
       expect(linkButton).toBeTruthy();
     });
 
-    it('shippingOrders: 버튼에 "입고 확인" 레이블 렌더링', () => {
+    it('shippingOrders: 버튼에 "확인하기" 레이블 렌더링', () => {
       render(
         <TasksCard
           canApprove={false}
@@ -185,7 +185,7 @@ describe('TasksCard', () => {
         />
       );
       const buttons = screen.getAllByRole('button');
-      const checkButton = buttons.find(btn => btn.textContent.includes('입고 확인'));
+      const checkButton = buttons.find(btn => btn.textContent.includes('확인하기'));
       expect(checkButton).toBeTruthy();
     });
 
@@ -201,7 +201,7 @@ describe('TasksCard', () => {
         />
       );
       const buttons = screen.getAllByRole('button');
-      const button = buttons.find(btn => btn.textContent.includes('주문 링크'));
+      const button = buttons.find(btn => btn.textContent.includes('검토하기'));
       expect(button).toBeTruthy();
       await user.click(button);
     });
@@ -218,7 +218,7 @@ describe('TasksCard', () => {
         />
       );
       const buttons = screen.getAllByRole('button');
-      const button = buttons.find(btn => btn.textContent.includes('입고 확인'));
+      const button = buttons.find(btn => btn.textContent.includes('확인하기'));
       expect(button).toBeTruthy();
       await user.click(button);
     });
@@ -272,7 +272,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/- · 0/)).toBeInTheDocument();
+      expect(screen.getByText(/- · 가격 미등록/)).toBeInTheDocument();
     });
 
     it('approvalOrders의 길이가 여러 개일 때 모두 렌더링', () => {
@@ -291,7 +291,7 @@ describe('TasksCard', () => {
         />
       );
       // 승인 대기 3건이 표시됨 (각 order마다 한 번, 3번 렌더링)
-      const approvalTexts = screen.getAllByText(/주문 승인 대기 3건/);
+      const approvalTexts = screen.getAllByText(/발주 승인 대기 3건/);
       expect(approvalTexts.length).toBe(3);
     });
 

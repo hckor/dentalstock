@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Truck, Package, PackageCheck, AlertCircle } from "lucide-react";
+import { Truck, Package, PackageCheck, AlertCircle, XCircle } from "lucide-react";
 import { T, font } from "../../constants/colors";
 import { Card } from "../shared/Card";
 import { ShippingOrderCard } from "../shared/ShippingOrderCard";
@@ -18,7 +18,7 @@ function makeDemoTracking(orderId) {
   };
 }
 
-export function ShippingTrackingScreen({orders, allItems, currentUser, openModal, showToast, startTracking, confirmReceipt}) {
+export function ShippingTrackingScreen({orders, allItems, currentUser, canApprove, openModal, showToast, approveOrder, rejectOrder, startTracking, confirmReceipt}) {
   const [trackingTab, setTrackingTab] = useState("auto_wait");
 
   const isManager = currentUser.role === "owner" || currentUser.role === "manager";
@@ -29,37 +29,59 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, openModal
   }, [orders, currentUser.name, isManager]);
 
   // 상태별 그룹핑
-  // pending → auto_wait (자동대기: 주문 승인 필요)
-  // ordered → in_transit (진행중: 배송 중)
-  // received → completed (완료: 배송 도착)
+  // pending → auto_wait (승인 필요)
+  // ordered → in_transit (주문/배송 진행)
+  // received → completed (입고 완료)
+  // rejected → rejected (반려)
   const groupedOrders = useMemo(() => {
     const groups = {
       auto_wait: myOrders.filter(o => o.status === "pending"),
       in_transit: myOrders.filter(o => o.status === "ordered"),
       completed: myOrders.filter(o => o.status === "received"),
+      rejected: myOrders.filter(o => o.status === "rejected"),
     };
     return groups;
   }, [myOrders]);
 
   const tabDefs = [
-    {id: "auto_wait", label: "자동대기", icon: AlertCircle, count: groupedOrders.auto_wait.length},
+    {id: "auto_wait", label: "승인대기", icon: AlertCircle, count: groupedOrders.auto_wait.length},
     {id: "in_transit", label: "진행중", icon: Truck, count: groupedOrders.in_transit.length},
     {id: "completed", label: "완료", icon: PackageCheck, count: groupedOrders.completed.length},
+    {id: "rejected", label: "반려", icon: XCircle, count: groupedOrders.rejected.length},
   ];
 
   const currentOrders = groupedOrders[trackingTab];
 
   const handleActionClick = (order, actionType) => {
-    if (actionType === "order_link") {
-      showToast("도매 사이트에서 직접 주문해주세요");
+    if (actionType === "approve") {
+      if (!canApprove) {
+        showToast("승인 권한이 없습니다");
+        return;
+      }
+      approveOrder(order.id, "");
+      setTrackingTab("in_transit");
+    } else if (actionType === "reject") {
+      if (!canApprove) {
+        showToast("거절 권한이 없습니다");
+        return;
+      }
+      rejectOrder(order.id, "관리자 반려");
+      setTrackingTab("rejected");
     } else if (actionType === "tracking_start") {
-      // 더미 송장번호로 즉시 배송 추적 시작 (실제는 사용자가 입력)
+      if (!canApprove) {
+        showToast("송장 등록 권한이 없습니다");
+        return;
+      }
       const { carrier, trackingNumber } = makeDemoTracking(order.id);
       startTracking(order.id, carrier, trackingNumber);
       setTrackingTab("in_transit");
     } else if (actionType === "tracking_detail") {
       openModal("shipping_detail", order);
     } else if (actionType === "confirm_receipt") {
+      if (!canApprove) {
+        showToast("입고 확인 권한이 없습니다");
+        return;
+      }
       confirmReceipt(order.id, order.qty, "");
       setTrackingTab("completed");
     }
@@ -131,13 +153,15 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, openModal
           </div>
           <p style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600, color: T.grey700 }}>
             {trackingTab === "auto_wait" && "승인 대기 중인 주문이 없어요"}
-            {trackingTab === "in_transit" && "배송 중인 주문이 없어요"}
-            {trackingTab === "completed" && "완료된 주문이 없어요"}
+            {trackingTab === "in_transit" && "진행 중인 주문이 없어요"}
+            {trackingTab === "completed" && "입고 완료된 주문이 없어요"}
+            {trackingTab === "rejected" && "반려된 주문이 없어요"}
           </p>
           <p style={{ margin: 0, fontSize: 16, color: T.grey500 }}>
-            {trackingTab === "auto_wait" && "새로운 주문이 필요하신가요?"}
-            {trackingTab === "in_transit" && "곧 도착할 예정입니다"}
+            {trackingTab === "auto_wait" && (canApprove ? "요청을 승인하거나 반려할 수 있습니다" : "관리자 검토를 기다리는 요청입니다")}
+            {trackingTab === "in_transit" && "송장 등록과 입고 확인을 진행하세요"}
             {trackingTab === "completed" && "입고 확인을 완료한 주문들입니다"}
+            {trackingTab === "rejected" && "반려된 발주 요청입니다"}
           </p>
         </Card>
       ) : (
@@ -150,6 +174,7 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, openModal
                 order={order}
                 item={item}
                 stage={trackingTab}
+                canApprove={canApprove}
                 onActionClick={(actionType) => handleActionClick(order, actionType)}
               />
             );

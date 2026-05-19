@@ -3,6 +3,8 @@ import { T, font } from "../../constants/colors";
 import { Inp } from "../shared/Inp";
 
 export function InOutSheet({modal, selItem, form, setForm, onCommit, onClose}) {
+  const requestedQty = Math.max(1, parseInt(form.qty) || 1);
+  const overStock = modal === "out" && requestedQty > selItem.current_qty;
   return (
     <div style={{padding:"16px 20px 0"}}>
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16}}>
@@ -26,10 +28,19 @@ export function InOutSheet({modal, selItem, form, setForm, onCommit, onClose}) {
           </button>
         ))}
       </div>
+      {overStock && (
+        <p style={{margin:"-10px 0 16px", fontSize: 16, color:T.red500, fontWeight:600, textAlign:"center"}}>
+          현재 재고는 {selItem.current_qty}{selItem.unit}입니다
+        </p>
+      )}
       <p style={{margin:"0 0 8px", fontSize: 16, fontWeight:600, color:T.grey700}}>메모 (선택)</p>
       <Inp value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} placeholder="예: 진료실 보충" style={{marginBottom:20}}/>
-      <button onClick={onCommit} style={{width:"100%",padding:"16px 0",borderRadius:9999,border:"none",cursor:"pointer",fontFamily:font,fontSize: 16,fontWeight:600,color:T.white,background:modal==="out"?T.red500:T.blue500}}>
-        {modal==="in"?"입고 완료":"출고 완료"}
+      <button
+        onClick={onCommit}
+        disabled={overStock}
+        style={{width:"100%",padding:"16px 0",borderRadius:9999,border:"none",cursor:overStock?"not-allowed":"pointer",fontFamily:font,fontSize: 16,fontWeight:600,color:T.white,background:overStock?T.grey300:modal==="out"?T.red500:T.blue500}}
+      >
+        {overStock ? "재고 부족" : modal==="in"?"입고 완료":"출고 완료"}
       </button>
     </div>
   );

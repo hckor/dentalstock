@@ -93,7 +93,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
           {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} orders={orders} onItemClick={openDetail} onExpiryClick={openExpiry}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
-          {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} openModal={openModal} showToast={showToast} startTracking={startTracking} confirmReceipt={confirmReceipt}/>}
+          {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} rejectOrder={rejectOrder} startTracking={startTracking} confirmReceipt={confirmReceipt}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
           {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} approveOrder={approveOrder} rejectOrder={rejectOrder} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast}/>}
         </Suspense>
@@ -125,6 +125,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         orders={orders} currentUser={currentUser}
         commit={commit} submitOrder={submitOrder} confirmReceipt={confirmReceipt}
         showToast={showToast}
+        canApprove={canApprove}
         editItemsState={editItemsState} setEditItemsState={setEditItemsState}
         openModal={openModal}
       />

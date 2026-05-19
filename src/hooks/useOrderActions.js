@@ -1,4 +1,5 @@
 import { getActiveOrder } from "../utils/helpers";
+import { can } from "../constants/permissions";
 
 export function useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal }) {
   // ── 발주 요청 → pending 주문 즉시 생성 ───────────────
@@ -37,6 +38,10 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
 
   // ── 발주 승인 (ordered 상태로, 재고 반영 없음) ────────
   const approveOrder = (orderId, reviewNote) => {
+    if (!can(currentUser.role, "orders_approve")) {
+      showToast("승인 권한이 없습니다");
+      return;
+    }
     const order = orders.find(o=>o.id===orderId);
     if (!order || order.status !== "pending") {
       showToast("처리할 발주 요청을 찾을 수 없습니다.");
@@ -54,6 +59,10 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
 
   // ── 발주 거절 ────────────────────────────────────────
   const rejectOrder = (orderId, reviewNote) => {
+    if (!can(currentUser.role, "orders_approve")) {
+      showToast("거절 권한이 없습니다");
+      return;
+    }
     const order = orders.find(o=>o.id===orderId);
     if (!order || order.status !== "pending") {
       showToast("처리할 발주 요청을 찾을 수 없습니다.");
@@ -71,6 +80,10 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
 
   // ── 실 입고 확인 (ordered → received, 재고 반영) ──────
   const confirmReceipt = (orderId, actualQty, note) => {
+    if (!can(currentUser.role, "orders_approve")) {
+      showToast("입고 확인 권한이 없습니다");
+      return;
+    }
     const order = orders.find(o=>o.id===orderId);
     if (!order || order.status !== "ordered") {
       showToast("입고 확인할 발주를 찾을 수 없습니다.");
@@ -90,22 +103,26 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
     setModal(null);
   };
 
-  // ── 배송 추적 시작 (pending → ordered + 송장 정보 저장) ──
+  // ── 송장 등록 (ordered 상태에 배송 정보 저장) ──────────
   const startTracking = (orderId, carrier, trackingNumber) => {
+    if (!can(currentUser.role, "orders_approve")) {
+      showToast("송장 등록 권한이 없습니다");
+      return;
+    }
     const order = orders.find(o => o.id === orderId);
-    if (!order || order.status !== "pending") {
-      showToast("추적 시작할 주문을 찾을 수 없습니다.");
+    if (!order || order.status !== "ordered") {
+      showToast("송장 등록할 주문을 찾을 수 없습니다.");
       return;
     }
     const item = items.find(i => i.id === order.item_id);
     setOrders(p => p.map(o => o.id === orderId
-      ? { ...o, status: "ordered", carrier, tracking_number: trackingNumber, reviewed_by: currentUser.name, reviewed_at: new Date().toISOString() }
+      ? { ...o, carrier, tracking_number: trackingNumber }
       : o
     ));
     if (item) {
-      setNotifs(p => [{ id: `n${Date.now()}`, type: "ordered", item_id: item.id, message: `${item.name} 배송 추적이 시작됐습니다`, sub: `${carrier} · ${trackingNumber}`, is_read: false, created_at: new Date().toISOString() }, ...p]);
+      setNotifs(p => [{ id: `n${Date.now()}`, type: "ordered", item_id: item.id, message: `${item.name} 송장이 등록됐습니다`, sub: `${carrier} · ${trackingNumber}`, is_read: false, created_at: new Date().toISOString() }, ...p]);
     }
-    showToast("배송 추적이 시작됐습니다");
+    showToast("송장이 등록됐습니다");
   };
 
   return { submitOrder, approveOrder, rejectOrder, confirmReceipt, startTracking };
