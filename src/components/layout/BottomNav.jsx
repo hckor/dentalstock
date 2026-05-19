@@ -12,9 +12,9 @@ export function BottomNav({ tab, setTab, items }) {
           <button key={id} onClick={()=>setTab(id)}
             style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3, border:"none", background:"none", cursor:"pointer", padding:"10px 0", position:"relative"}}>
             <Icon size={26} color={active?T.blue500:dynamicT.grey400} strokeWidth={active?2.5:1.8}/>
-            <span style={{fontSize:15, fontFamily:font, color:active?T.blue500:dynamicT.grey400, fontWeight:active?700:400}}>{label}</span>
+            <span style={{fontSize: 12, fontFamily:font, color:active?T.blue500:dynamicT.grey400, fontWeight:active?700:400}}>{label}</span>
             {badge > 0 && (
-              <span style={{position:"absolute", top:2, left:"50%", marginLeft:4, background:T.red500, color:T.white, borderRadius:9999, fontSize:13, fontWeight:700, width:14, height:14, display:"flex", alignItems:"center", justifyContent:"center"}}>
+              <span style={{position:"absolute", top:2, left:"50%", marginLeft:4, background:T.red500, color:T.white, borderRadius:9999, fontSize: 12, fontWeight:700, width:14, height:14, display:"flex", alignItems:"center", justifyContent:"center"}}>
                 {badge}
               </span>
             )}

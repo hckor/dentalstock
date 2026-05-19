@@ -29,13 +29,13 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
         <div style={{display:"flex", gap:6, overflowX:"auto", scrollbarWidth:"none"}}>
           {tabs.map(t => (
             <button key={t.id} onClick={()=>setAdminTab(t.id)}
-              style={{flexShrink:0, padding:"8px 16px", border:"none", borderRadius:9999, cursor:"pointer", fontFamily:font, fontSize:19, fontWeight:600,
+              style={{flexShrink:0, padding:"8px 16px", border:"none", borderRadius:9999, cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:600,
                 background:adminTab===t.id ? T.grey900 : T.grey100,
                 color:adminTab===t.id ? T.white : T.grey600,
                 display:"flex", alignItems:"center", gap:5, transition:"all 150ms"}}>
               {t.label}
               {t.badge>0 && (
-                <span style={{background:adminTab===t.id?T.red500:T.red500, color:T.white, borderRadius:9999, fontSize:15, fontWeight:700, padding:"1px 6px"}}>
+                <span style={{background:adminTab===t.id?T.red500:T.red500, color:T.white, borderRadius:9999, fontSize: 12, fontWeight:700, padding:"1px 6px"}}>
                   {t.badge}
                 </span>
               )}
@@ -62,13 +62,13 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
                 {label:"입고 대기", value:orders.filter(o=>o.status==="ordered").length,   color:T.teal500},
               ].map(s => (
                 <Card key={s.label} style={{padding:"12px 10px"}}>
-                  <p style={{margin:"0 0 4px", fontSize:16, color:T.grey500}}>{s.label}</p>
-                  <p style={{margin:0, fontSize:26, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
+                  <p style={{margin:"0 0 4px", fontSize: 16, color:T.grey500}}>{s.label}</p>
+                  <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
                 </Card>
               ))}
             </div>
 
-            <p style={{margin:"0 0 10px", fontSize:19, fontWeight:600, color:T.grey600}}>직원 목록</p>
+            <p style={{margin:"0 0 10px", fontSize: 16, fontWeight:600, color:T.grey600}}>직원 목록</p>
             <Card style={{marginBottom:16}}>
               {users.map((u, i) => {
                 const m    = ROLE_META[u.role];
@@ -79,14 +79,14 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
                       <Avatar name={u.name} role={u.role} size={40}/>
                       <div style={{flex:1}}>
                         <div style={{display:"flex", alignItems:"center", gap:6}}>
-                          <p style={{margin:0, fontSize:20, fontWeight:600, color:T.grey900}}>{u.name}</p>
-                          {isMe && <span style={{fontSize:15, fontWeight:700, color:T.blue500, background:T.blue50, padding:"1px 6px", borderRadius:9999}}>나</span>}
+                          <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900}}>{u.name}</p>
+                          {isMe && <span style={{fontSize: 12, fontWeight:700, color:T.blue500, background:T.blue50, padding:"1px 6px", borderRadius:9999}}>나</span>}
                         </div>
-                        <span style={{fontSize:18, fontWeight:600, color:m.color}}>{m.label}</span>
+                        <span style={{fontSize: 16, fontWeight:600, color:m.color}}>{m.label}</span>
                       </div>
                       {!isMe && (
                         <button onClick={()=>setUsers(p=>p.map(x=>x.id===u.id?{...x,active:!x.active}:x))}
-                          style={{padding:"12px 18px", borderRadius:9999, border:"none", cursor:"pointer", fontFamily:font, fontSize:18, fontWeight:600, background:u.active?T.red50:T.green50, color:u.active?T.red500:T.green500}}>
+                          style={{padding:"12px 18px", borderRadius:9999, border:"none", cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:600, background:u.active?T.red50:T.green50, color:u.active?T.red500:T.green500}}>
                           {u.active?"비활성":"활성화"}
                         </button>
                       )}
@@ -104,11 +104,11 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
                   window.location.reload();
                 }
               }}
-              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.orange500}33`, background:T.orange50, color:T.orange500, fontSize:20, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:8}}>
+              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.orange500}33`, background:T.orange50, color:T.orange500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:8}}>
               <RotateCcw size={18}/> 초기 데이터로 리셋 (데모용)
             </button>
             <button onClick={onLogout}
-              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize:22, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 20, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
               <LogOut size={20} color={T.grey600}/> 로그아웃
             </button>
           </>

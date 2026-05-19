@@ -19,7 +19,7 @@ export function VendorSettingsTab() {
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       {/* 도매 사이트 연결 섹션 */}
-      <p style={{ margin: "0 0 12px", fontSize: 19, fontWeight: 600, color: T.grey600 }}>
+      <p style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: T.grey600 }}>
         도매 사이트 연결
       </p>
       <Card style={{ marginBottom: 20, padding: "16px" }}>
@@ -34,7 +34,7 @@ export function VendorSettingsTab() {
               }}
             >
               <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 19, fontWeight: 600, color: T.grey900 }}>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: T.grey900 }}>
                   {vendor.name}
                 </p>
               </div>
@@ -71,7 +71,7 @@ export function VendorSettingsTab() {
       </Card>
 
       {/* 자동발주 설정 섹션 */}
-      <p style={{ margin: "0 0 12px", fontSize: 19, fontWeight: 600, color: T.grey600 }}>
+      <p style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: T.grey600 }}>
         자동발주 설정
       </p>
       <Card style={{ padding: "20px" }}>
@@ -81,7 +81,7 @@ export function VendorSettingsTab() {
             style={{
               display: "block",
               marginBottom: 8,
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: 600,
               color: T.grey700,
             }}
@@ -97,7 +97,7 @@ export function VendorSettingsTab() {
               borderRadius: 12,
               border: `1px solid rgba(2,32,71,0.05)`,
               background: "rgba(0,23,51,0.02)",
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: 500,
               color: T.grey800,
               fontFamily: font,
@@ -123,7 +123,7 @@ export function VendorSettingsTab() {
             style={{
               display: "block",
               marginBottom: 8,
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: 600,
               color: T.grey700,
             }}
@@ -138,7 +138,7 @@ export function VendorSettingsTab() {
               placeholder="예: 50000"
               style={{ flex: 1 }}
             />
-            <span style={{ fontSize: 18, fontWeight: 600, color: T.grey600, flexShrink: 0 }}>
+            <span style={{ fontSize: 16, fontWeight: 600, color: T.grey600, flexShrink: 0 }}>
               원
             </span>
           </div>

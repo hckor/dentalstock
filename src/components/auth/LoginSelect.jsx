@@ -10,8 +10,8 @@ export function LoginSelect({users, onSelect}) {
         <div style={{width:64, height:64, borderRadius:20, background:T.blue50, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px"}}>
           <Stethoscope size={34} color={T.blue500} strokeWidth={2.2}/>
         </div>
-        <h1 style={{margin:"0 0 6px", fontSize:28, fontWeight:700, color:T.grey900}}>DentalStock</h1>
-        <p style={{margin:0, fontSize:20, color:T.grey500}}>누구로 로그인할까요?</p>
+        <h1 style={{margin:"0 0 6px", fontSize: 24, fontWeight:700, color:T.grey900}}>DentalStock</h1>
+        <p style={{margin:0, fontSize: 16, color:T.grey500}}>누구로 로그인할까요?</p>
       </div>
       <div style={{flex:1, overflowY:"auto", padding:"0 16px 16px"}}>
         {users.filter(u=>u.active).map((u,i) => {
@@ -21,15 +21,15 @@ export function LoginSelect({users, onSelect}) {
               style={{width:"100%", display:"flex", alignItems:"center", gap:14, padding:"18px 20px", marginBottom:8, background:T.white, borderRadius:16, border:`1px solid ${T.grey200}`, cursor:"pointer", fontFamily:font, boxShadow:CS, animation:`fadeUp ${150+i*50}ms both`}}>
               <Avatar name={u.name} role={u.role} size={48}/>
               <div style={{flex:1, textAlign:"left"}}>
-                <p style={{margin:0, fontSize:19, fontWeight:700, color:T.grey900}}>{u.name}</p>
-                <span style={{fontSize:18, fontWeight:600, color:m.color, background:m.bg, padding:"2px 8px", borderRadius:9999}}>{m.label}</span>
+                <p style={{margin:0, fontSize: 16, fontWeight:700, color:T.grey900}}>{u.name}</p>
+                <span style={{fontSize: 16, fontWeight:600, color:m.color, background:m.bg, padding:"2px 8px", borderRadius:9999}}>{m.label}</span>
               </div>
               <ChevronRight size={22} color={T.grey400}/>
             </button>
           );
         })}
       </div>
-      <p style={{textAlign:"center", fontSize:18, color:T.grey400, padding:"0 0 28px"}}>데모 PIN: 원장 1234 · 매니저 1111 · 위생사 0000</p>
+      <p style={{textAlign:"center", fontSize: 16, color:T.grey400, padding:"0 0 28px"}}>데모 PIN: 원장 1234 · 매니저 1111 · 위생사 0000</p>
     </div>
   );
 }

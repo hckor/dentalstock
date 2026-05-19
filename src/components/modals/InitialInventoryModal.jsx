@@ -50,7 +50,7 @@ export function InitialInventoryModal({ items, onSave, onClose }) {
         {items.map((item, idx) => (
           <div key={item.id} style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <label style={{ fontSize: 17, fontWeight: 600, color: T.grey900, margin: 0 }}>
+              <label style={{ fontSize: 16, fontWeight: 600, color: T.grey900, margin: 0 }}>
                 {item.name}
               </label>
               <span style={{ fontSize: 16, color: T.grey500 }}>({item.unit})</span>
@@ -61,7 +61,7 @@ export function InitialInventoryModal({ items, onSave, onClose }) {
               onChange={(e) => handleQuantityChange(item.id, e.target.value)}
               placeholder="수량 입력"
               style={{
-                fontSize: 18,
+                fontSize: 16,
                 padding: "14px 16px",
                 height: "48px",
               }}
@@ -80,7 +80,7 @@ export function InitialInventoryModal({ items, onSave, onClose }) {
           border: "none",
           background: T.blue500,
           color: T.white,
-          fontSize: 19,
+          fontSize: 16,
           fontWeight: 600,
           cursor: "pointer",
           fontFamily: font,

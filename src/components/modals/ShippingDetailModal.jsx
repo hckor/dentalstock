@@ -31,7 +31,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
           >
             <X size={24} color={T.grey500} />
           </button>
-          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.grey900 }}>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.grey900 }}>
             {item.name} 배송 추적
           </h2>
         </div>
@@ -39,16 +39,16 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
 
       {/* 배송사 정보 */}
       <div style={{ background: T.grey50, borderRadius: 12, padding: "14px 16px", marginBottom: 20, border: `1px solid ${T.grey200}` }}>
-        <p style={{ margin: 0, fontSize: 18, fontWeight: 600, color: T.grey600, marginBottom: 4 }}>
+        <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: T.grey600, marginBottom: 4 }}>
           {order.shipping_company || "CJ대한통운"}
         </p>
-        <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: T.grey900, fontFamily: "monospace" }}>
+        <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900, fontFamily: "monospace" }}>
           {order.tracking_number || "1234567890"}
         </p>
       </div>
 
       {/* 타임라인 */}
-      <p style={{ margin: "0 0 12px", fontSize: 18, fontWeight: 600, color: T.grey700 }}>배송 현황</p>
+      <p style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: T.grey700 }}>배송 현황</p>
 
       <div style={{ marginBottom: 20 }}>
         {shippingTimeline.map((event, idx) => (
@@ -77,7 +77,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
             {/* 텍스트 */}
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
-                <span style={{ fontSize: 18, fontWeight: 600, color: T.grey900 }}>{event.status}</span>
+                <span style={{ fontSize: 16, fontWeight: 600, color: T.grey900 }}>{event.status}</span>
                 <span style={{ fontSize: 16, color: T.grey500 }}>— {event.timestamp}</span>
               </div>
               <p style={{ margin: 0, fontSize: 16, color: T.grey600 }}>📍 {event.location}</p>
@@ -90,14 +90,14 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
       <div style={{ height: 1, background: T.grey200, marginBottom: 20 }} />
 
       {/* 주문 정보 */}
-      <p style={{ margin: "0 0 12px", fontSize: 18, fontWeight: 600, color: T.grey700 }}>주문정보</p>
+      <p style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: T.grey700 }}>주문정보</p>
 
       <div style={{ background: T.teal50, borderRadius: 12, padding: "16px 18px", marginBottom: 20, border: `1px solid ${T.teal500}33` }}>
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 18, color: T.grey600 }}>덴올</span>
-          <span style={{ fontSize: 18, fontWeight: 700, color: T.teal500 }}>{order.qty}{item.unit}</span>
-          <span style={{ fontSize: 18, color: T.grey600 }}>·</span>
-          <span style={{ fontSize: 18, fontWeight: 700, color: T.grey900 }}>{order.price?.toLocaleString()}원</span>
+          <span style={{ fontSize: 16, color: T.grey600 }}>덴올</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.teal500 }}>{order.qty}{item.unit}</span>
+          <span style={{ fontSize: 16, color: T.grey600 }}>·</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.grey900 }}>{order.price?.toLocaleString()}원</span>
         </div>
         <p style={{ margin: "8px 0", fontSize: 16, color: T.grey600 }}>주문번호 {order.id}</p>
         <p style={{ margin: "4px 0", fontSize: 16, color: T.grey600 }}>요청자 {order.requested_by}</p>
@@ -113,7 +113,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal }) {
           border: "none",
           background: T.blue500,
           color: T.white,
-          fontSize: 19,
+          fontSize: 16,
           fontWeight: 600,
           cursor: "pointer",
           fontFamily: font,

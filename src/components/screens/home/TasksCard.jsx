@@ -51,10 +51,10 @@ export function TasksCard({
             padding: "14px 16px 10px",
           }}
         >
-          <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: T.grey700 }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey700 }}>
             오늘 해야 할 일
           </p>
-          <span style={{ fontSize: 18, fontWeight: 700, color: T.blue500 }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.blue500 }}>
             {tasks.length}건
           </span>
         </div>
@@ -105,7 +105,7 @@ export function TasksCard({
                           <p
                             style={{
                               margin: 0,
-                              fontSize: 19,
+                              fontSize: 16,
                               fontWeight: 600,
                               color: T.grey900,
                             }}
@@ -132,7 +132,7 @@ export function TasksCard({
                             borderRadius: 9999,
                             background: T.red500,
                             color: T.white,
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: 700,
                           }}
                         >
@@ -188,7 +188,7 @@ export function TasksCard({
                           <p
                             style={{
                               margin: 0,
-                              fontSize: 19,
+                              fontSize: 16,
                               fontWeight: 600,
                               color: T.grey900,
                             }}
@@ -216,7 +216,7 @@ export function TasksCard({
                             borderRadius: 9999,
                             background: T.blue500,
                             color: T.white,
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: 700,
                           }}
                         >

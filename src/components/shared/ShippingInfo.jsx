@@ -14,17 +14,17 @@ export const ShippingInfo = memo(function ShippingInfo({
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-      <span style={{ fontSize: 14, color: T.grey600, fontWeight: 500 }}>
+      <span style={{ fontSize: 12, color: T.grey600, fontWeight: 500 }}>
         {displayText}
       </span>
       {trackingNumber && (
         <>
-          <span style={{ fontSize: 14, color: T.grey300 }}>·</span>
+          <span style={{ fontSize: 12, color: T.grey300 }}>·</span>
           {showLink ? (
             <button
               onClick={onLinkClick}
               style={{
-                fontSize: 14,
+                fontSize: 12,
                 color: T.blue500,
                 fontWeight: 600,
                 background: "none",
@@ -37,7 +37,7 @@ export const ShippingInfo = memo(function ShippingInfo({
               {trackingNumber}
             </button>
           ) : (
-            <span style={{ fontSize: 14, color: T.grey600, fontWeight: 500 }}>
+            <span style={{ fontSize: 12, color: T.grey600, fontWeight: 500 }}>
               {trackingNumber}
             </span>
           )}

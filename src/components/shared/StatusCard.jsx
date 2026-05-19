@@ -44,7 +44,7 @@ export const StatusCard = memo(function StatusCard({
         {Icon && <Icon size={20} color={iconColor} />}
       </div>
       <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: 19, fontWeight: 600, color: T.grey900 }}>
+        <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: T.grey900 }}>
           {title}
         </p>
         {subtitle && (
@@ -70,7 +70,7 @@ export const StatusCard = memo(function StatusCard({
             borderRadius: 9999,
             background: actionBgColor,
             color: T.white,
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: 700,
           }}
         >

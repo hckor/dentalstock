@@ -61,7 +61,7 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, openModal
               borderRadius: 9999,
               cursor: "pointer",
               fontFamily: font,
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: 600,
               background: trackingTab === tab.id ? T.grey900 : T.grey100,
               color: trackingTab === tab.id ? T.white : T.grey600,
@@ -110,12 +110,12 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, openModal
           >
             <Package size={28} color={T.grey400} />
           </div>
-          <p style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600, color: T.grey700 }}>
+          <p style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600, color: T.grey700 }}>
             {trackingTab === "auto_wait" && "승인 대기 중인 주문이 없어요"}
             {trackingTab === "in_transit" && "배송 중인 주문이 없어요"}
             {trackingTab === "completed" && "완료된 주문이 없어요"}
           </p>
-          <p style={{ margin: 0, fontSize: 18, color: T.grey500 }}>
+          <p style={{ margin: 0, fontSize: 16, color: T.grey500 }}>
             {trackingTab === "auto_wait" && "새로운 주문이 필요하신가요?"}
             {trackingTab === "in_transit" && "곧 도착할 예정입니다"}
             {trackingTab === "completed" && "입고 확인을 완료한 주문들입니다"}

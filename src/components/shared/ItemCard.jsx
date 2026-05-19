@@ -55,7 +55,7 @@ export function ItemCard({
               <p
                 style={{
                   margin: 0,
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: 700,
                   color: T.grey900,
                   overflow: "hidden",
@@ -96,7 +96,7 @@ export function ItemCard({
                 </span>
               )}
             </div>
-            <p style={{ margin: "3px 0 0", fontSize: 18, color: T.grey400 }}>
+            <p style={{ margin: "3px 0 0", fontSize: 16, color: T.grey400 }}>
               {catName(item.category_id)} · {item.location}
             </p>
           </div>
@@ -126,14 +126,14 @@ export function ItemCard({
           <span
             style={{
               flexShrink: 0,
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: 700,
               color: T.grey800,
               fontVariantNumeric: "tabular-nums"
             }}
           >
             {item.current_qty}
-            <span style={{ fontSize: 18, fontWeight: 400, color: T.grey400 }}>
+            <span style={{ fontSize: 16, fontWeight: 400, color: T.grey400 }}>
               {" "}/ {recQty}
               {item.unit}
             </span>
@@ -156,7 +156,7 @@ export function ItemCard({
             <Clock size={16} color={days <= 7 ? T.red500 : T.orange500} />
             <span
               style={{
-                fontSize: 18,
+                fontSize: 16,
                 color: days <= 7 ? T.red500 : T.orange500,
                 fontWeight: 600
               }}
@@ -181,10 +181,10 @@ export function ItemCard({
             }}
           >
             <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.grey900 }}>
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900 }}>
                 배송 도착
               </p>
-              <p style={{ margin: "2px 0 0", fontSize: 18, color: T.grey500 }}>
+              <p style={{ margin: "2px 0 0", fontSize: 16, color: T.grey500 }}>
                 {ao.qty}
                 {item.unit} · 요청자 {ao.requested_by}
               </p>
@@ -201,7 +201,7 @@ export function ItemCard({
                 border: "none",
                 background: T.blue500,
                 color: T.white,
-                fontSize: 19,
+                fontSize: 16,
                 fontWeight: 700,
                 cursor: "pointer",
                 fontFamily: font,
@@ -233,10 +233,10 @@ export function ItemCard({
             }}
           >
             <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.grey900 }}>
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900 }}>
                 발주 필요
               </p>
-              <p style={{ margin: "2px 0 0", fontSize: 18, color: T.grey500 }}>
+              <p style={{ margin: "2px 0 0", fontSize: 16, color: T.grey500 }}>
                 추천 {recQty}
                 {item.unit} · 최근 30일 평균 기준
               </p>
@@ -253,7 +253,7 @@ export function ItemCard({
                 border: "none",
                 background: T.red500,
                 color: T.white,
-                fontSize: 19,
+                fontSize: 16,
                 fontWeight: 700,
                 cursor: "pointer",
                 fontFamily: font,
@@ -282,7 +282,7 @@ export function ItemCard({
             border: "none",
             background: "#fff0f0",
             color: T.red500,
-            fontSize: 19,
+            fontSize: 16,
             fontWeight: 600,
             cursor: "pointer",
             fontFamily: font,

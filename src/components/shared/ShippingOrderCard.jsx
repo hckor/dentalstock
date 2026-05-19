@@ -20,10 +20,10 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
             <div style={{ padding: "18px 20px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.grey900 }}>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900 }}>
                     {item.name}
                   </p>
-                  <p style={{ margin: "4px 0 0", fontSize: 18, color: T.grey500 }}>
+                  <p style={{ margin: "4px 0 0", fontSize: 16, color: T.grey500 }}>
                     <span style={{ fontWeight: 600, color: T.grey700 }}>수량:</span> {order.qty}
                     {item.unit}
                   </p>
@@ -42,7 +42,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                     background: T.white,
                     cursor: "pointer",
                     fontFamily: font,
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: 600,
                     color: T.blue500,
                     display: "flex",
@@ -67,7 +67,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                     background: T.blue500,
                     cursor: "pointer",
                     fontFamily: font,
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: 600,
                     color: T.white,
                     display: "flex",
@@ -95,10 +95,10 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
             <div style={{ padding: "18px 20px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.grey900 }}>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900 }}>
                     {item.name}
                   </p>
-                  <p style={{ margin: "4px 0 0", fontSize: 18, color: T.grey500 }}>
+                  <p style={{ margin: "4px 0 0", fontSize: 16, color: T.grey500 }}>
                     <span style={{ fontWeight: 600, color: T.teal500 }}>배송 중</span>
                     {order.shipping_company && ` · ${order.shipping_company}`}
                   </p>
@@ -129,7 +129,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                   background: T.white,
                   cursor: "pointer",
                   fontFamily: font,
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: 600,
                   color: T.grey700,
                   display: "flex",
@@ -163,10 +163,10 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
             <div style={{ padding: "18px 20px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.grey900 }}>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900 }}>
                     {item.name}
                   </p>
-                  <p style={{ margin: "4px 0 0", fontSize: 18, color: T.grey500 }}>
+                  <p style={{ margin: "4px 0 0", fontSize: 16, color: T.grey500 }}>
                     <span style={{ fontWeight: 600, color: T.green500 }}>배달 완료</span>
                     {order.received_at && ` · ${new Date(order.received_at).toLocaleDateString("ko-KR")}`}
                   </p>
@@ -184,7 +184,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                   background: T.green500,
                   cursor: "pointer",
                   fontFamily: font,
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: 600,
                   color: T.white,
                   display: "flex",

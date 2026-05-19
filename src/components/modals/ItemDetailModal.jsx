@@ -34,27 +34,27 @@ export function ItemDetailModal({ item, onClose, openModal, showToast }) {
       <div style={{ background: T.grey50, borderRadius: 12, padding: "16px 18px", marginBottom: 20, border: `1px solid ${T.grey200}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <Package size={20} color={T.blue500} />
-          <span style={{ fontSize: 18, fontWeight: 600, color: T.grey700 }}>현재 재고</span>
-          <span style={{ fontSize: 20, fontWeight: 700, color: T.blue500 }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: T.grey700 }}>현재 재고</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.blue500 }}>
             {item.current_qty}{item.unit}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <Package size={20} color={T.orange500} />
-          <span style={{ fontSize: 18, fontWeight: 600, color: T.grey700 }}>최소 재고</span>
-          <span style={{ fontSize: 20, fontWeight: 700, color: T.orange500 }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: T.grey700 }}>최소 재고</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.orange500 }}>
             {item.min_qty}{item.unit}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <MapPin size={20} color={T.grey600} />
-          <span style={{ fontSize: 18, fontWeight: 600, color: T.grey700 }}>위치</span>
-          <span style={{ fontSize: 18, color: T.grey800 }}>{item.location || "미지정"}</span>
+          <span style={{ fontSize: 16, fontWeight: 600, color: T.grey700 }}>위치</span>
+          <span style={{ fontSize: 16, color: T.grey800 }}>{item.location || "미지정"}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Calendar size={20} color={T.grey600} />
-          <span style={{ fontSize: 18, fontWeight: 600, color: T.grey700 }}>유통기한</span>
-          <span style={{ fontSize: 18, color: T.grey800 }}>{item.expiry_date || "—"}</span>
+          <span style={{ fontSize: 16, fontWeight: 600, color: T.grey700 }}>유통기한</span>
+          <span style={{ fontSize: 16, color: T.grey800 }}>{item.expiry_date || "—"}</span>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export function ItemDetailModal({ item, onClose, openModal, showToast }) {
           border: "none",
           background: T.red500,
           color: T.white,
-          fontSize: 19,
+          fontSize: 16,
           fontWeight: 600,
           cursor: "pointer",
           fontFamily: font,
@@ -91,7 +91,7 @@ export function ItemDetailModal({ item, onClose, openModal, showToast }) {
             border: "none",
             background: "none",
             cursor: "pointer",
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: 600,
             color: T.grey700,
             fontFamily: font,
@@ -112,7 +112,7 @@ export function ItemDetailModal({ item, onClose, openModal, showToast }) {
                 border: `1.5px solid ${T.blue500}`,
                 background: "transparent",
                 color: T.blue500,
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: 600,
                 cursor: "pointer",
                 fontFamily: font,
@@ -129,7 +129,7 @@ export function ItemDetailModal({ item, onClose, openModal, showToast }) {
                 border: `1.5px solid ${T.grey300}`,
                 background: "transparent",
                 color: T.grey700,
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: 600,
                 cursor: "pointer",
                 fontFamily: font,
@@ -146,7 +146,7 @@ export function ItemDetailModal({ item, onClose, openModal, showToast }) {
                 border: `1.5px solid ${T.grey300}`,
                 background: "transparent",
                 color: T.grey700,
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: 600,
                 cursor: "pointer",
                 fontFamily: font,

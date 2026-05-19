@@ -57,11 +57,11 @@ export class ErrorBoundary extends Component {
           textAlign: "center",
           boxShadow: "0px 8px 24px rgba(0,0,0,0.08)",
         }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-          <h1 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700, color: "#191f28" }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+          <h1 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 700, color: "#191f28" }}>
             앗, 문제가 발생했어요
           </h1>
-          <p style={{ margin: "0 0 20px", fontSize: 14, color: "#6b7684", lineHeight: 1.5 }}>
+          <p style={{ margin: "0 0 20px", fontSize: 12, color: "#6b7684", lineHeight: 1.5 }}>
             일시적인 오류가 발생했어요. 새로고침 또는 다시 시도해주세요.
           </p>
           {this.state.error && (
@@ -69,7 +69,7 @@ export class ErrorBoundary extends Component {
               background: "#f9fafb",
               borderRadius: 8,
               padding: 12,
-              fontSize: 11,
+              fontSize: 12,
               color: "#8b95a1",
               textAlign: "left",
               overflow: "auto",
@@ -84,7 +84,7 @@ export class ErrorBoundary extends Component {
               border: "1.5px solid #e5e8eb",
               background: "#fff",
               color: "#4e5968",
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: 600,
               cursor: "pointer",
             }}>다시 시도</button>
@@ -94,7 +94,7 @@ export class ErrorBoundary extends Component {
               border: "none",
               background: "#2563eb",
               color: "#fff",
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: 600,
               cursor: "pointer",
             }}>새로고침</button>

@@ -118,7 +118,7 @@ export function AnalyticsTab({items, txs, orders}) {
         {PERIODS.map(p => {
           const active = p.id === period;
           return (
-            <button key={p.id} onClick={() => setPeriod(p.id)} style={{flex:1, padding:"14px 0", borderRadius:9, border:"none", background:active ? T.white : "transparent", boxShadow:active ? "0px 1px 3px rgba(0,0,0,0.1)" : "none", cursor:"pointer", fontFamily:font, fontSize:19, fontWeight:active ? 700 : 500, color:active ? T.grey900 : T.grey500, transition:"all 120ms"}}>
+            <button key={p.id} onClick={() => setPeriod(p.id)} style={{flex:1, padding:"14px 0", borderRadius:9, border:"none", background:active ? T.white : "transparent", boxShadow:active ? "0px 1px 3px rgba(0,0,0,0.1)" : "none", cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:active ? 700 : 500, color:active ? T.grey900 : T.grey500, transition:"all 120ms"}}>
               {p.label}
             </button>
           );
@@ -129,8 +129,8 @@ export function AnalyticsTab({items, txs, orders}) {
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:16}}>
         {stats.map(s => (
           <div key={s.label} style={{background:T.white, borderRadius:14, padding:"14px 12px", boxShadow:"0px 1px 2px rgba(15,23,42,0.04), 0px 4px 16px rgba(15,23,42,0.04)"}}>
-            <p style={{margin:"0 0 6px", fontSize:16, color:T.grey500, fontWeight:500}}>{s.label}</p>
-            <p style={{margin:0, fontSize:26, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums", lineHeight:"1"}}>{s.value}<span style={{fontSize:16, fontWeight:400, color:T.grey400}}>{s.unit}</span></p>
+            <p style={{margin:"0 0 6px", fontSize: 16, color:T.grey500, fontWeight:500}}>{s.label}</p>
+            <p style={{margin:0, fontSize: 24, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums", lineHeight:"1"}}>{s.value}<span style={{fontSize: 16, fontWeight:400, color:T.grey400}}>{s.unit}</span></p>
             {s.delta && <div style={{marginTop:6}}>{s.delta}</div>}
           </div>
         ))}
@@ -152,8 +152,8 @@ export function AnalyticsTab({items, txs, orders}) {
               {byCat.map(cat => (
                 <div key={cat.id} style={{display:"flex", alignItems:"center", gap:5}}>
                   <div style={{width:8, height:8, borderRadius:9999, background:cat.color, flexShrink:0}}/>
-                  <span style={{fontSize:18, color:T.grey600, fontWeight:500}}>{cat.name}</span>
-                  <span style={{fontSize:18, fontWeight:700, color:T.grey800, fontVariantNumeric:"tabular-nums"}}>{cat.used}</span>
+                  <span style={{fontSize: 16, color:T.grey600, fontWeight:500}}>{cat.name}</span>
+                  <span style={{fontSize: 16, fontWeight:700, color:T.grey800, fontVariantNumeric:"tabular-nums"}}>{cat.used}</span>
                 </div>
               ))}
             </div>
@@ -165,7 +165,7 @@ export function AnalyticsTab({items, txs, orders}) {
       <SecTitle>많이 사용한 품목</SecTitle>
       {byItem.length === 0 ? (
         <Card>
-          <p style={{margin:0, padding:"24px 16px", fontSize:20, color:T.grey500, textAlign:"center"}}>이 기간에 출고 기록이 없어요.</p>
+          <p style={{margin:0, padding:"24px 16px", fontSize: 16, color:T.grey500, textAlign:"center"}}>이 기간에 출고 기록이 없어요.</p>
         </Card>
       ) : (
         <Card style={{marginBottom:16}}>
@@ -173,12 +173,12 @@ export function AnalyticsTab({items, txs, orders}) {
             <div key={item.id}>
               <div style={{padding:"18px 20px"}}>
                 <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
-                  <span style={{fontSize:19, fontWeight:700, color:T.grey300, minWidth:16, fontVariantNumeric:"tabular-nums"}}>{i + 1}</span>
+                  <span style={{fontSize: 16, fontWeight:700, color:T.grey300, minWidth:16, fontVariantNumeric:"tabular-nums"}}>{i + 1}</span>
                   <div style={{flex:1, minWidth:0}}>
-                    <p style={{margin:0, fontSize:20, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
-                    <p style={{margin:"1px 0 0", fontSize:16, color:T.grey500}}>예상 소진 {item.expectedDays}일</p>
+                    <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
+                    <p style={{margin:"1px 0 0", fontSize: 16, color:T.grey500}}>예상 소진 {item.expectedDays}일</p>
                   </div>
-                  <p style={{margin:0, fontSize:19, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{item.used}<span style={{fontSize:16, fontWeight:400, color:T.grey500}}>{item.unit}</span></p>
+                  <p style={{margin:0, fontSize: 16, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{item.used}<span style={{fontSize: 16, fontWeight:400, color:T.grey500}}>{item.unit}</span></p>
                 </div>
                 <div style={{height:6, borderRadius:9999, background:T.grey100, overflow:"hidden"}}>
                   <div style={{height:"100%", width:`${pct(item.used, maxUsed)}%`, background:T.blue500, borderRadius:9999, transition:"width 300ms"}}/>

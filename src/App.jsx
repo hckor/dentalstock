@@ -84,7 +84,7 @@ function DentalStockInner() {
     <>
       {/* 오프라인 배너 */}
       {!isOnline && (
-        <div style={{position:"absolute", top:0, left:0, right:0, zIndex:9999, background:"#1e293b", color:"#fff", padding:"10px 16px", display:"flex", alignItems:"center", gap:8, fontSize:13, fontWeight:600, fontFamily:font}}>
+        <div style={{position:"absolute", top:0, left:0, right:0, zIndex:9999, background:"#1e293b", color:"#fff", padding:"10px 16px", display:"flex", alignItems:"center", gap:8, fontSize: 12, fontWeight:600, fontFamily:font}}>
           <WifiOff size={15}/> 오프라인 · 저장된 데이터로 동작 중
         </div>
       )}

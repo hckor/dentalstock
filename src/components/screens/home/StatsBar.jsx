@@ -16,8 +16,8 @@ export function StatsBar({ items, setTab }) {
         {stats.map((s, i) => (
           <button key={s.label} onClick={()=>setTab("inventory")}
             style={{flex:1, padding:"16px 0", border:"none", background:"none", cursor:"pointer", fontFamily:font, textAlign:"center", borderRight:i<stats.length-1?`1px solid ${T.grey100}`:"none"}}>
-            <p style={{margin:0, fontSize:28, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
-            <p style={{margin:"3px 0 0", fontSize:16, color:T.grey500}}>{s.label}</p>
+            <p style={{margin:0, fontSize: 24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
+            <p style={{margin:"3px 0 0", fontSize: 16, color:T.grey500}}>{s.label}</p>
           </button>
         ))}
       </div>
