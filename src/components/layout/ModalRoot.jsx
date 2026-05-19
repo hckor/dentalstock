@@ -6,12 +6,13 @@ import { ReceiptConfirmSheet } from "../modals/ReceiptConfirmSheet";
 import { AddItemModal } from "../modals/AddItemModal";
 import { EditItemModal } from "../modals/EditItemModal";
 import { EditSurgeryItemsSheet } from "../modals/EditSurgeryItemsSheet";
+import { ShippingDetailModal } from "../modals/ShippingDetailModal";
 
 export function ModalRoot({
   modal, setModal, selItem, setSelItem, form, setForm,
   items, setItems, orders, currentUser,
   commit, submitOrder, confirmReceipt, showToast,
-  editItemsState, setEditItemsState,
+  editItemsState, setEditItemsState, openModal,
 }) {
   return (
     <>
@@ -34,6 +35,14 @@ export function ModalRoot({
           )}
           {modal==="edit_item" && selItem && (
             <EditItemModal item={selItem} setItems={setItems} onClose={()=>setModal(null)} showToast={showToast}/>
+          )}
+          {modal==="shipping_detail" && selItem && (
+            <ShippingDetailModal
+              order={selItem}
+              item={items.find(i => i.id === selItem.item_id)}
+              onClose={()=>setModal(null)}
+              openModal={openModal}
+            />
           )}
         </BottomSheet>
       )}

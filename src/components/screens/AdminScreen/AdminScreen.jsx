@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { LogOut, RotateCcw } from "lucide-react";
+import { LogOut, RotateCcw, ClipboardList } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
 import { T, font } from "../../../constants/colors";
 import { ROLE_META } from "../../../constants/permissions";
@@ -11,9 +11,20 @@ import { Inp } from "../../shared/Inp";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { SurgeryAdminTab } from "./SurgeryAdminTab";
 import { VendorSettingsTab } from "./VendorSettingsTab";
+import { BottomSheet } from "../../shared/BottomSheet";
+import { InitialInventoryModal } from "../../modals/InitialInventoryModal";
 
-export function AdminScreen({users, setUsers, currentUser, orders, items, txs, surgeries, addSurgery, onLogout, openItemsEditor, updateSurgeryItems}) {
+export function AdminScreen({users, setUsers, currentUser, orders, items, setItems, txs, surgeries, addSurgery, onLogout, openItemsEditor, updateSurgeryItems}) {
   const [adminTab, setAdminTab] = useState("surgery");
+  const [showInitialInventory, setShowInitialInventory] = useState(false);
+
+  const handleInitialInventorySave = (quantities) => {
+    setItems(prev => prev.map(item =>
+      quantities[item.id] !== undefined
+        ? { ...item, current_qty: quantities[item.id] }
+        : item
+    ));
+  };
 
   const tabs = [
     {id:"surgery",   label:"수술 준비"},
@@ -98,6 +109,11 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
             </Card>
 
             <button
+              onClick={() => setShowInitialInventory(true)}
+              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.blue500}33`, background:T.blue50, color:T.blue500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:8}}>
+              <ClipboardList size={18}/> 초기 재고 일괄 입력
+            </button>
+            <button
               onClick={()=>{
                 if (window.confirm("모든 데이터를 초기 상태로 되돌립니다. 계속하시겠습니까?")) {
                   resetToInitial();
@@ -117,6 +133,15 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
         {adminTab === "vendor" && <VendorSettingsTab/>}
       </div>
 
+      {showInitialInventory && (
+        <BottomSheet onClose={() => setShowInitialInventory(false)}>
+          <InitialInventoryModal
+            items={items}
+            onSave={handleInitialInventorySave}
+            onClose={() => setShowInitialInventory(false)}
+          />
+        </BottomSheet>
+      )}
     </div>
   );
 }

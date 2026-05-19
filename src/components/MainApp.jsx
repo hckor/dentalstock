@@ -34,21 +34,18 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
 
   const [detailItem,  setDetailItem]  = useState(null);
   const [showExpiry,  setShowExpiry]  = useState(false);
-  const [showBarcode, setShowBarcode] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
   const overlayClosers = useMemo(() => [
     {isOpen: !!detailItem, close: () => setDetailItem(null)},
     {isOpen: showExpiry,   close: () => setShowExpiry(false)},
-    {isOpen: showBarcode,  close: () => setShowBarcode(false)},
     {isOpen: showProfile,  close: () => setShowProfile(false)},
-  ], [detailItem, showExpiry, showBarcode, showProfile]);
+  ], [detailItem, showExpiry, showProfile]);
 
   const { open: openOverlay, close: closeOverlay } = useOverlayHistory(overlayClosers);
 
   const openDetail  = useCallback((item) => openOverlay(() => setDetailItem(item)), [openOverlay]);
   const openExpiry  = useCallback(() => openOverlay(() => setShowExpiry(true)),   [openOverlay]);
-  const openBarcode = useCallback(() => openOverlay(() => setShowBarcode(true)),  [openOverlay]);
   const openProfile = useCallback(() => openOverlay(() => setShowProfile(true)),  [openOverlay]);
 
   const { tokens: dynamicT } = useTheme();
@@ -83,12 +80,6 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     ...(canApprove ? [{id:"admin", Icon:Users, label:"관리", badge:adminBadge}] : []),
   ];
 
-  const handleBarcodeScan = ({item, type, qty}) => {
-    setShowBarcode(false);
-    openModal(type, item);
-    setForm({qty, note:""});
-  };
-
   return (
     <>
       <AppHeader
@@ -106,7 +97,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} openModal={openModal} showToast={showToast} startTracking={startTracking} confirmReceipt={confirmReceipt}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs}/>}
-          {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} approveOrder={approveOrder} rejectOrder={rejectOrder} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
+          {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} approveOrder={approveOrder} rejectOrder={rejectOrder} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
         </Suspense>
       </div>
 
@@ -115,7 +106,6 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       <OverlayRoot
         detailItem={detailItem}
         showExpiry={showExpiry}
-        showBarcode={showBarcode}
         showProfile={showProfile}
         items={items}
         txs={txs}
@@ -123,11 +113,9 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         currentUser={currentUser}
         onCloseDetail={()=>closeOverlay(()=>setDetailItem(null))}
         onCloseExpiry={()=>closeOverlay(()=>setShowExpiry(false))}
-        onCloseBarcode={()=>closeOverlay(()=>setShowBarcode(false))}
         onCloseProfile={()=>closeOverlay(()=>setShowProfile(false))}
         openModal={openModal}
         onLogout={onLogout}
-        onBarcodeSelect={handleBarcodeScan}
       />
 
       <ModalRoot
@@ -139,6 +127,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         commit={commit} submitOrder={submitOrder} confirmReceipt={confirmReceipt}
         showToast={showToast}
         editItemsState={editItemsState} setEditItemsState={setEditItemsState}
+        openModal={openModal}
       />
 
       {toast && (
