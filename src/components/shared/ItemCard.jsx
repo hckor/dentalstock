@@ -1,8 +1,8 @@
 import { Clock } from "lucide-react";
-import { T, font, CS } from "../../constants/colors";
+import { T, CS } from "../../constants/colors";
 import { getStatus, catName, daysUntil } from "../../utils/helpers";
 
-export function ItemCard({ item, isOrdered, ao, onCardClick, onOutClick }) {
+export function ItemCard({ item, isOrdered, ao, onCardClick }) {
   const st   = getStatus(item);
   const days = daysUntil(item.expiry);
   const isOk = st === "ok";
@@ -18,13 +18,11 @@ export function ItemCard({ item, isOrdered, ao, onCardClick, onOutClick }) {
         marginBottom: 16,
         overflow: "hidden",
         cursor: "pointer",
-        display: "flex",
         borderLeft: `4px solid ${borderColor}`,
       }}
       onClick={() => onCardClick?.(item)}
     >
-      {/* 메인 영역 */}
-      <div style={{ flex: 1, padding: "16px 16px 14px", minWidth: 0 }}>
+      <div style={{ flex: 1, padding: "16px", minWidth: 0 }}>
 
         {/* 품목명 + 상태칩 */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -92,27 +90,6 @@ export function ItemCard({ item, isOrdered, ao, onCardClick, onOutClick }) {
         )}
       </div>
 
-      {/* 출고 버튼 — 우측 세로 배치 */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onOutClick?.(item); }}
-        style={{
-          flexShrink: 0,
-          width: 52,
-          background: "#fff0f0",
-          border: "none",
-          borderLeft: `1px solid ${T.grey100}`,
-          cursor: "pointer",
-          fontFamily: font,
-          fontSize: 12,
-          fontWeight: 700,
-          color: T.red500,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        출고
-      </button>
     </div>
   );
 }

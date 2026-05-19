@@ -102,7 +102,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       <div style={{flex:1, overflowY:"auto", background:dynamicT.grey50}}>
         <Suspense fallback={<div style={{padding:40, textAlign:"center", color:T.grey500, fontSize: 16}}>로딩 중...</div>}>
           {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
-          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast} onItemClick={openDetail} onExpiryClick={openExpiry} onBarcodeClick={openBarcode}/>}
+          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} orders={orders} onItemClick={openDetail} onExpiryClick={openExpiry}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} openModal={openModal} showToast={showToast} startTracking={startTracking} confirmReceipt={confirmReceipt}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs}/>}
