@@ -12,10 +12,10 @@ export function ItemPickerSheet({items, setSelItem, onClose}) {
       </div>
       {items.map((item,i) => (
         <div key={item.id}>
-          <button onClick={()=>setSelItem(item)} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"14px 0", background:"none", border:"none", cursor:"pointer", fontFamily:font}}>
+          <button onClick={()=>setSelItem(item)} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"16px 0", background:"none", border:"none", cursor:"pointer", fontFamily:font}}>
             <div style={{width:8, height:8, borderRadius:9999, background:catColor(item.category_id), flexShrink:0}}/>
             <div style={{flex:1, textAlign:"left"}}>
-              <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900}}>{item.name}</p>
+              <p style={{margin:0, fontSize:16, fontWeight:600, color:T.grey900}}>{item.name}</p>
               <p style={{margin:0, fontSize:12, color:T.grey500}}>{item.current_qty}{item.unit}</p>
             </div>
             <ChevronRight size={16} color={T.grey400}/>

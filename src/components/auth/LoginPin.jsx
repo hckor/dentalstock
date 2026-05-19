@@ -66,18 +66,18 @@ export function LoginPin({user, onSuccess, onBack}) {
   const m = ROLE_META[user.role];
   return (
     <div style={{flex:1, display:"flex", flexDirection:"column", background:T.white}}>
-      <button onClick={onBack} style={{alignSelf:"flex-start", margin:"16px 16px 0", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:6, color:T.grey600, fontFamily:font, fontSize:14}}>
+      <button onClick={onBack} style={{alignSelf:"flex-start", margin:"16px 16px 0", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:6, color:T.grey600, fontFamily:font, fontSize:16}}>
         <ChevronRight size={16} style={{transform:"rotate(180deg)"}}/> 다른 계정
       </button>
       <div style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"0 32px"}}>
         <Avatar name={user.name} role={user.role} size={72}/>
-        <p style={{margin:"16px 0 4px", fontSize:20, fontWeight:700, color:T.grey900}}>{user.name}</p>
-        <span style={{fontSize:13, fontWeight:600, color:m.color, background:m.bg, padding:"3px 12px", borderRadius:9999, marginBottom:8}}>{m.label}</span>
-        <p style={{margin:0, fontSize:14, color:T.grey500}}>
+        <p style={{margin:"16px 0 4px", fontSize:24, fontWeight:700, color:T.grey900}}>{user.name}</p>
+        <span style={{fontSize:14, fontWeight:600, color:m.color, background:m.bg, padding:"3px 12px", borderRadius:9999, marginBottom:8}}>{m.label}</span>
+        <p style={{margin:0, fontSize:16, color:T.grey500}}>
           {locked ? `잠금 해제까지 ${formatRemaining(lockMs)}` : "PIN 4자리를 입력하세요"}
         </p>
         <div style={{animation:shake?"shake 400ms":"none"}}><PinDots length={LEN} filled={pin.length} error={error}/></div>
-        {msg && <p style={{margin:"0 0 12px", fontSize:13, color:T.red500, fontWeight:600, textAlign:"center"}}>{msg}</p>}
+        {msg && <p style={{margin:"0 0 12px", fontSize:14, color:T.red500, fontWeight:600, textAlign:"center"}}>{msg}</p>}
       </div>
       <div style={{padding:"0 24px 40px", opacity:locked?0.4:1, pointerEvents:locked?"none":"auto"}}>
         <PinPad onChange={onKey} onDelete={()=>{setPin(p=>p.slice(0,-1)); setError(false); setMsg("");}}/>

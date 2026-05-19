@@ -23,7 +23,7 @@ export function ProfileSheet({currentUser, onClose, onLogout}) {
 
         {/* 헤더 */}
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 20px 16px"}}>
-          <p style={{margin:0, fontSize:17, fontWeight:700, color:T.grey900}}>내 정보</p>
+          <p style={{margin:0, fontSize:18, fontWeight:700, color:T.grey900}}>내 정보</p>
           <button onClick={onClose} style={{border:"none", background:"none", cursor:"pointer", padding:4}}>
             <X size={20} color={T.grey500}/>
           </button>
@@ -33,8 +33,8 @@ export function ProfileSheet({currentUser, onClose, onLogout}) {
         <div style={{margin:"0 16px 16px", background:T.grey50, borderRadius:14, padding:"16px", display:"flex", alignItems:"center", gap:14}}>
           <Avatar name={currentUser.name} role={currentUser.role} size={48}/>
           <div>
-            <p style={{margin:0, fontSize:17, fontWeight:700, color:T.grey900}}>{currentUser.name} {m.label}</p>
-            <p style={{margin:"3px 0 0", fontSize:13, color:T.grey500}}>{currentUser.role} · DentalStock</p>
+            <p style={{margin:0, fontSize:18, fontWeight:700, color:T.grey900}}>{currentUser.name} {m.label}</p>
+            <p style={{margin:"3px 0 0", fontSize:14, color:T.grey500}}>{currentUser.role} · DentalStock</p>
           </div>
         </div>
 
@@ -44,12 +44,12 @@ export function ProfileSheet({currentUser, onClose, onLogout}) {
             const Icon = item.Icon;
             return (
               <div key={item.label}>
-                <button onClick={item.onClick} style={{width:"100%", display:"flex", alignItems:"center", gap:14, padding:"14px 16px", border:"none", background:"none", cursor:"pointer", fontFamily:font, textAlign:"left"}}>
-                  <div style={{width:34, height:34, borderRadius:9999, background:T.grey100, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                <button onClick={item.onClick} style={{width:"100%", display:"flex", alignItems:"center", gap:14, padding:"16px 16px", border:"none", background:"none", cursor:"pointer", fontFamily:font, textAlign:"left"}}>
+                  <div style={{width:40, height:40, borderRadius:9999, background:T.grey100, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                     <Icon size={16} color={T.grey600}/>
                   </div>
                   <div style={{flex:1}}>
-                    <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900}}>{item.label}</p>
+                    <p style={{margin:0, fontSize:16, fontWeight:600, color:T.grey900}}>{item.label}</p>
                     {item.sub && <p style={{margin:"1px 0 0", fontSize:12, color:T.grey500}}>{item.sub}</p>}
                   </div>
                   <ChevronRight size={16} color={T.grey300}/>
@@ -63,7 +63,7 @@ export function ProfileSheet({currentUser, onClose, onLogout}) {
         {/* 로그아웃 */}
         <button
           onClick={()=>{ if(window.confirm("로그아웃 하시겠습니까?")) onLogout(); }}
-          style={{width:"calc(100% - 32px)", margin:"0 16px", padding:"14px 0", borderRadius:9999, border:"none", background:T.red50, color:T.red500, fontSize:15, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+          style={{width:"calc(100% - 32px)", margin:"0 16px", padding:"16px 0", borderRadius:9999, border:"none", background:T.red50, color:T.red500, fontSize:16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
           <LogOut size={16}/> 로그아웃
         </button>
 
