@@ -1,11 +1,8 @@
 import { useState, useMemo } from "react";
-import { Truck, XCircle, PackageCheck, LogOut, RotateCcw } from "lucide-react";
+import { LogOut, RotateCcw } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
 import { T, font } from "../../../constants/colors";
 import { ROLE_META } from "../../../constants/permissions";
-import { ORDER_ST } from "../../../constants/orderStates";
-import { ST } from "../../../constants/itemStates";
-import { getStatus, fmtFull } from "../../../utils/helpers";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
 import { Chip } from "../../shared/Chip";
@@ -13,28 +10,16 @@ import { Avatar } from "../../shared/Avatar";
 import { Inp } from "../../shared/Inp";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { SurgeryAdminTab } from "./SurgeryAdminTab";
+import { VendorSettingsTab } from "./VendorSettingsTab";
 
-export function AdminScreen({users, setUsers, currentUser, orders, items, txs, surgeries, addSurgery, onLogout, approveOrder, rejectOrder, openItemsEditor, updateSurgeryItems}) {
-  const [adminTab,    setAdminTab]    = useState("orders");
-  const [reviewModal, setReviewModal] = useState(null);
-  const [reviewNote,  setReviewNote]  = useState("");
-
-  const pendingOrders = useMemo(() => orders.filter(o => o.status === "pending"),  [orders]);
-  const doneOrders    = useMemo(() => orders.filter(o => o.status !== "pending"), [orders]);
-
-  const confirmReview = () => {
-    if (!reviewModal) return;
-    reviewModal.action === "approved"
-      ? approveOrder(reviewModal.order.id, reviewNote)
-      : rejectOrder(reviewModal.order.id, reviewNote);
-    setReviewModal(null); setReviewNote("");
-  };
+export function AdminScreen({users, setUsers, currentUser, orders, items, txs, surgeries, addSurgery, onLogout, openItemsEditor, updateSurgeryItems}) {
+  const [adminTab, setAdminTab] = useState("surgery");
 
   const tabs = [
-    {id:"orders",    label:"발주 승인", badge:pendingOrders.length},
     {id:"surgery",   label:"수술 준비"},
     {id:"analytics", label:"소비 분석"},
     {id:"staff",     label:"직원 관리"},
+    {id:"vendor",    label:"도매 설정"},
   ];
 
   return (
@@ -60,105 +45,6 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
       </div>
 
       <div style={{flex:1, overflowY:"auto", background:T.grey50, padding:16}}>
-
-        {/* ── 발주 승인 탭 ── */}
-        {adminTab === "orders" && (
-          <>
-            {pendingOrders.length > 0 ? (
-              <>
-                <p style={{margin:"0 0 12px", fontSize:19, fontWeight:600, color:T.grey600}}>승인 대기 {pendingOrders.length}</p>
-                <div style={{display:"flex", flexDirection:"column", gap:10, marginBottom:24}}>
-                  {pendingOrders.map(order => {
-                    const item = items.find(i => i.id === order.item_id);
-                    const st   = getStatus(item || {current_qty:0, min_qty:1});
-                    return (
-                      <Card key={order.id} style={{padding:"16px"}}>
-                        {/* 헤더 */}
-                        <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:12}}>
-                          <div style={{flex:1, minWidth:0}}>
-                            <p style={{margin:0, fontSize:19, fontWeight:700, color:T.grey900}}>{item?.name}</p>
-                            <p style={{margin:"3px 0 0", fontSize:18, color:T.grey500}}>요청 {order.requested_by} · {fmtFull(order.requested_at)}</p>
-                          </div>
-                          <p style={{margin:0, fontSize:26, fontWeight:700, color:T.grey900, flexShrink:0, fontVariantNumeric:"tabular-nums"}}>
-                            {order.qty}<span style={{fontSize:19, fontWeight:400, color:T.grey500}}>{item?.unit}</span>
-                          </p>
-                        </div>
-
-                        {/* 재고 현황 */}
-                        <div style={{background:T.grey50, borderRadius:10, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"center", gap:8}}>
-                          <div style={{width:7, height:7, borderRadius:9999, background:ST[st].text, flexShrink:0}}/>
-                          <span style={{fontSize:18, color:T.grey600}}>
-                            현재 재고 <span style={{fontWeight:700, color:ST[st].text}}>{item?.current_qty}{item?.unit}</span>
-                            <span style={{color:T.grey400}}> · 최소 {item?.min_qty}{item?.unit}</span>
-                          </span>
-                        </div>
-
-                        {/* 요청 메모 */}
-                        {order.note && (
-                          <div style={{background:T.orange50, borderRadius:10, padding:"14px 16px", marginBottom:12}}>
-                            <p style={{margin:"0 0 2px", fontSize:16, fontWeight:600, color:T.orange500}}>요청 메모</p>
-                            <p style={{margin:0, fontSize:19, color:T.grey700}}>{order.note}</p>
-                          </div>
-                        )}
-
-                        {/* 버튼 */}
-                        <div style={{display:"grid", gridTemplateColumns:"1fr 2fr", gap:8}}>
-                          <button onClick={()=>{setReviewModal({order, action:"rejected"}); setReviewNote("");}}
-                            style={{padding:"16px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.red500, fontSize:20, fontWeight:600, cursor:"pointer", fontFamily:font}}>
-                            거절
-                          </button>
-                          <button onClick={()=>{setReviewModal({order, action:"approved"}); setReviewNote("");}}
-                            style={{padding:"16px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize:20, fontWeight:700, cursor:"pointer", fontFamily:font}}>
-                            발주 승인
-                          </button>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <div style={{textAlign:"center", padding:"40px 20px"}}>
-                <p style={{margin:0, fontSize:22, fontWeight:600, color:T.grey800}}>검토할 발주 요청이 없어요</p>
-                <p style={{margin:"6px 0 0", fontSize:19, color:T.grey500}}>새 요청이 들어오면 이곳에서 승인할 수 있어요</p>
-              </div>
-            )}
-
-            {doneOrders.length > 0 && (
-              <>
-                <p style={{margin:"0 0 10px", fontSize:19, fontWeight:600, color:T.grey600}}>처리 이력</p>
-                <Card>
-                  {doneOrders.map((o, i) => {
-                    const item = items.find(it => it.id === o.item_id);
-                    const os   = ORDER_ST[o.status];
-                    return (
-                      <div key={o.id}>
-                        <div style={{display:"flex", alignItems:"center", gap:12, padding:"18px 20px"}}>
-                          <div style={{width:44, height:44, borderRadius:10, background:os.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                            {o.status==="ordered"  ? <Truck size={18} color={os.text}/> :
-                             o.status==="received" ? <PackageCheck size={18} color={os.text}/> :
-                                                     <XCircle size={18} color={os.text}/>}
-                          </div>
-                          <div style={{flex:1, minWidth:0}}>
-                            <p style={{margin:0, fontSize:19, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item?.name}</p>
-                            <p style={{margin:"1px 0 0", fontSize:16, color:T.grey500}}>
-                              {o.requested_by} 요청{o.reviewed_by ? ` · ${o.reviewed_by} 처리` : ""}
-                            </p>
-                          </div>
-                          <div style={{textAlign:"right", flexShrink:0}}>
-                            <Chip label={os.label} color={os.text} bg={os.bg}/>
-                            <p style={{margin:"3px 0 0", fontSize:16, color:T.grey400}}>{o.qty}{item?.unit}</p>
-                          </div>
-                        </div>
-                        {i < doneOrders.length-1 && <Divider/>}
-                      </div>
-                    );
-                  })}
-                </Card>
-              </>
-            )}
-          </>
-        )}
 
         {adminTab === "analytics" && <AnalyticsTab items={items} txs={txs} orders={orders}/>}
 
@@ -227,51 +113,10 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, txs, s
             </button>
           </>
         )}
+
+        {adminTab === "vendor" && <VendorSettingsTab/>}
       </div>
 
-      {/* 승인/거절 확인 모달 */}
-      {reviewModal && (
-        <div style={{position:"absolute", inset:0, background:"rgba(2,9,19,0.5)", zIndex:99, display:"flex", justifyContent:"center", alignItems:"flex-end"}} onClick={()=>setReviewModal(null)}>
-          <div style={{background:T.white, borderRadius:"16px 16px 0 0", width:"100%", padding:"20px 20px 40px"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex", justifyContent:"center", marginBottom:16}}><div style={{width:36, height:4, borderRadius:9999, background:T.grey200}}/></div>
-            <h2 style={{margin:"0 0 6px", fontSize:26, fontWeight:700, color:T.grey900}}>
-              {reviewModal.action==="approved" ? "발주 승인" : "발주 거절"}
-            </h2>
-            <p style={{margin:"0 0 16px", fontSize:20, color:T.grey600}}>
-              {reviewModal.action==="approved"
-                ? "승인 시 직원이 실 수령 후 직접 입고 확인합니다."
-                : "거절 사유를 입력하면 요청자에게 알림이 전송됩니다."}
-            </p>
-            {(() => {
-              const item = items.find(i => i.id === reviewModal.order.item_id);
-              return (
-                <div style={{background:T.grey50, borderRadius:12, padding:"16px 18px", marginBottom:16, border:`1px solid ${T.grey200}`}}>
-                  <p style={{margin:0, fontSize:20, fontWeight:600, color:T.grey900}}>{item?.name}</p>
-                  <p style={{margin:"4px 0 0", fontSize:19, color:T.grey600}}>
-                    {reviewModal.order.requested_by} · <span style={{fontWeight:700, color:T.teal500}}>{reviewModal.order.qty}{item?.unit}</span>
-                  </p>
-                </div>
-              );
-            })()}
-            <p style={{margin:"0 0 8px", fontSize:19, fontWeight:600, color:T.grey700}}>
-              {reviewModal.action==="approved" ? "메모 (선택)" : "거절 사유 (선택)"}
-            </p>
-            <Inp value={reviewNote} onChange={e=>setReviewNote(e.target.value)}
-              placeholder={reviewModal.action==="approved" ? "예: 승인합니다" : "예: 이번달 예산 초과"}
-              style={{marginBottom:20}}/>
-            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10}}>
-              <button onClick={()=>setReviewModal(null)}
-                style={{padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize:22, fontWeight:600, cursor:"pointer", fontFamily:font}}>
-                취소
-              </button>
-              <button onClick={confirmReview}
-                style={{padding:"18px 0", borderRadius:9999, border:"none", background:reviewModal.action==="approved"?T.blue500:T.red500, color:T.white, fontSize:22, fontWeight:600, cursor:"pointer", fontFamily:font}}>
-                {reviewModal.action==="approved" ? "발주 승인" : "거절"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
