@@ -34,7 +34,7 @@ describe('TasksCard', () => {
     });
 
     it('approvalOrders가 있으면 "발주 승인 대기" 텍스트 렌더링 (canApprove=true)', () => {
-      // approvalOrders에 1개가 있으면, "발주 승인 대기 1건"이 1번 렌더링됨 (order마다)
+      // approvalOrders에 1개가 있으면, 개별 업무 행으로 렌더링됨
       const singleApproval = [mockApprovalOrders[0]];
       render(
         <TasksCard
@@ -45,7 +45,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/발주 승인 대기 1건/)).toBeInTheDocument();
+      expect(screen.getByText(/발주 승인 대기/)).toBeInTheDocument();
       expect(screen.getByText('오늘 해야 할 일')).toBeInTheDocument();
     });
 
@@ -73,7 +73,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/입고 대기 1건/)).toBeInTheDocument();
+      expect(screen.getByText(/입고 대기/)).toBeInTheDocument();
       expect(screen.getByText('오늘 해야 할 일')).toBeInTheDocument();
     });
 
@@ -108,8 +108,8 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/발주 승인 대기 1건/)).toBeInTheDocument();
-      expect(screen.getByText(/라텍스 장갑 \(M\) · 5,000/)).toBeInTheDocument();
+      expect(screen.getByText('라텍스 장갑 (M)')).toBeInTheDocument();
+      expect(screen.getByText(/발주 승인 대기 · 5,000/)).toBeInTheDocument();
     });
 
     it('approvalOrders: 존재하지 않는 item_id일 때 "-" 표시', () => {
@@ -123,7 +123,8 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/- · 가격 미등록/)).toBeInTheDocument();
+      expect(screen.getByText('-')).toBeInTheDocument();
+      expect(screen.getByText(/발주 승인 대기 · 가격 미등록/)).toBeInTheDocument();
     });
 
     it('shippingOrders: 아이콘, 제목, 서브텍스트(상품명·배송사·송장번호) 정확히 렌더링', () => {
@@ -136,7 +137,7 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/입고 대기 1건/)).toBeInTheDocument();
+      expect(screen.getByText(/입고 대기/)).toBeInTheDocument();
       expect(screen.getByText(/라텍스 장갑 \(M\)/)).toBeInTheDocument();
       expect(screen.getByText(/CJ대한통운/)).toBeInTheDocument();
       expect(screen.getByText(/1234567890/)).toBeInTheDocument();
@@ -272,7 +273,8 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      expect(screen.getByText(/- · 가격 미등록/)).toBeInTheDocument();
+      expect(screen.getByText('-')).toBeInTheDocument();
+      expect(screen.getByText(/발주 승인 대기 · 가격 미등록/)).toBeInTheDocument();
     });
 
     it('approvalOrders의 길이가 여러 개일 때 모두 렌더링', () => {
@@ -290,8 +292,8 @@ describe('TasksCard', () => {
           setTab={vi.fn()}
         />
       );
-      // 승인 대기 3건이 표시됨 (각 order마다 한 번, 3번 렌더링)
-      const approvalTexts = screen.getAllByText(/발주 승인 대기 3건/);
+      // 승인 대기 상태가 각 order마다 한 번, 3번 렌더링
+      const approvalTexts = screen.getAllByText(/발주 승인 대기/);
       expect(approvalTexts.length).toBe(3);
     });
 

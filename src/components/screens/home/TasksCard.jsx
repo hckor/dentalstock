@@ -14,31 +14,43 @@ export function TasksCard({
 }) {
   const { tokens: T } = useTheme();
 
-  const tasks = useMemo(() => {
-    const list = [];
+  const workItems = useMemo(() => {
+    const getItem = (order) => items.find(it => it.id === order.item_id);
+    const approvals = canApprove ? approvalOrders.map(order => {
+      const item = getItem(order);
+      const priceLabel = item?.price ? `${item.price.toLocaleString()}원` : "가격 미등록";
+      return {
+        id: `approval-${order.id}`,
+        Icon: ClipboardList,
+        iconBg: T.orange50,
+        iconColor: T.orange500,
+        title: item?.name || "-",
+        subtitle: `발주 승인 대기 · ${priceLabel}`,
+        actionLabel: "검토하기",
+        actionBg: T.red500,
+      };
+    }) : [];
 
-    // 주문 승인 대기 (관리자만)
-    if (canApprove && approvalOrders.length > 0) {
-      list.push({
-        id: "approval",
-        type: "approval",
-        data: approvalOrders,
-      });
-    }
+    const shippings = shippingOrders.map(order => {
+      const item = getItem(order);
+      const carrier = order.carrier || "송장 미등록";
+      const trackingNumber = order.tracking_number ? ` · ${order.tracking_number}` : "";
+      return {
+        id: `shipping-${order.id}`,
+        Icon: Package,
+        iconBg: T.teal50,
+        iconColor: T.teal500,
+        title: item?.name || "-",
+        subtitle: `입고 대기 · ${carrier}${trackingNumber}`,
+        actionLabel: "확인하기",
+        actionBg: T.blue500,
+      };
+    });
 
-    // 배송 완료 (모든 사용자)
-    if (shippingOrders.length > 0) {
-      list.push({
-        id: "shipping",
-        type: "shipping",
-        data: shippingOrders,
-      });
-    }
+    return [...approvals, ...shippings];
+  }, [T, approvalOrders, canApprove, items, shippingOrders]);
 
-    return list;
-  }, [canApprove, approvalOrders, shippingOrders]);
-
-  if (tasks.length === 0) return null;
+  if (workItems.length === 0) return null;
 
   return (
     <div style={{ padding: "16px 16px 0" }}>
@@ -55,178 +67,67 @@ export function TasksCard({
             오늘 해야 할 일
           </p>
           <span style={{ fontSize: 16, fontWeight: 700, color: T.blue500 }}>
-            {tasks.length}건
+            {workItems.length}건
           </span>
         </div>
-        {tasks.map((task, i) => (
-          <div key={task.id}>
-            {i > 0 && <Divider />}
-            {task.type === "approval" && (
-              <div>
-                {task.data.map((order, idx) => {
-                  const itemName =
-                    items.find(it => it.id === order.item_id)?.name || "-";
-                  const price =
-                    items.find(it => it.id === order.item_id)?.price;
-                  const priceLabel = price ? `${price.toLocaleString()}원` : "가격 미등록";
-                  return (
-                    <div key={`approval-${order.id}`}>
-                      {idx > 0 && <Divider />}
-                      <button
-                        onClick={() => setTab("shipping")}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 12,
-                          padding: "11px 16px",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          fontFamily: font,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 10,
-                            background: T.orange50,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                          }}
-                        >
-                          <ClipboardList size={20} color={T.orange500} />
-                        </div>
-                        <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: 16,
-                              fontWeight: 600,
-                              color: T.grey900,
-                            }}
-                          >
-                            발주 승인 대기 {task.data.length}건
-                          </p>
-                          <p
-                            style={{
-                              margin: "2px 0 0",
-                              fontSize: 16,
-                              color: T.grey500,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {itemName} · {priceLabel}
-                          </p>
-                        </div>
-                        <span
-                          style={{
-                            flexShrink: 0,
-                            padding: "12px 18px",
-                            borderRadius: 9999,
-                            background: T.red500,
-                            color: T.white,
-                            fontSize: 16,
-                            fontWeight: 700,
-                          }}
-                        >
-                          검토하기
-                        </span>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {task.type === "shipping" && (
-              <div>
-                {task.data.map((order, idx) => {
-                  const itemName =
-                    items.find(it => it.id === order.item_id)?.name || "-";
-                  const carrier = order.carrier || "-";
-                  const trackingNumber = order.tracking_number || "-";
-                  return (
-                    <div key={`shipping-${order.id}`}>
-                      {idx > 0 && <Divider />}
-                      <button
-                        onClick={() => setTab("shipping")}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 12,
-                          padding: "11px 16px",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          fontFamily: font,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 10,
-                            background: T.teal50,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                          }}
-                        >
-                          <Package size={20} color={T.teal500} />
-                        </div>
-                        <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: 16,
-                              fontWeight: 600,
-                              color: T.grey900,
-                            }}
-                          >
-                            입고 대기 {task.data.length}건
-                          </p>
-                          <p
-                            style={{
-                              margin: "2px 0 0",
-                              fontSize: 16,
-                              color: T.grey500,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {itemName} · {carrier}
-                            {trackingNumber && trackingNumber !== "-" ? ` · ${trackingNumber}` : ""}
-                          </p>
-                        </div>
-                        <span
-                          style={{
-                            flexShrink: 0,
-                            padding: "12px 18px",
-                            borderRadius: 9999,
-                            background: T.blue500,
-                            color: T.white,
-                            fontSize: 16,
-                            fontWeight: 700,
-                          }}
-                        >
-                          확인하기
-                        </span>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ))}
+        {workItems.map((task, i) => {
+          const Icon = task.Icon;
+          return (
+            <div key={task.id}>
+              {i > 0 && <Divider />}
+              <button
+                onClick={() => setTab("shipping")}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 16px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: font,
+                }}
+              >
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 10,
+                    background: task.iconBg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={20} color={task.iconColor} />
+                </div>
+                <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {task.title}
+                  </p>
+                  <p style={{ margin: "2px 0 0", fontSize: 16, color: T.grey500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {task.subtitle}
+                  </p>
+                </div>
+                <span
+                  style={{
+                    flexShrink: 0,
+                    padding: "10px 14px",
+                    borderRadius: 9999,
+                    background: task.actionBg,
+                    color: T.white,
+                    fontSize: 14,
+                    fontWeight: 700,
+                  }}
+                >
+                  {task.actionLabel}
+                </span>
+              </button>
+            </div>
+          );
+        })}
       </Card>
     </div>
   );

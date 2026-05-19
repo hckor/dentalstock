@@ -69,12 +69,15 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   );
 
   const myOrders = orders.filter(o => o.requested_by === currentUser.name);
+  const activeOrderCount = canApprove
+    ? orders.filter(o => o.status === "pending" || o.status === "ordered").length
+    : myOrders.filter(o => o.status === "pending" || o.status === "ordered").length;
 
   const navItems = [
     {id:"home",      Icon:Home,            label:"홈"},
     {id:"inventory", Icon:Package,         label:"재고"},
     {id:"inout",     Icon:ArrowDownToLine, label:"입출고"},
-    {id:"shipping",  Icon:ShoppingCart,    label:"배송추적", badge:myOrders.filter(o => o.status === "pending").length},
+    {id:"shipping",  Icon:ShoppingCart,    label:"발주/배송", badge:activeOrderCount},
     ...(canApprove ? [{id:"admin", Icon:Users, label:"관리", badge:adminBadge}] : []),
   ];
 

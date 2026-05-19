@@ -19,11 +19,11 @@ export function InOutSheet({modal, selItem, form, setForm, onCommit, onClose}) {
       <div style={{display:"flex", alignItems:"center", gap:16, marginBottom:12}}>
         <button onClick={()=>setForm(f=>({...f,qty:Math.max(1,f.qty-1)}))} style={{width:44,height:44,borderRadius:9999,border:`1.5px solid ${T.grey200}`,background:T.white,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Minus size={22} color={T.grey700}/></button>
         <p style={{flex:1,textAlign:"center",margin:0,fontSize: 28,fontWeight:700,color:T.grey900,fontVariantNumeric:"tabular-nums"}}>{form.qty}</p>
-        <button onClick={()=>setForm(f=>({...f,qty:f.qty+1}))} style={{width:44,height:44,borderRadius:9999,border:"none",background:T.blue500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Plus size={22} color={T.white}/></button>
+        <button onClick={()=>setForm(f=>({...f,qty:f.qty+1}))} style={{width:44,height:44,borderRadius:9999,border:"none",background:modal==="out"?T.red500:T.blue500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Plus size={22} color={T.white}/></button>
       </div>
       <div style={{display:"flex", gap:6, marginBottom:20}}>
         {[10, 50, 100].map(n => (
-          <button key={n} onClick={()=>setForm(f=>({...f,qty:f.qty+n}))} style={{flex:1, padding:"14px 0", borderRadius:9999, border:`1px solid #bfdbfe`, background:T.blue50, color:T.blue500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font}}>
+          <button key={n} onClick={()=>setForm(f=>({...f,qty:f.qty+n}))} style={{flex:1, padding:"14px 0", borderRadius:9999, border:`1px solid ${modal==="out"?T.red500+"33":"#bfdbfe"}`, background:modal==="out"?T.red50:T.blue50, color:modal==="out"?T.red500:T.blue500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font}}>
             +{n}
           </button>
         ))}
