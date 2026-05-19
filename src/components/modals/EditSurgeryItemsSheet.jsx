@@ -58,8 +58,8 @@ export function EditSurgeryItemsSheet({initialItems, allItems, onSave, onClose, 
             <Plus size={20}/> 품목 추가
           </button>
           <div style={{display:"flex", gap:10, paddingBottom:8}}>
-            <button onClick={onClose} style={{flex:1, padding:"18px 0", borderRadius:9999, border:`1px solid ${T.grey200}`, background:T.white, cursor:"pointer", fontFamily:font, fontSize: 20, fontWeight:600, color:T.grey700}}>취소</button>
-            <button onClick={()=>{onSave(draft); onClose();}} style={{flex:2, padding:"18px 0", borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", fontFamily:font, fontSize: 20, fontWeight:600, color:T.white}}>저장</button>
+            <button onClick={onClose} style={{flex:1, padding:"18px 0", borderRadius:9999, border:`1px solid ${T.grey200}`, background:T.white, cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:600, color:T.grey700}}>취소</button>
+            <button onClick={()=>{onSave(draft); onClose();}} style={{flex:2, padding:"18px 0", borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:600, color:T.white}}>저장</button>
           </div>
         </>
       )}

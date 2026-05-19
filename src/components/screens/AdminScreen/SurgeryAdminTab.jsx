@@ -86,7 +86,7 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, openItemsEditor, 
             );
           })}
         </div>
-        <button onClick={submit} style={{width:"100%",padding:"18px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 20,fontWeight:600,cursor:"pointer",fontFamily:font}}>수술 일정 등록</button>
+        <button onClick={submit} style={{width:"100%",padding:"18px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font}}>수술 일정 등록</button>
       </Card>
 
       <SecTitle>예정 수술</SecTitle>

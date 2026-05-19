@@ -124,7 +124,7 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
               <RotateCcw size={18}/> 초기 데이터로 리셋 (데모용)
             </button>
             <button onClick={onLogout}
-              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 20, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+              style={{width:"100%", padding:"18px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
               <LogOut size={20} color={T.grey600}/> 로그아웃
             </button>
           </>
