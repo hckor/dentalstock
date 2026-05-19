@@ -4,10 +4,10 @@ import {
 } from "lucide-react";
 import { T, font, CS } from "../../constants/colors";
 import { CATEGORIES } from "../../constants/categories";
-import { ST } from "../../constants/itemStates";
 import { getStatus, catName, daysUntil, getActiveOrder } from "../../utils/helpers";
 import { AddItemModal } from "../modals/AddItemModal";
 import { EditItemModal } from "../modals/EditItemModal";
+import { BottomSheet } from "../shared/BottomSheet";
 
 export function InventoryScreen({items, search, setSearch, cat, setCat, openModal, setItems, orders, showToast, onItemClick, onExpiryClick, onBarcodeClick}) {
   const [showAdd,  setShowAdd]  = useState(false);
@@ -16,9 +16,8 @@ export function InventoryScreen({items, search, setSearch, cat, setCat, openModa
   const alertItems = useMemo(() => items.filter(i => getStatus(i) !== "ok"), [items]);
   const okItems    = useMemo(() => items.filter(i => getStatus(i) === "ok"),  [items]);
 
-  const renderItem = (item, i, arr) => {
+  const renderItem = (item) => {
     const st        = getStatus(item);
-    const sc        = ST[st];
     const days      = daysUntil(item.expiry);
     const ao        = getActiveOrder(orders, item.id);
     const isOrdered = ao?.status === "ordered";
@@ -150,7 +149,7 @@ export function InventoryScreen({items, search, setSearch, cat, setCat, openModa
               <div style={{width:7, height:7, borderRadius:9999, background:T.red500}}/>
               <p style={{margin:0, fontSize:13, fontWeight:700, color:T.grey700}}>확인 필요 {alertItems.length}</p>
             </div>
-            {alertItems.map((item,i,arr) => renderItem(item,i,arr))}
+            {alertItems.map(renderItem)}
             {okItems.length > 0 && (
               <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:10, marginTop:6}}>
                 <div style={{width:7, height:7, borderRadius:9999, background:T.green500}}/>
@@ -161,7 +160,7 @@ export function InventoryScreen({items, search, setSearch, cat, setCat, openModa
         )}
 
         {/* 정상 품목 */}
-        {okItems.map((item,i,arr) => renderItem(item,i,arr))}
+        {okItems.map(renderItem)}
 
         {items.length === 0 && (
           <div style={{textAlign:"center", padding:"40px 0"}}>
@@ -172,20 +171,14 @@ export function InventoryScreen({items, search, setSearch, cat, setCat, openModa
 
       {/* 모달 */}
       {showAdd && (
-        <div style={{position:"absolute", inset:0, background:"rgba(2,9,19,0.5)", zIndex:99, display:"flex", justifyContent:"center", alignItems:"flex-end"}} onClick={()=>setShowAdd(false)}>
-          <div style={{background:T.white, borderRadius:"16px 16px 0 0", width:"100%", paddingBottom:32}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex", justifyContent:"center", padding:"12px 0 0"}}><div style={{width:36, height:4, borderRadius:9999, background:T.grey200}}/></div>
-            <AddItemModal setItems={setItems} onClose={()=>setShowAdd(false)} showToast={showToast}/>
-          </div>
-        </div>
+        <BottomSheet onClose={()=>setShowAdd(false)}>
+          <AddItemModal setItems={setItems} onClose={()=>setShowAdd(false)} showToast={showToast}/>
+        </BottomSheet>
       )}
       {editItem && (
-        <div style={{position:"absolute", inset:0, background:"rgba(2,9,19,0.5)", zIndex:99, display:"flex", justifyContent:"center", alignItems:"flex-end"}} onClick={()=>setEditItem(null)}>
-          <div style={{background:T.white, borderRadius:"16px 16px 0 0", width:"100%", paddingBottom:32}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex", justifyContent:"center", padding:"12px 0 0"}}><div style={{width:36, height:4, borderRadius:9999, background:T.grey200}}/></div>
-            <EditItemModal item={editItem} setItems={setItems} onClose={()=>setEditItem(null)} showToast={showToast}/>
-          </div>
-        </div>
+        <BottomSheet onClose={()=>setEditItem(null)}>
+          <EditItemModal item={editItem} setItems={setItems} onClose={()=>setEditItem(null)} showToast={showToast}/>
+        </BottomSheet>
       )}
     </div>
   );

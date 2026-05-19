@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { ChevronLeft, ArrowUpFromLine } from "lucide-react";
-import { T, font, CS } from "../../constants/colors";
+import { T, font } from "../../constants/colors";
 import { catName, daysUntil } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";

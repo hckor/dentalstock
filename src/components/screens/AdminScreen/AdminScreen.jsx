@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { ShoppingCart, Truck, XCircle, PackageCheck, LogOut, RotateCcw } from "lucide-react";
+import { Truck, XCircle, PackageCheck, LogOut, RotateCcw } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
-import { T, font, CS } from "../../../constants/colors";
+import { T, font } from "../../../constants/colors";
 import { ROLE_META } from "../../../constants/permissions";
 import { ORDER_ST } from "../../../constants/orderStates";
 import { ST } from "../../../constants/itemStates";
@@ -10,7 +10,6 @@ import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
 import { Chip } from "../../shared/Chip";
 import { Avatar } from "../../shared/Avatar";
-import { SecTitle } from "../../shared/SecTitle";
 import { Inp } from "../../shared/Inp";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { SurgeryAdminTab } from "./SurgeryAdminTab";

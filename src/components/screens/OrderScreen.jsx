@@ -1,12 +1,11 @@
 import { useMemo } from "react";
 import { ShoppingCart, Minus, Plus, Trash2, Truck, PackageCheck, XCircle, ClipboardList } from "lucide-react";
-import { T, font, CS } from "../../constants/colors";
+import { T, font } from "../../constants/colors";
 import { ORDER_ST } from "../../constants/orderStates";
 import { fmtFull, catColor } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
 import { Chip } from "../shared/Chip";
-import { SecTitle } from "../shared/SecTitle";
 
 export function OrderScreen({cart, allItems, orders, currentUser, updateCartQty, removeFromCart, submitCart, clearCart}) {
   const myOrders = useMemo(() => orders.filter(o => o.requested_by === currentUser.name), [orders, currentUser.name]);

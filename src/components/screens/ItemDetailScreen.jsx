@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { ChevronLeft, Edit2, ArrowDownToLine, ArrowUpFromLine, ShoppingCart } from "lucide-react";
+import { ChevronLeft, ArrowDownToLine, ArrowUpFromLine, ShoppingCart } from "lucide-react";
 import { T, font, CS } from "../../constants/colors";
 import { ST } from "../../constants/itemStates";
 import { ORDER_ST } from "../../constants/orderStates";
-import { catName, catColor, daysUntil, fmtDate, fmtFull, getStatus, getActiveOrder } from "../../utils/helpers";
+import { catName, fmtDate, fmtFull, getStatus, getActiveOrder } from "../../utils/helpers";
 import { Chip } from "../shared/Chip";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
@@ -11,9 +11,9 @@ import { Divider } from "../shared/Divider";
 function StockSparkline({txs, itemId, minQty}) {
   const W = 280, H = 80, PAD = 8;
   const days = 30;
-  const now  = new Date();
 
   const points = useMemo(() => {
+    const now = new Date();
     const pts = [];
     let qty = 0;
     const filtered = txs.filter(tx => tx.item_id === itemId).sort((a,b)=>a.created_at.localeCompare(b.created_at));
@@ -25,6 +25,8 @@ function StockSparkline({txs, itemId, minQty}) {
     }
     return pts;
   }, [txs, itemId]);
+
+  const now = new Date();
 
   const maxQty = Math.max(...points.map(p=>p.qty), minQty*2, 1);
   const toX = (d) => PAD + ((days-d)/days)*(W-PAD*2);
@@ -64,7 +66,6 @@ export function ItemDetailScreen({item, txs, orders, onClose, onIn, onOut, onOrd
   const st  = getStatus(item);
   const sc  = ST[st];
   const ao  = getActiveOrder(orders, item.id);
-  const days = daysUntil(item.expiry);
   const itemTxs = useMemo(() => txs.filter(tx=>tx.item_id===item.id).sort((a,b)=>b.created_at.localeCompare(a.created_at)), [txs, item.id]);
   const lastOrder = useMemo(() => orders.filter(o=>o.item_id===item.id).sort((a,b)=>b.requested_at.localeCompare(a.requested_at))[0], [orders, item.id]);
 

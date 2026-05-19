@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { font, T } from "./constants/colors";
+import { font } from "./constants/colors";
 import { WifiOff } from "lucide-react";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { seedIfEmpty, resetToInitial } from "./api/seed";

@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, Plus, ScanBarcode } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { T, font, CS } from "../../constants/colors";
-import { fmtDate, todayKey } from "../../utils/helpers";
+import { todayKey } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
-import { SecTitle } from "../shared/SecTitle";
 
 function groupByDate(txs) {
   const map = {};

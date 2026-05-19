@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { T, font } from "../../../constants/colors";
 import { CATEGORIES } from "../../../constants/categories";
-import { getStatus, pct } from "../../../utils/helpers";
+import { pct } from "../../../utils/helpers";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
 import { Chip } from "../../shared/Chip";
@@ -49,7 +49,7 @@ function getPrevRange(period) {
 export function AnalyticsTab({items, txs, orders}) {
   const [period, setPeriod] = useState("current");
 
-  const { periodOut, prevOut, totalUsed, prevTotalUsed, avgPerDay, orderCount } = useMemo(() => {
+  const { periodOut, totalUsed, prevTotalUsed, avgPerDay, orderCount } = useMemo(() => {
     const range = getPeriodRange(period);
     const prev  = getPrevRange(period);
     const outTxs = txs.filter(tx => tx.type === "out");
@@ -57,19 +57,17 @@ export function AnalyticsTab({items, txs, orders}) {
       const d = new Date(tx.created_at);
       return d >= range.start && d <= range.end;
     });
-    const prevOut = outTxs.filter(tx => {
-      const d = new Date(tx.created_at);
-      return d >= prev.start && d <= prev.end;
-    });
+    const prevTotalUsed = outTxs
+      .filter(tx => { const d = new Date(tx.created_at); return d >= prev.start && d <= prev.end; })
+      .reduce((s, tx) => s + tx.qty, 0);
     const totalUsed = periodOut.reduce((s, tx) => s + tx.qty, 0);
-    const prevTotalUsed = prevOut.reduce((s, tx) => s + tx.qty, 0);
     const days = Math.max(1, Math.round((range.end - range.start) / 86400000));
     const avgPerDay = totalUsed > 0 ? (totalUsed / days).toFixed(1) : "0.0";
     const orderCount = orders.filter(o => {
       const d = new Date(o.requested_at);
       return d >= range.start && d <= range.end;
     }).length;
-    return { periodOut, prevOut, totalUsed, prevTotalUsed, avgPerDay, orderCount };
+    return { periodOut, totalUsed, prevTotalUsed, avgPerDay, orderCount };
   }, [period, txs, orders]);
 
   const delta = totalUsed - prevTotalUsed;
@@ -88,15 +86,12 @@ export function AnalyticsTab({items, txs, orders}) {
   const maxUsed = Math.max(1, ...byItem.map(i => i.used));
 
   const byCat = useMemo(() => {
-    const result = CATEGORIES.map(cat => {
+    return CATEGORIES.map(cat => {
       const catItemIds = items.filter(i => i.category_id === cat.id).map(i => i.id);
       const used = periodOut.filter(tx => catItemIds.includes(tx.item_id)).reduce((s, tx) => s + tx.qty, 0);
       return { ...cat, used };
     }).filter(c => c.used > 0);
-    return result;
   }, [items, periodOut]);
-
-  const catTotal = byCat.reduce((s, c) => s + c.used, 0) || 1;
 
   const stats = [
     {

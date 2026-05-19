@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { X, Keyboard, Minus, Plus, Flashlight, RotateCcw } from "lucide-react";
-import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { X, Keyboard, Minus, Plus, RotateCcw } from "lucide-react";
+import { BrowserMultiFormatReader } from "@zxing/library";
 import { T, font } from "../../constants/colors";
 import { getStatus } from "../../utils/helpers";
 import { ST } from "../../constants/itemStates";
@@ -18,8 +18,35 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
 
   const videoRef  = useRef(null);
   const readerRef = useRef(null);
+  const itemsRef  = useRef(items);
 
-  // ZXing 초기화 + 카메라 시작
+  useEffect(() => { itemsRef.current = items; }, [items]);
+
+  const startCamera = useCallback((reader, deviceId) => {
+    if (!videoRef.current) return;
+    setCamReady(false);
+    setCamError(null);
+    reader.decodeFromVideoDevice(deviceId, videoRef.current, (result, err) => {
+      if (result) {
+        const text = result.getText();
+        setScanResult(text);
+        const matched = itemsRef.current.find(i =>
+          i.name.includes(text) || (i.barcode && i.barcode === text)
+        );
+        if (matched) {
+          setSelected(matched);
+          setQty(1);
+          try { reader.reset(); } catch { /* ignore */ }
+        }
+      }
+      // err: NotFoundException 매 프레임 호출되므로 무시
+      void err;
+    });
+    if (videoRef.current) {
+      videoRef.current.onloadedmetadata = () => setCamReady(true);
+    }
+  }, []);
+
   useEffect(() => {
     const reader = new BrowserMultiFormatReader();
     readerRef.current = reader;
@@ -31,10 +58,7 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
           return;
         }
         setDevices(devs);
-        // 후면 카메라 우선
-        const backIdx = devs.findIndex(d =>
-          /back|rear|environment|뒤/i.test(d.label)
-        );
+        const backIdx = devs.findIndex(d => /back|rear|environment|뒤/i.test(d.label));
         const idx = backIdx >= 0 ? backIdx : 0;
         setDeviceIdx(idx);
         startCamera(reader, devs[idx].deviceId);
@@ -42,43 +66,15 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
       .catch(() => setCamError("카메라 권한을 허용해주세요"));
 
     return () => {
-      try { reader.reset(); } catch (_) {}
+      try { reader.reset(); } catch { /* ignore */ }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const startCamera = (reader, deviceId) => {
-    if (!videoRef.current) return;
-    setCamReady(false);
-    setCamError(null);
-    reader.decodeFromVideoDevice(deviceId, videoRef.current, (result, err) => {
-      if (result) {
-        const text = result.getText();
-        setScanResult(text);
-        // 품목명에서 매칭 시도
-        const matched = items.find(i =>
-          i.name.includes(text) || (i.barcode && i.barcode === text)
-        );
-        if (matched) {
-          setSelected(matched);
-          setQty(1);
-          try { reader.reset(); } catch (_) {}
-        }
-      }
-      if (err && !(err instanceof NotFoundException)) {
-        // 스캔 중 일반 에러는 무시 (매 프레임 호출됨)
-      }
-    });
-    // 비디오 로드 감지
-    if (videoRef.current) {
-      videoRef.current.onloadedmetadata = () => setCamReady(true);
-    }
-  };
+  }, [startCamera]);
 
   const switchCamera = () => {
     if (devices.length < 2) return;
     const nextIdx = (deviceIdx + 1) % devices.length;
     setDeviceIdx(nextIdx);
-    try { readerRef.current?.reset(); } catch (_) {}
+    try { readerRef.current?.reset(); } catch { /* ignore */ }
     startCamera(readerRef.current, devices[nextIdx].deviceId);
   };
 
@@ -92,7 +88,7 @@ export function BarcodeScanScreen({items, onSelect, onClose}) {
     setQty(1);
     setQuery("");
     setScanResult(null);
-    try { readerRef.current?.reset(); } catch (_) {}
+    try { readerRef.current?.reset(); } catch { /* ignore */ }
   };
 
   const handleAction = (type) => {

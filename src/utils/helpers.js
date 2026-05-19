@@ -16,5 +16,4 @@ export const initials = (n) => n.slice(0,1);
 export const getActiveOrder = (orders, itemId) =>
   orders.find(o => o.item_id===itemId && (o.status==="pending"||o.status==="ordered")) || null;
 
-export const monthKey = (s) => new Date(s).toISOString().slice(0,7);
 export const pct = (value, total) => total > 0 ? Math.round((value / total) * 100) : 0;
