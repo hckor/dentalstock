@@ -1,35 +1,141 @@
-import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
-import { T, CS } from "../../constants/colors";
-import { fmtDate } from "../../utils/helpers";
+import { useState, useMemo } from "react";
+import { ArrowDownToLine, ArrowUpFromLine, Plus, ScanBarcode } from "lucide-react";
+import { T, font, CS } from "../../constants/colors";
+import { fmtDate, todayKey } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
 import { SecTitle } from "../shared/SecTitle";
 
+function groupByDate(txs) {
+  const map = {};
+  txs.forEach(tx => {
+    const d = tx.created_at.slice(0,10);
+    if (!map[d]) map[d] = [];
+    map[d].push(tx);
+  });
+  return Object.entries(map).sort((a,b)=>b[0].localeCompare(a[0]));
+}
+
+function formatDateHeader(dateStr) {
+  const today = todayKey();
+  const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if (dateStr === today) return `오늘 · ${dateStr.slice(5).replace("-",".")}`;
+  if (dateStr === yesterday) return `어제 · ${dateStr.slice(5).replace("-",".")}`;
+  return dateStr.slice(5).replace("-",".");
+}
+
+function formatTime(created_at) {
+  const d = new Date(created_at);
+  const h = String(d.getHours()).padStart(2,"0");
+  const m = String(d.getMinutes()).padStart(2,"0");
+  return `${h}:${m}`;
+}
+
 export function InOutScreen({items, txs, openModal}) {
+  const [typeFilter, setTypeFilter] = useState("all");
+
+  const filtered = useMemo(() => {
+    if (typeFilter === "all") return txs;
+    return txs.filter(tx => tx.type === typeFilter);
+  }, [txs, typeFilter]);
+
+  const grouped = useMemo(() => groupByDate(filtered), [filtered]);
+
+  const todayTxs = txs.filter(tx => tx.created_at.slice(0,10) === todayKey());
+  const todayIn  = todayTxs.filter(tx=>tx.type==="in").reduce((s,tx)=>s+tx.qty,0);
+  const todayOut = todayTxs.filter(tx=>tx.type==="out").reduce((s,tx)=>s+tx.qty,0);
+
   return (
     <div>
-      <div style={{padding:"16px 16px 0"}}>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
-          {[{label:"입고 등록",sub:"재고가 들어왔어요",Icon:ArrowDownToLine,iconBg:T.blue50,iconColor:T.blue500,type:"in"},{label:"출고 등록",sub:"재고를 사용했어요",Icon:ArrowUpFromLine,iconBg:T.red50,iconColor:T.red500,type:"out"}].map(a=>(
-            <button key={a.type} onClick={()=>openModal(a.type)} style={{padding:"20px 16px",borderRadius:16,border:`1px solid ${T.grey200}`,background:T.white,cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:10,boxShadow:CS}}>
-              <div style={{width:48,height:48,borderRadius:9999,background:a.iconBg,display:"flex",alignItems:"center",justifyContent:"center"}}><a.Icon size={24} color={a.iconColor}/></div>
-              <div style={{textAlign:"center"}}><p style={{margin:0,fontSize:15,fontWeight:700,color:T.grey900}}>{a.label}</p><p style={{margin:"2px 0 0",fontSize:12,color:T.grey500}}>{a.sub}</p></div>
+      {/* 상단 액션 버튼 */}
+      <div style={{padding:"12px 16px 0", display:"flex", gap:8}}>
+        <button onClick={()=>openModal("in")} style={{flex:1, padding:"11px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
+          <ArrowDownToLine size={15}/> 입고 등록
+        </button>
+        <button onClick={()=>openModal("out")} style={{flex:1, padding:"11px 0", borderRadius:9999, border:"none", background:T.red500, color:T.white, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
+          <ArrowUpFromLine size={15}/> 출고 등록
+        </button>
+      </div>
+
+      {/* 오늘 요약 카드 */}
+      {todayTxs.length > 0 && (
+        <div style={{padding:"12px 16px 0"}}>
+          <div style={{background:T.white, borderRadius:14, boxShadow:CS, padding:"14px 20px", display:"flex", alignItems:"center", gap:0}}>
+            <div style={{flex:1, textAlign:"center", borderRight:`1px solid ${T.grey100}`}}>
+              <p style={{margin:0, fontSize:11, color:T.grey500, marginBottom:3}}>입고</p>
+              <p style={{margin:0, fontSize:22, fontWeight:700, color:T.blue500, fontVariantNumeric:"tabular-nums"}}>+{todayIn}</p>
+            </div>
+            <div style={{flex:1, textAlign:"center", borderRight:`1px solid ${T.grey100}`}}>
+              <p style={{margin:0, fontSize:11, color:T.grey500, marginBottom:3}}>출고</p>
+              <p style={{margin:0, fontSize:22, fontWeight:700, color:T.red500, fontVariantNumeric:"tabular-nums"}}>-{todayOut}</p>
+            </div>
+            <div style={{flex:1, textAlign:"center"}}>
+              <p style={{margin:0, fontSize:11, color:T.grey500, marginBottom:3}}>순증감</p>
+              <p style={{margin:0, fontSize:22, fontWeight:700, color:todayIn-todayOut>=0?T.blue500:T.red500, fontVariantNumeric:"tabular-nums"}}>{todayIn-todayOut>=0?"+":""}{todayIn-todayOut}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 필터 탭 */}
+      <div style={{padding:"12px 16px 0"}}>
+        <div style={{display:"flex", background:T.grey100, borderRadius:10, padding:4, gap:2}}>
+          {[{id:"all",label:"전체"},{id:"in",label:"입고"},{id:"out",label:"출고"}].map(f=>(
+            <button key={f.id} onClick={()=>setTypeFilter(f.id)} style={{flex:1, padding:"8px 0", border:"none", borderRadius:8, background:typeFilter===f.id?T.white:"transparent", boxShadow:typeFilter===f.id?"0px 1px 3px rgba(0,0,0,0.08)":"none", cursor:"pointer", fontFamily:font, fontSize:13, fontWeight:typeFilter===f.id?700:500, color:typeFilter===f.id?T.grey900:T.grey500, transition:"all 120ms"}}>
+              {f.label}
             </button>
           ))}
         </div>
-        <SecTitle>입출고 이력</SecTitle>
-        <Card style={{marginBottom:24}}>
-          {txs.map((tx,i)=>{const item=items.find(it=>it.id===tx.item_id);return(
-            <div key={tx.id}>
-              <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px"}}>
-                <div style={{width:36,height:36,borderRadius:10,background:tx.type==="in"?T.blue50:T.red50,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{tx.type==="in"?<ArrowDownToLine size={16} color={T.blue500}/>:<ArrowUpFromLine size={16} color={T.red500}/>}</div>
-                <div style={{flex:1,minWidth:0}}><p style={{margin:0,fontSize:14,fontWeight:600,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item?.name}</p><p style={{margin:"2px 0 0",fontSize:12,color:T.grey500}}>{tx.note||"-"} · {tx.user}</p></div>
-                <div style={{textAlign:"right",flexShrink:0}}><p style={{margin:0,fontSize:15,fontWeight:700,color:tx.type==="in"?T.blue500:T.red500,fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</p><p style={{margin:0,fontSize:11,color:T.grey400}}>{fmtDate(tx.created_at)}</p></div>
+      </div>
+
+      {/* 날짜별 이력 */}
+      <div style={{padding:"12px 16px 24px"}}>
+        {grouped.length === 0 ? (
+          <div style={{textAlign:"center", padding:"40px 0"}}>
+            <p style={{margin:0, fontSize:14, color:T.grey400}}>입출고 이력이 없어요</p>
+          </div>
+        ) : grouped.map(([date, dayTxs]) => {
+          const dayIn  = dayTxs.filter(tx=>tx.type==="in").length;
+          const dayOut = dayTxs.filter(tx=>tx.type==="out").length;
+          return (
+            <div key={date} style={{marginBottom:20}}>
+              {/* 날짜 헤더 */}
+              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8}}>
+                <p style={{margin:0, fontSize:13, fontWeight:700, color:T.grey700}}>{formatDateHeader(date)}</p>
+                <div style={{display:"flex", gap:8}}>
+                  {dayIn>0  && <span style={{fontSize:11, fontWeight:600, color:T.blue500}}>입고 +{dayIn}</span>}
+                  {dayOut>0 && <span style={{fontSize:11, fontWeight:600, color:T.red500}}>출고 -{dayOut}</span>}
+                </div>
               </div>
-              {i<txs.length-1&&<Divider/>}
+              <Card>
+                {dayTxs.map((tx,i)=>{
+                  const item = items.find(it=>it.id===tx.item_id);
+                  return (
+                    <div key={tx.id}>
+                      <div style={{display:"flex", alignItems:"center", gap:12, padding:"13px 16px"}}>
+                        <div style={{width:32, height:32, borderRadius:9999, background:tx.type==="in"?T.blue50:T.red50, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                          {tx.type==="in"?<ArrowDownToLine size={15} color={T.blue500}/>:<ArrowUpFromLine size={15} color={T.red500}/>}
+                        </div>
+                        <div style={{flex:1, minWidth:0}}>
+                          <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item?.name}</p>
+                          <p style={{margin:"1px 0 0", fontSize:12, color:T.grey500}}>
+                            {tx.note||""}
+                            {tx.note ? " · " : ""}{tx.user}
+                          </p>
+                        </div>
+                        <div style={{textAlign:"right", flexShrink:0}}>
+                          <p style={{margin:0, fontSize:15, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</p>
+                          <p style={{margin:"1px 0 0", fontSize:11, color:T.grey400}}>{formatTime(tx.created_at)}</p>
+                        </div>
+                      </div>
+                      {i < dayTxs.length-1 && <Divider/>}
+                    </div>
+                  );
+                })}
+              </Card>
             </div>
-          );})}
-        </Card>
+          );
+        })}
       </div>
     </div>
   );

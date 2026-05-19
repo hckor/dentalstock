@@ -1,113 +1,199 @@
-import { useMemo } from "react";
-import { T } from "../../../constants/colors";
+import { useState, useMemo } from "react";
+import { T, font } from "../../../constants/colors";
 import { CATEGORIES } from "../../../constants/categories";
-import { getStatus, monthKey, pct } from "../../../utils/helpers";
+import { getStatus, pct } from "../../../utils/helpers";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
 import { Chip } from "../../shared/Chip";
 import { SecTitle } from "../../shared/SecTitle";
 
+const PERIODS = [
+  { id: "current", label: "이번 달" },
+  { id: "prev",    label: "지난 달" },
+  { id: "3months", label: "3개월" },
+];
+
+function getPeriodRange(period) {
+  const now = new Date();
+  if (period === "current") {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { start, end: now };
+  }
+  if (period === "prev") {
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    return { start, end };
+  }
+  // 3months
+  const start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+  return { start, end: now };
+}
+
+function getPrevRange(period) {
+  const now = new Date();
+  if (period === "current") {
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    return { start, end };
+  }
+  if (period === "prev") {
+    const start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const end   = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59);
+    return { start, end };
+  }
+  const start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+  const end   = new Date(now.getFullYear(), now.getMonth() - 3, 0, 23, 59, 59);
+  return { start, end };
+}
+
 export function AnalyticsTab({items, txs, orders}) {
-  const { outTxs, currentOut, prevOut } = useMemo(() => {
-    const latestTx = txs.reduce((latest, tx) => !latest || new Date(tx.created_at) > new Date(latest.created_at) ? tx : latest, null);
-    const now = latestTx ? new Date(latestTx.created_at) : new Date();
-    const currentMonth = now.toISOString().slice(0,7);
-    const prevMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
-    const prevMonth = prevMonthDate.toISOString().slice(0,7);
+  const [period, setPeriod] = useState("current");
+
+  const { periodOut, prevOut, totalUsed, prevTotalUsed, avgPerDay, orderCount } = useMemo(() => {
+    const range = getPeriodRange(period);
+    const prev  = getPrevRange(period);
     const outTxs = txs.filter(tx => tx.type === "out");
-    const currentOut = outTxs.filter(tx => monthKey(tx.created_at) === currentMonth);
-    const prevOut = outTxs.filter(tx => monthKey(tx.created_at) === prevMonth);
-    return { outTxs, currentOut, prevOut };
-  }, [txs]);
+    const periodOut = outTxs.filter(tx => {
+      const d = new Date(tx.created_at);
+      return d >= range.start && d <= range.end;
+    });
+    const prevOut = outTxs.filter(tx => {
+      const d = new Date(tx.created_at);
+      return d >= prev.start && d <= prev.end;
+    });
+    const totalUsed = periodOut.reduce((s, tx) => s + tx.qty, 0);
+    const prevTotalUsed = prevOut.reduce((s, tx) => s + tx.qty, 0);
+    const days = Math.max(1, Math.round((range.end - range.start) / 86400000));
+    const avgPerDay = totalUsed > 0 ? (totalUsed / days).toFixed(1) : "0.0";
+    const orderCount = orders.filter(o => {
+      const d = new Date(o.requested_at);
+      return d >= range.start && d <= range.end;
+    }).length;
+    return { periodOut, prevOut, totalUsed, prevTotalUsed, avgPerDay, orderCount };
+  }, [period, txs, orders]);
 
-  const currentTotal = useMemo(() => currentOut.reduce((sum,tx) => sum+tx.qty, 0), [currentOut]);
-  const prevTotal    = useMemo(() => prevOut.reduce((sum,tx) => sum+tx.qty, 0), [prevOut]);
-  const delta        = currentTotal - prevTotal;
+  const delta = totalUsed - prevTotalUsed;
 
-  const activeOrders = useMemo(() => orders.filter(o => o.status === "pending" || o.status === "ordered").length, [orders]);
-  const lowStock     = useMemo(() => items.filter(i => getStatus(i) !== "ok").length, [items]);
-
-  const { byItem, maxUsed } = useMemo(() => {
-    const byItem = items.map(item => {
-      const used = currentOut.filter(tx => tx.item_id === item.id).reduce((sum,tx) => sum+tx.qty, 0);
-      const threeMonthUsed = outTxs.filter(tx => tx.item_id === item.id).reduce((sum,tx) => sum+tx.qty, 0);
+  const byItem = useMemo(() => {
+    return items.map(item => {
+      const used = periodOut.filter(tx => tx.item_id === item.id).reduce((s, tx) => s + tx.qty, 0);
+      const allOut = txs.filter(tx => tx.type === "out" && tx.item_id === item.id);
+      const threeMonthUsed = allOut.reduce((s, tx) => s + tx.qty, 0);
       const monthlyAvg = Math.max(0.1, threeMonthUsed / 4);
       const expectedDays = Math.round((item.current_qty / monthlyAvg) * 30);
-      return {...item, used, expectedDays};
-    }).sort((a,b) => b.used - a.used);
-    const maxUsed = Math.max(1, ...byItem.map(i => i.used));
-    return { byItem, maxUsed };
-  }, [items, currentOut, outTxs]);
+      return { ...item, used, expectedDays };
+    }).sort((a, b) => b.used - a.used).filter(i => i.used > 0);
+  }, [items, periodOut, txs]);
 
-  const byCat = useMemo(() => CATEGORIES.map(cat => {
-    const catItems = items.filter(i => i.category_id === cat.id).map(i => i.id);
-    const used = currentOut.filter(tx => catItems.includes(tx.item_id)).reduce((sum,tx) => sum+tx.qty, 0);
-    return {...cat, used};
-  }).filter(c => c.used > 0), [items, currentOut]);
+  const maxUsed = Math.max(1, ...byItem.map(i => i.used));
+
+  const byCat = useMemo(() => {
+    const result = CATEGORIES.map(cat => {
+      const catItemIds = items.filter(i => i.category_id === cat.id).map(i => i.id);
+      const used = periodOut.filter(tx => catItemIds.includes(tx.item_id)).reduce((s, tx) => s + tx.qty, 0);
+      return { ...cat, used };
+    }).filter(c => c.used > 0);
+    return result;
+  }, [items, periodOut]);
+
+  const catTotal = byCat.reduce((s, c) => s + c.used, 0) || 1;
+
+  const stats = [
+    {
+      label: "총사용량",
+      value: totalUsed,
+      unit: "개",
+      delta: delta !== 0 ? (
+        <Chip
+          label={`${delta > 0 ? "+" : ""}${delta}`}
+          color={delta > 0 ? T.red500 : T.green500}
+          bg={delta > 0 ? T.red50 : T.green50}
+          border={delta > 0 ? T.red50 : T.green50}
+        />
+      ) : null,
+    },
+    { label: "평균/일", value: avgPerDay, unit: "개" },
+    { label: "발주횟수", value: orderCount, unit: "회" },
+  ];
 
   return (
     <div>
-      <Card style={{padding:20, marginBottom:16}}>
-        <p style={{margin:"0 0 8px", fontSize:14, fontWeight:400, color:T.grey500}}>이번 달 출고량</p>
-        <div style={{display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:12}}>
-          <p style={{margin:0, fontSize:32, lineHeight:"40px", fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{currentTotal}</p>
-          <Chip
-            label={`${delta>=0?"+":""}${delta} 전월 대비`}
-            color={delta>=0?T.red500:T.green500}
-            bg={delta>=0?T.red50:T.green50}
-            border={delta>=0?T.red50:T.green50}
-          />
-        </div>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:20}}>
-          <div style={{background:T.grey50, borderRadius:12, padding:"12px 14px"}}>
-            <p style={{margin:"0 0 4px", fontSize:12, color:T.grey500}}>주의 품목</p>
-            <p style={{margin:0, fontSize:22, fontWeight:700, color:T.orange500, fontVariantNumeric:"tabular-nums"}}>{lowStock}</p>
-          </div>
-          <div style={{background:T.grey50, borderRadius:12, padding:"12px 14px"}}>
-            <p style={{margin:"0 0 4px", fontSize:12, color:T.grey500}}>진행 발주</p>
-            <p style={{margin:0, fontSize:22, fontWeight:700, color:T.blue500, fontVariantNumeric:"tabular-nums"}}>{activeOrders}</p>
-          </div>
-        </div>
-      </Card>
+      {/* 기간 탭 */}
+      <div style={{display:"flex", background:"#f1f5f9", borderRadius:12, padding:3, marginBottom:16}}>
+        {PERIODS.map(p => {
+          const active = p.id === period;
+          return (
+            <button key={p.id} onClick={() => setPeriod(p.id)} style={{flex:1, padding:"8px 0", borderRadius:9, border:"none", background:active ? T.white : "transparent", boxShadow:active ? "0px 1px 3px rgba(0,0,0,0.1)" : "none", cursor:"pointer", fontFamily:font, fontSize:13, fontWeight:active ? 700 : 500, color:active ? T.grey900 : T.grey500, transition:"all 120ms"}}>
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
 
-      <SecTitle>많이 사용한 품목</SecTitle>
-      <Card style={{marginBottom:16}}>
-        {byItem.slice(0,5).map((item,i)=>(
-          <div key={item.id}>
-            <div style={{padding:"14px 16px"}}>
-              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, marginBottom:8}}>
-                <div style={{minWidth:0}}>
-                  <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
-                  <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>예상 소진 {item.expectedDays}일</p>
-                </div>
-                <p style={{margin:0, fontSize:16, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{item.used}<span style={{fontSize:12, fontWeight:400, color:T.grey500}}>{item.unit}</span></p>
-              </div>
-              <div style={{height:6, borderRadius:9999, background:T.grey100, overflow:"hidden"}}>
-                <div style={{height:"100%", width:`${pct(item.used,maxUsed)}%`, background:item.used===0?T.grey200:T.blue500, borderRadius:9999}}/>
-              </div>
-            </div>
-            {i<Math.min(5,byItem.length)-1&&<Divider/>}
+      {/* 3개 통계 카드 */}
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:16}}>
+        {stats.map(s => (
+          <div key={s.label} style={{background:T.white, borderRadius:14, padding:"14px 12px", boxShadow:"0px 1px 2px rgba(15,23,42,0.04), 0px 4px 16px rgba(15,23,42,0.04)"}}>
+            <p style={{margin:"0 0 6px", fontSize:11, color:T.grey500, fontWeight:500}}>{s.label}</p>
+            <p style={{margin:0, fontSize:22, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums", lineHeight:"1"}}>{s.value}<span style={{fontSize:11, fontWeight:400, color:T.grey400}}>{s.unit}</span></p>
+            {s.delta && <div style={{marginTop:6}}>{s.delta}</div>}
           </div>
         ))}
-      </Card>
+      </div>
 
-      <SecTitle>카테고리별 출고</SecTitle>
-      <Card>
-        {byCat.length>0 ? byCat.map((cat,i)=>(
-          <div key={cat.id}>
-            <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 16px"}}>
-              <div style={{display:"flex", alignItems:"center", gap:10}}>
-                <div style={{width:8, height:8, borderRadius:9999, background:cat.color}}/>
-                <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900}}>{cat.name}</p>
-              </div>
-              <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{cat.used}</p>
+      {/* 카테고리별 누적 바 */}
+      {byCat.length > 0 && (
+        <>
+          <SecTitle>카테고리별 출고</SecTitle>
+          <Card style={{marginBottom:16, padding:"16px"}}>
+            {/* 누적 바 */}
+            <div style={{display:"flex", height:12, borderRadius:9999, overflow:"hidden", marginBottom:14, gap:2}}>
+              {byCat.map(cat => (
+                <div key={cat.id} style={{flex:cat.used, background:cat.color, transition:"flex 300ms"}}/>
+              ))}
             </div>
-            {i<byCat.length-1&&<Divider/>}
-          </div>
-        )) : (
-          <p style={{margin:0, padding:"24px 16px", fontSize:14, color:T.grey500}}>이번 달 출고 기록이 아직 없어요.</p>
-        )}
-      </Card>
+            {/* 범례 */}
+            <div style={{display:"flex", flexWrap:"wrap", gap:"8px 16px"}}>
+              {byCat.map(cat => (
+                <div key={cat.id} style={{display:"flex", alignItems:"center", gap:5}}>
+                  <div style={{width:8, height:8, borderRadius:9999, background:cat.color, flexShrink:0}}/>
+                  <span style={{fontSize:12, color:T.grey600, fontWeight:500}}>{cat.name}</span>
+                  <span style={{fontSize:12, fontWeight:700, color:T.grey800, fontVariantNumeric:"tabular-nums"}}>{cat.used}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* 많이 사용한 품목 Top 5 */}
+      <SecTitle>많이 사용한 품목</SecTitle>
+      {byItem.length === 0 ? (
+        <Card>
+          <p style={{margin:0, padding:"24px 16px", fontSize:14, color:T.grey500, textAlign:"center"}}>이 기간에 출고 기록이 없어요.</p>
+        </Card>
+      ) : (
+        <Card style={{marginBottom:16}}>
+          {byItem.slice(0, 5).map((item, i) => (
+            <div key={item.id}>
+              <div style={{padding:"14px 16px"}}>
+                <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
+                  <span style={{fontSize:13, fontWeight:700, color:T.grey300, minWidth:16, fontVariantNumeric:"tabular-nums"}}>{i + 1}</span>
+                  <div style={{flex:1, minWidth:0}}>
+                    <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
+                    <p style={{margin:"1px 0 0", fontSize:11, color:T.grey500}}>예상 소진 {item.expectedDays}일</p>
+                  </div>
+                  <p style={{margin:0, fontSize:16, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{item.used}<span style={{fontSize:11, fontWeight:400, color:T.grey500}}>{item.unit}</span></p>
+                </div>
+                <div style={{height:6, borderRadius:9999, background:T.grey100, overflow:"hidden"}}>
+                  <div style={{height:"100%", width:`${pct(item.used, maxUsed)}%`, background:T.blue500, borderRadius:9999, transition:"width 300ms"}}/>
+                </div>
+              </div>
+              {i < Math.min(5, byItem.length) - 1 && <Divider/>}
+            </div>
+          ))}
+        </Card>
+      )}
     </div>
   );
 }

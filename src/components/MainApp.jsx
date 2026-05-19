@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-import { Home, Package, ArrowDownToLine, Bell, Users, LogOut, ShoppingCart, Moon, Sun } from "lucide-react";
+import { Home, Package, ArrowDownToLine, Bell, Users, ShoppingCart } from "lucide-react";
 import { T, font } from "../constants/colors";
 import { useTheme } from "../contexts/ThemeContext";
 import { can, ROLE_META } from "../constants/permissions";
@@ -16,6 +16,10 @@ const InOutScreen     = lazy(() => import("./screens/InOutScreen").then(m => ({ 
 const AlertsScreen    = lazy(() => import("./screens/AlertsScreen").then(m => ({ default: m.AlertsScreen })));
 const OrderScreen     = lazy(() => import("./screens/OrderScreen").then(m => ({ default: m.OrderScreen })));
 const AdminScreen     = lazy(() => import("./screens/AdminScreen/AdminScreen").then(m => ({ default: m.AdminScreen })));
+const ItemDetailScreen      = lazy(() => import("./screens/ItemDetailScreen").then(m => ({ default: m.ItemDetailScreen })));
+const ExpiryManagementScreen = lazy(() => import("./screens/ExpiryManagementScreen").then(m => ({ default: m.ExpiryManagementScreen })));
+const BarcodeScanScreen     = lazy(() => import("./screens/BarcodeScanScreen").then(m => ({ default: m.BarcodeScanScreen })));
+const ProfileSheet          = lazy(() => import("./screens/ProfileSheet").then(m => ({ default: m.ProfileSheet })));
 
 import { ItemPickerSheet } from "./modals/ItemPickerSheet";
 import { InOutSheet } from "./modals/InOutSheet";
@@ -35,6 +39,12 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   const [toast,   showToast]  = useToast();
   const [editItemsState, setEditItemsState] = useState(null);
 
+  // 새 화면 상태
+  const [detailItem,   setDetailItem]   = useState(null);
+  const [showExpiry,   setShowExpiry]   = useState(false);
+  const [showBarcode,  setShowBarcode]  = useState(false);
+  const [showProfile,  setShowProfile]  = useState(false);
+
   const { tokens: dynamicT, mode, toggle } = useTheme();
 
   const role       = currentUser.role;
@@ -42,71 +52,63 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   const adminBadge = canApprove ? pendingOrders : 0;
 
   const { firePush, requestPushPermission, firedRemindersRef } = usePushNotifications();
-
   const { commit } = useStockActions({ items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
-
   const { submitOrder, approveOrder, rejectOrder, confirmReceipt } = useOrderActions({ orders, setOrders, items, setItems, cart, setCart, setTxs, setNotifs, currentUser, showToast, setModal });
-
   const { updateCartQty, removeFromCart, clearCart, submitCart } = useCartActions({ cart, setCart, orders, setOrders, setNotifs, items, currentUser, showToast, setTab });
-
   const { addSurgery, confirmSurgeryPrep, updateSurgeryItems } = useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentUser, showToast, firePush, firedRemindersRef });
 
-  // ── 로그인 직후: 브라우저 푸쉬 권한 요청 ──
-  // (당일 수술 알림 useEffect는 useSurgeryActions 내부로 이동)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { requestPushPermission(); }, []);
+  useEffect(() => { requestPushPermission(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openModal = useCallback((type, item=null) => { setSelItem(item); setForm({qty:1, note:""}); setModal(type); }, []);
-
-  const openItemsEditor = useCallback((initialItems, onSave, title) =>
-    setEditItemsState({initialItems, onSave, title}), []);
+  const openItemsEditor = useCallback((initialItems, onSave, title) => setEditItemsState({initialItems, onSave, title}), []);
 
   const filteredItems = useMemo(() => items.filter(i => i.name.includes(search) && (cat===0 || i.category_id===cat)), [items, search, cat]);
+
+  // 하단 탭 — 알림 탭 제거, 5개만
   const navItems = [
     {id:"home",      Icon:Home,            label:"홈"},
     {id:"inventory", Icon:Package,         label:"재고"},
     {id:"inout",     Icon:ArrowDownToLine, label:"입출고"},
     {id:"order",     Icon:ShoppingCart,    label:"발주", badge:cart.length},
-    {id:"alerts",    Icon:Bell,            label:"알림", badge:unread},
-    ...(canApprove?[{id:"admin", Icon:Users, label:"관리", badge:adminBadge}]:[]),
+    ...(canApprove ? [{id:"admin", Icon:Users, label:"관리", badge:adminBadge}] : []),
   ];
+
+  const tabTitles = {home:"대시보드", inventory:"재고 목록", inout:"입출고", order:"발주", alerts:"알림", admin:"관리"};
+
+  // 바코드 스캔에서 품목 선택
+  const handleBarcodeScan = ({item, type, qty}) => {
+    setShowBarcode(false);
+    openModal(type, item);
+    setForm({qty, note:""});
+  };
 
   return (
     <>
       {/* 상태바 */}
       <div style={{background:dynamicT.white, padding:"14px 24px 8px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${dynamicT.grey100}`}}>
-        <span style={{fontSize:13, fontWeight:700, color:T.grey900}}>9:41</span>
-        <div style={{width:110, height:24, background:T.grey900, borderRadius:12}}/>
-        <span style={{fontSize:12, color:T.grey600}}>100%</span>
+        <span style={{fontSize:13, fontWeight:700, color:dynamicT.grey900}}>9:41</span>
+        <div style={{width:110, height:24, background:dynamicT.grey900, borderRadius:12}}/>
+        <span style={{fontSize:12, color:dynamicT.grey600}}>100%</span>
       </div>
+
       {/* 헤더 */}
       <div style={{background:dynamicT.white, padding:"12px 20px 14px", borderBottom:`1px solid ${dynamicT.grey100}`}}>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
           <div>
-            <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:2}}>
-              <p style={{margin:0, fontSize:12, color:T.grey400}}>DentalStock</p>
+            <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:2}}>
+              <p style={{margin:0, fontSize:12, color:dynamicT.grey400}}>DentalStock</p>
               <span style={{fontSize:11, fontWeight:600, color:ROLE_META[role].color, background:ROLE_META[role].bg, padding:"1px 8px", borderRadius:9999}}>{currentUser.name}</span>
             </div>
-            <h1 style={{margin:0, fontSize:20, fontWeight:700, color:T.grey900}}>
-              {{home:"대시보드",inventory:"재고 목록",inout:"입출고",order:"발주",alerts:"알림",admin:"관리"}[tab]}
-            </h1>
+            <h1 style={{margin:0, fontSize:20, fontWeight:700, color:dynamicT.grey900}}>{tabTitles[tab] || "대시보드"}</h1>
           </div>
-          <div style={{display:"flex", alignItems:"center", gap:4}}>
-            <button
-              aria-label={mode === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
-              onClick={toggle}
-              style={{background:"none", border:"none", cursor:"pointer", padding:8}}>
-              {mode === "dark" ? <Sun size={20} color={T.grey700}/> : <Moon size={20} color={T.grey700}/>}
-            </button>
+          <div style={{display:"flex", alignItems:"center", gap:2}}>
             <button onClick={()=>setTab("alerts")} style={{position:"relative", background:"none", border:"none", cursor:"pointer", padding:8}}>
-              <Bell size={22} color={T.grey700}/>
-              {unread>0&&<span style={{position:"absolute", top:4, right:4, background:T.red500, color:T.white, borderRadius:9999, fontSize:10, fontWeight:700, width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center"}}>{unread}</span>}
+              <Bell size={22} color={dynamicT.grey700}/>
+              {unread > 0 && <span style={{position:"absolute", top:4, right:4, background:T.red500, color:T.white, borderRadius:9999, fontSize:10, fontWeight:700, width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center"}}>{unread}</span>}
             </button>
-            <button
-              aria-label="로그아웃"
-              onClick={()=>{ if (window.confirm("로그아웃 하시겠습니까?")) onLogout(); }}
-              style={{background:"none", border:"none", cursor:"pointer", padding:8}}>
-              <LogOut size={20} color={T.grey700}/>
+            {/* 프로필 아바타 버튼 */}
+            <button onClick={()=>setShowProfile(true)} style={{width:32, height:32, borderRadius:9999, border:"none", background:ROLE_META[role].bg, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:ROLE_META[role].color, fontFamily:font}}>
+              {currentUser.name.slice(0,1)}
             </button>
           </div>
         </div>
@@ -116,7 +118,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       <div style={{flex:1, overflowY:"auto", background:dynamicT.grey50}}>
         <Suspense fallback={<div style={{padding:40, textAlign:"center", color:T.grey500, fontSize:13}}>로딩 중...</div>}>
           {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} openModal={openModal} currentUser={currentUser} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
-          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast}/>}
+          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} openModal={openModal} setItems={setItems} orders={orders} showToast={showToast} onItemClick={setDetailItem} onExpiryClick={()=>setShowExpiry(true)} onBarcodeClick={()=>setShowBarcode(true)}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="order"     && <OrderScreen cart={cart} allItems={items} orders={orders} currentUser={currentUser} updateCartQty={updateCartQty} removeFromCart={removeFromCart} submitCart={submitCart} clearCart={clearCart}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs}/>}
@@ -130,14 +132,54 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           const a = tab===id;
           return (
             <button key={id} onClick={()=>setTab(id)} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3, border:"none", background:"none", cursor:"pointer", padding:"6px 0", position:"relative"}}>
-              <Icon size={22} color={a?T.blue500:T.grey400} strokeWidth={a?2.5:1.8}/>
-              <span style={{fontSize:10, fontFamily:font, color:a?T.blue500:T.grey400, fontWeight:a?700:400}}>{label}</span>
-              {badge>0&&<span style={{position:"absolute", top:4, left:"50%", marginLeft:6, background:T.red500, color:T.white, borderRadius:9999, fontSize:9, fontWeight:700, width:14, height:14, display:"flex", alignItems:"center", justifyContent:"center"}}>{badge}</span>}
-              {a&&<div style={{position:"absolute", bottom:0, width:20, height:2, background:T.blue500, borderRadius:9999}}/>}
+              <Icon size={22} color={a?T.blue500:dynamicT.grey400} strokeWidth={a?2.5:1.8}/>
+              <span style={{fontSize:10, fontFamily:font, color:a?T.blue500:dynamicT.grey400, fontWeight:a?700:400}}>{label}</span>
+              {badge>0 && <span style={{position:"absolute", top:2, left:"50%", marginLeft:4, background:T.red500, color:T.white, borderRadius:9999, fontSize:9, fontWeight:700, width:14, height:14, display:"flex", alignItems:"center", justifyContent:"center"}}>{badge}</span>}
+              {a && <div style={{position:"absolute", bottom:0, width:20, height:2, background:T.blue500, borderRadius:9999}}/>}
             </button>
           );
         })}
       </div>
+
+      {/* 품목 상세 화면 (오버레이) */}
+      {detailItem && (
+        <div style={{position:"absolute", inset:0, zIndex:100, background:T.white}}>
+          <Suspense fallback={null}>
+            <ItemDetailScreen
+              item={detailItem}
+              txs={txs}
+              orders={orders}
+              onClose={()=>setDetailItem(null)}
+              onIn={()=>openModal("in", detailItem)}
+              onOut={()=>openModal("out", detailItem)}
+              onOrder={()=>openModal("order_req", detailItem)}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {/* 유통기한 관리 (오버레이) */}
+      {showExpiry && (
+        <div style={{position:"absolute", inset:0, zIndex:100, background:T.white}}>
+          <Suspense fallback={null}>
+            <ExpiryManagementScreen items={items} onClose={()=>setShowExpiry(false)} openModal={openModal}/>
+          </Suspense>
+        </div>
+      )}
+
+      {/* 바코드 스캔 */}
+      {showBarcode && (
+        <Suspense fallback={null}>
+          <BarcodeScanScreen items={items} onSelect={handleBarcodeScan} onClose={()=>setShowBarcode(false)}/>
+        </Suspense>
+      )}
+
+      {/* 프로필 시트 */}
+      {showProfile && (
+        <Suspense fallback={null}>
+          <ProfileSheet currentUser={currentUser} onClose={()=>setShowProfile(false)} onLogout={onLogout}/>
+        </Suspense>
+      )}
 
       {/* 모달 */}
       {modal && (
@@ -174,7 +216,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         </div>
       )}
 
-      {toast&&<div style={{position:"absolute", bottom:86, left:20, right:20, background:T.grey900, color:T.white, padding:"12px 16px", borderRadius:12, fontSize:14, fontWeight:400, zIndex:999, boxShadow:"0px 4px 12px rgba(0,0,0,0.12)", animation:"fadeUp 150ms"}}>{toast}</div>}
+      {toast && <div style={{position:"absolute", bottom:86, left:20, right:20, background:T.grey900, color:T.white, padding:"12px 16px", borderRadius:12, fontSize:14, fontWeight:400, zIndex:999, boxShadow:"0px 4px 12px rgba(0,0,0,0.12)", animation:"fadeUp 150ms"}}>{toast}</div>}
     </>
   );
 }

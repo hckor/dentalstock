@@ -7,14 +7,26 @@ const sizes = {
   lg: { padding: "16px 24px", fontSize: 15, height: 52 },
 };
 
-export function Button({ variant = "primary", size = "md", fullWidth = false, leftIcon, children, style = {}, ...rest }) {
+export function Button({
+  variant = "primary",
+  size = "md",
+  fullWidth = false,
+  leftIcon,
+  children,
+  style = {},
+  ...rest
+}) {
   const { tokens: T } = useTheme();
 
   const variants = {
-    primary:   { background: T.blue500,      color: T.white,    border: "none" },
-    secondary: { background: T.white,        color: T.grey700,  border: `1.5px solid ${T.grey200}` },
-    danger:    { background: T.red50,        color: T.red500,   border: `1.5px solid ${T.red500}` },
-    ghost:     { background: "transparent",  color: T.grey700,  border: "none" },
+    // 파란색 배경 + 흰색 텍스트
+    primary:   { background: T.blue500,  color: T.white,    border: "none" },
+    // 빨간색 배경 + 흰색 텍스트
+    danger:    { background: T.red500,   color: T.white,    border: "none" },
+    // 연한 배경 + 진한 텍스트 (테두리 없음, 옅은 그레이 필)
+    secondary: { background: T.grey100,  color: T.grey800,  border: "none" },
+    // 테두리 없음 + 텍스트만
+    ghost:     { background: "transparent", color: T.grey700, border: "none" },
   };
 
   return (
@@ -31,6 +43,9 @@ export function Button({ variant = "primary", size = "md", fullWidth = false, le
         justifyContent: "center",
         gap: 6,
         width: fullWidth ? "100%" : undefined,
+        outline: "none",
+        WebkitTapHighlightColor: "transparent",
+        transition: "opacity 120ms ease",
         ...style,
       }}
       {...rest}

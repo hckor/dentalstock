@@ -1,272 +1,153 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
-  ArrowDownToLine, ArrowUpFromLine, ChevronRight, AlertTriangle, X,
-  Edit2, ShoppingCart, ClipboardList, PackageCheck, CalendarDays, ClipboardCheck
+  ArrowDownToLine, ArrowUpFromLine, ChevronRight,
+  AlertTriangle, ShoppingCart, PackageCheck,
+  CalendarDays, ClipboardCheck, ClipboardList, Edit2
 } from "lucide-react";
 import { T, font, CS } from "../../constants/colors";
 import { ROLE_META } from "../../constants/permissions";
 import { ORDER_ST } from "../../constants/orderStates";
 import { ST } from "../../constants/itemStates";
 import { SURGERY_PRESETS } from "../../constants/surgeryPresets";
-import { getStatus, catName, catColor, todayKey, fmtDate, getActiveOrder } from "../../utils/helpers";
+import { getStatus, todayKey, fmtDate, getActiveOrder } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
 import { Chip } from "../shared/Chip";
-import { Avatar } from "../shared/Avatar";
 import { SecTitle } from "../shared/SecTitle";
 
 export function HomeScreen({items, txs, orders, surgeries, setTab, openModal, currentUser, canApprove, confirmSurgeryPrep, openItemsEditor, updateSurgeryItems}) {
-  const [statFilter, setStatFilter] = useState(null);
 
-  const alertItems = useMemo(() => items.filter(i => getStatus(i) !== "ok"), [items]);
-  const pendingCount = useMemo(() => orders.filter(o => o.status === "pending").length, [orders]);
-  const waitingCount = useMemo(() => orders.filter(o => o.status === "ordered").length, [orders]);
-  const myOrders = useMemo(() => orders.filter(o => o.requested_by === currentUser.name).slice(0, 3), [orders, currentUser.name]);
+  const pendingOrders  = useMemo(() => orders.filter(o => o.status === "pending"),  [orders]);
+  const waitingOrders  = useMemo(() => orders.filter(o => o.status === "ordered"),  [orders]);
+  const alertItems     = useMemo(() => items.filter(i => getStatus(i) !== "ok"),    [items]);
   const todaySurgeries = useMemo(() => surgeries.filter(s => s.scheduled_date === todayKey()).sort((a,b) => (a.scheduled_time||"").localeCompare(b.scheduled_time||"")), [surgeries]);
 
-  const stats = useMemo(() => {
-    const okItems      = items.filter(i => getStatus(i) === "ok");
-    const warningItems = items.filter(i => getStatus(i) === "warning");
-    const dangerItems  = items.filter(i => getStatus(i) === "danger");
-    return [
-      {id:"all",     label:"전체 품목", value:items.length,          color:T.grey900,  items},
-      {id:"ok",      label:"정상",      value:okItems.length,        color:T.green500, items:okItems},
-      {id:"warning", label:"재고 부족", value:warningItems.length,   color:T.orange500,items:warningItems},
-      {id:"danger",  label:"재고 소진", value:dangerItems.length,    color:T.red500,   items:dangerItems},
-    ];
-  }, [items]);
+  const stats = useMemo(() => [
+    {label:"전체",    value:items.length,                                           color:T.grey900},
+    {label:"정상",    value:items.filter(i=>getStatus(i)==="ok").length,            color:T.green500},
+    {label:"부족",    value:items.filter(i=>getStatus(i)==="warning").length,       color:T.orange500},
+    {label:"소진",    value:items.filter(i=>getStatus(i)==="danger").length,        color:T.red500},
+  ], [items]);
 
-  const selectedStat = stats.find(s=>s.id===statFilter);
+  const tasks = useMemo(() => {
+    const list = [];
+    if (canApprove && pendingOrders.length > 0) {
+      const first = pendingOrders[0];
+      const itemName = items.find(i => i.id === first.item_id)?.name || "";
+      list.push({id:"pending", Icon:ClipboardList, iconBg:T.orange50, iconColor:T.orange500, title:`발주 승인 대기 ${pendingOrders.length}건`, sub:`${itemName} · ${first.requested_by} 요청`, action:"검토", actionBg:T.red500, onClick:()=>setTab("admin")});
+    }
+    if (!canApprove && alertItems.length > 0) {
+      list.push({id:"alerts", Icon:AlertTriangle, iconBg:T.red50, iconColor:T.red500, title:`재고 부족 품목 ${alertItems.length}건`, sub:`${alertItems[0]?.name} · 발주 요청 필요`, action:"발주", actionBg:T.red500, onClick:()=>setTab("order")});
+    }
+    if (waitingOrders.length > 0) {
+      list.push({id:"waiting", Icon:PackageCheck, iconBg:T.blue50, iconColor:T.blue500, title:`배송 도착 ${waitingOrders.length}건`, sub:"재고에 등록해주세요", action:"확인", actionBg:T.blue500, onClick:()=>setTab("inventory")});
+    }
+    return list;
+  }, [canApprove, pendingOrders, alertItems, waitingOrders, items, setTab]);
 
   return (
-    <div>
-      <div style={{padding:"16px 16px 0"}}>
-        <Card style={{padding:"14px 16px", marginBottom:16, display:"flex", alignItems:"center", gap:12}}>
-          <Avatar name={currentUser.name} role={currentUser.role} size={44}/>
-          <div>
-            <p style={{margin:0, fontSize:15, fontWeight:700, color:T.grey900}}>{currentUser.name}님, 안녕하세요</p>
-            <span style={{fontSize:12, fontWeight:600, color:ROLE_META[currentUser.role].color}}>{ROLE_META[currentUser.role].label}</span>
-          </div>
-        </Card>
+    <div style={{paddingBottom:24}}>
 
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16}}>
-          {stats.map(s=>{
-            const active = statFilter===s.id;
-            return (
-              <button key={s.id} onClick={()=>setStatFilter(active?null:s.id)}
-                style={{textAlign:"left", padding:"14px 16px", border:"none", borderRadius:12, background:T.white, boxShadow:active?"0px 0px 0px 2px #2563eb, 0px 2px 8px rgba(0,0,0,0.08)":CS, cursor:"pointer", fontFamily:font}}>
-                <p style={{margin:"0 0 4px", fontSize:12, color:active?T.blue500:T.grey500, fontWeight:active?600:400}}>{s.label}</p>
-                <p style={{margin:0, fontSize:26, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
-              </button>
-            );
-          })}
-        </div>
-
-        {selectedStat&&(
-          <Card style={{marginBottom:16}}>
-            <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 16px"}}>
-              <div>
-                <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey900}}>{selectedStat.label} 상세</p>
-                <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>{selectedStat.value}개 품목</p>
-              </div>
-              <button onClick={()=>setStatFilter(null)} style={{border:"none", background:T.grey100, width:32, height:32, borderRadius:9999, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
-                <X size={16} color={T.grey600}/>
-              </button>
+      {/* ── 오늘 해야 할 일 ── */}
+      {tasks.length > 0 && (
+        <div style={{padding:"16px 16px 0"}}>
+          <Card style={{overflow:"hidden", padding:0}}>
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 16px 10px"}}>
+              <p style={{margin:0, fontSize:13, fontWeight:700, color:T.grey700}}>오늘 해야 할 일</p>
+              <span style={{fontSize:12, fontWeight:700, color:T.blue500}}>{tasks.length}건</span>
             </div>
-            {selectedStat.items.length>0 ? selectedStat.items.map((item,i)=>{
-              const sc = ST[getStatus(item)];
-              const ao = getActiveOrder(orders, item.id);
+            {tasks.map((task, i) => {
+              const Icon = task.Icon;
               return (
-                <div key={item.id}>
-                  <button onClick={()=>openModal(getStatus(item)==="ok"?"out":"in",item)} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"14px 16px", background:"none", border:"none", cursor:"pointer", fontFamily:font}}>
-                    <div style={{width:8, height:8, borderRadius:9999, background:catColor(item.category_id), flexShrink:0}}/>
+                <div key={task.id}>
+                  {i > 0 && <Divider/>}
+                  <button onClick={task.onClick} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"11px 16px", background:"none", border:"none", cursor:"pointer", fontFamily:font}}>
+                    <div style={{width:36, height:36, borderRadius:10, background:task.iconBg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                      <Icon size={17} color={task.iconColor}/>
+                    </div>
                     <div style={{flex:1, textAlign:"left", minWidth:0}}>
-                      <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.name}</p>
-                      <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>{catName(item.category_id)} · {item.current_qty}{item.unit} / 최소 {item.min_qty}{item.unit}</p>
+                      <p style={{margin:0, fontSize:13, fontWeight:600, color:T.grey900}}>{task.title}</p>
+                      {task.sub && <p style={{margin:"2px 0 0", fontSize:11, color:T.grey500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{task.sub}</p>}
                     </div>
-                    <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4}}>
-                      <Chip label={sc.label} color={sc.text} bg={sc.bg} border={sc.border}/>
-                      {ao&&<Chip label={ORDER_ST[ao.status].short} color={ORDER_ST[ao.status].text} bg={ORDER_ST[ao.status].bg} border={ORDER_ST[ao.status].border}/>}
-                    </div>
+                    <span style={{flexShrink:0, padding:"6px 14px", borderRadius:9999, background:task.actionBg, color:T.white, fontSize:12, fontWeight:700}}>{task.action}</span>
                   </button>
-                  {i<selectedStat.items.length-1&&<Divider/>}
                 </div>
               );
-            }) : (
-              <p style={{margin:0, padding:"0 16px 18px", fontSize:14, color:T.grey500}}>조건에 맞는 품목이 없어요.</p>
-            )}
+            })}
           </Card>
-        )}
+        </div>
+      )}
+
+      {/* ── 오늘 수술 (compact) ── */}
+      {todaySurgeries.map(surgery => {
+        const shortages = surgery.required_items.filter(req => {
+          const item = items.find(i => i.id === req.item_id);
+          return !item || item.current_qty < req.qty;
+        });
+        const allOk = shortages.length === 0;
+        return (
+          <div key={surgery.id} style={{padding:"12px 16px 0"}}>
+            <button
+              onClick={() => openItemsEditor(surgery.required_items, (newItems) => updateSurgeryItems(surgery.id, newItems), `${surgery.scheduled_time} · ${surgery.title}`)}
+              style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderRadius:14, background:surgery.prep_confirmed ? T.green50 : T.white, boxShadow:CS, border:"none", cursor:"pointer", fontFamily:font, textAlign:"left"}}
+            >
+              <div style={{width:36, height:36, borderRadius:9999, background:surgery.prep_confirmed?T.green500:allOk?T.blue500:T.orange500, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                {surgery.prep_confirmed ? <ClipboardCheck size={17} color={T.white}/> : <CalendarDays size={17} color={T.white}/>}
+              </div>
+              <div style={{flex:1, minWidth:0}}>
+                <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey900}}>{surgery.patient}님</p>
+                <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                  {surgery.scheduled_time} · {surgery.title} · 준비 품목 {surgery.required_items.length}종 {allOk?"모두 충분":`${shortages.length}종 부족`}
+                </p>
+              </div>
+              {!surgery.prep_confirmed && (
+                <button
+                  onClick={e=>{e.stopPropagation(); confirmSurgeryPrep(surgery.id);}}
+                  style={{flexShrink:0, padding:"7px 14px", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:font}}
+                >확인</button>
+              )}
+              {surgery.prep_confirmed && <ChevronRight size={16} color={T.grey400}/>}
+            </button>
+          </div>
+        );
+      })}
+
+      {/* ── 재고 통계 ── */}
+      <div style={{padding:"16px 16px 0"}}>
+        <div style={{display:"flex", background:T.white, borderRadius:14, boxShadow:CS, overflow:"hidden"}}>
+          {stats.map((s, i) => (
+            <button key={s.label} onClick={()=>setTab("inventory")} style={{flex:1, padding:"16px 0", border:"none", background:"none", cursor:"pointer", fontFamily:font, textAlign:"center", borderRight:i<stats.length-1?`1px solid ${T.grey100}`:"none"}}>
+              <p style={{margin:0, fontSize:24, fontWeight:700, color:s.color, fontVariantNumeric:"tabular-nums"}}>{s.value}</p>
+              <p style={{margin:"3px 0 0", fontSize:11, color:T.grey500}}>{s.label}</p>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {todaySurgeries.length>0&&(
-        <div style={{padding:"0 16px 16px"}}>
-          <SecTitle>오늘 수술 준비</SecTitle>
-          <div style={{display:"flex", flexDirection:"column", gap:10}}>
-            {todaySurgeries.map(surgery=>{
-              const preset = SURGERY_PRESETS[surgery.type];
-              const shortages = surgery.required_items.filter(req=>{
-                const item = items.find(i=>i.id===req.item_id);
-                return !item || item.current_qty < req.qty;
-              });
-              return (
-                <Card key={surgery.id} style={{padding:"16px"}}>
-                  <div style={{display:"flex", alignItems:"flex-start", gap:12, marginBottom:12}}>
-                    <div style={{width:40, height:40, borderRadius:12, background:surgery.prep_confirmed?T.green50:T.blue50, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                      {surgery.prep_confirmed?<ClipboardCheck size={20} color={T.green500}/>:<CalendarDays size={20} color={T.blue500}/>}
-                    </div>
-                    <div style={{flex:1, minWidth:0}}>
-                      <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:2, flexWrap:"wrap"}}>
-                        <p style={{margin:0, fontSize:15, fontWeight:700, color:T.grey900}}>{surgery.title}</p>
-                        <Chip label={preset?.label||"수술"} color={T.blue500} bg={T.blue50} border={T.blue50}/>
-                      </div>
-                      <p style={{margin:0, fontSize:12, color:T.grey500}}>{surgery.scheduled_time} · 환자 {surgery.patient}</p>
-                    </div>
-                    <Chip label={surgery.prep_confirmed?"준비완료":shortages.length>0?"부족확인":"준비필요"} color={surgery.prep_confirmed?T.green500:shortages.length>0?T.orange500:T.blue500} bg={surgery.prep_confirmed?T.green50:shortages.length>0?T.orange50:T.blue50} border={T.grey200}/>
-                  </div>
-                  <div style={{background:T.grey50, borderRadius:12, padding:"10px 12px", marginBottom:12}}>
-                    {surgery.required_items.map((req,i)=>{
-                      const item = items.find(it=>it.id===req.item_id);
-                      const enough = item && item.current_qty>=req.qty;
-                      return (
-                        <div key={`${surgery.id}-${req.item_id}`} style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:i===0?"0 0 8px":i===surgery.required_items.length-1?"8px 0 0":"8px 0", borderTop:i===0?"none":`1px solid ${T.grey100}`}}>
-                          <div style={{minWidth:0}}>
-                            <p style={{margin:0, fontSize:13, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item?.name||"삭제된 품목"}</p>
-                            <p style={{margin:"2px 0 0", fontSize:11, color:T.grey500}}>필요 {req.qty}{item?.unit||""} · 현재 {item?.current_qty??0}{item?.unit||""}</p>
-                          </div>
-                          <Chip label={enough?"가능":"부족"} color={enough?T.green500:T.red500} bg={enough?T.green50:T.red50} border={T.grey200}/>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {surgery.note&&<p style={{margin:"0 0 12px", fontSize:12, color:T.grey600}}>메모: {surgery.note}</p>}
-                  {surgery.prep_confirmed ? (
-                    <button disabled style={{width:"100%", padding:"12px 0", borderRadius:9999, border:"none", background:T.grey100, color:T.grey500, fontSize:14, fontWeight:600, cursor:"default", fontFamily:font}}>
-                      {surgery.prepared_by} 준비 완료
-                    </button>
-                  ) : (
-                    <div style={{display:"flex", gap:8}}>
-                      <button
-                        onClick={()=>openItemsEditor(surgery.required_items, (newItems)=>updateSurgeryItems(surgery.id, newItems), `${surgery.scheduled_time} · ${surgery.title}`)}
-                        style={{flex:1, padding:"12px 0", borderRadius:9999, border:`1px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:4}}
-                      ><Edit2 size={14}/>품목 편집</button>
-                      <button
-                        onClick={()=>confirmSurgeryPrep(surgery.id)}
-                        style={{flex:2, padding:"12px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:font}}
-                      >준비 확인 완료</button>
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
+      {/* ── 최근 입출고 ── */}
+      <div style={{padding:"16px 16px 0"}}>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10}}>
+          <SecTitle>최근 입출고</SecTitle>
+          <button onClick={()=>setTab("inout")} style={{fontSize:13, color:T.blue500, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600}}>전체보기</button>
         </div>
-      )}
-
-      {/* 발주 대기 배너 — 매니저/원장 */}
-      {canApprove && pendingCount>0 && (
-        <div style={{padding:"0 16px 12px"}}>
-          <button onClick={()=>setTab("admin")} style={{width:"100%", padding:"14px 16px", borderRadius:16, border:`1.5px solid ${T.orange500}44`, background:T.orange50, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:12}}>
-            <div style={{width:36, height:36, borderRadius:9999, background:T.orange500, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}><ClipboardList size={18} color={T.white}/></div>
-            <div style={{flex:1, textAlign:"left"}}>
-              <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey900}}>승인 대기 중인 발주 요청</p>
-              <p style={{margin:"2px 0 0", fontSize:12, color:T.orange500, fontWeight:600}}>{pendingCount}건 검토 필요</p>
-            </div>
-            <ChevronRight size={18} color={T.orange500}/>
-          </button>
-        </div>
-      )}
-
-      {/* 입고 대기 배너 — 전 직원 (ordered 상태 있을 때) */}
-      {waitingCount>0 && (
-        <div style={{padding:"0 16px 12px"}}>
-          <button onClick={()=>setTab("inventory")} style={{width:"100%", padding:"14px 16px", borderRadius:16, border:`1.5px solid ${T.teal500}44`, background:T.teal50, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:12}}>
-            <div style={{width:36, height:36, borderRadius:9999, background:T.teal500, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}><PackageCheck size={18} color={T.white}/></div>
-            <div style={{flex:1, textAlign:"left"}}>
-              <p style={{margin:0, fontSize:14, fontWeight:700, color:T.grey900}}>입고 확인이 필요합니다</p>
-              <p style={{margin:"2px 0 0", fontSize:12, color:T.teal500, fontWeight:600}}>배송 완료된 품목 {waitingCount}건 — 재고에 등록해주세요</p>
-            </div>
-            <ChevronRight size={18} color={T.teal500}/>
-          </button>
-        </div>
-      )}
-
-      {/* 주의 품목 */}
-      {alertItems.length>0 && (
-        <div style={{padding:"0 16px 16px"}}>
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10}}>
-            <SecTitle>주의 필요 품목</SecTitle>
-            <button onClick={()=>setTab("inventory")} style={{fontSize:13, color:T.blue500, background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:600, paddingBottom:10}}>전체보기</button>
-          </div>
-          <Card>
-            {alertItems.slice(0,3).map((item,i)=>{
-              const sc  = ST[getStatus(item)];
-              const ao  = getActiveOrder(orders, item.id);
-              return (
-                <div key={item.id}>
-                  <button onClick={()=>openModal("in",item)} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"14px 16px", background:"none", border:"none", cursor:"pointer", fontFamily:"inherit"}}>
-                    <div style={{width:36, height:36, borderRadius:10, background:sc.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}><AlertTriangle size={18} color={sc.text}/></div>
-                    <div style={{flex:1, textAlign:"left"}}>
-                      <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900}}>{item.name}</p>
-                      <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>{item.current_qty}{item.unit} / 최소 {item.min_qty}{item.unit}</p>
-                    </div>
-                    <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4}}>
-                      <Chip label={sc.label} color={sc.text} bg={sc.bg} border={sc.border}/>
-                      {ao&&<Chip label={ORDER_ST[ao.status].short} color={ORDER_ST[ao.status].text} bg={ORDER_ST[ao.status].bg} border={ORDER_ST[ao.status].border}/>}
-                    </div>
-                  </button>
-                  {i<alertItems.slice(0,3).length-1&&<Divider/>}
-                </div>
-              );
-            })}
-          </Card>
-        </div>
-      )}
-
-      {/* 내 발주 현황 */}
-      {myOrders.length>0 && (
-        <div style={{padding:"0 16px 16px"}}>
-          <SecTitle>내 발주 현황</SecTitle>
-          <Card>
-            {myOrders.map((o,i)=>{
-              const item = items.find(it=>it.id===o.item_id);
-              const os   = ORDER_ST[o.status];
-              return (
-                <div key={o.id}>
-                  <div style={{display:"flex", alignItems:"center", gap:12, padding:"14px 16px"}}>
-                    <div style={{width:36, height:36, borderRadius:10, background:os.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}><ShoppingCart size={16} color={os.text}/></div>
-                    <div style={{flex:1, minWidth:0}}>
-                      <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item?.name}</p>
-                      <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>{o.qty}{item?.unit} · {fmtDate(o.requested_at)}</p>
-                    </div>
-                    <Chip label={os.label} color={os.text} bg={os.bg} border={os.border}/>
-                  </div>
-                  {i<myOrders.length-1&&<Divider/>}
-                </div>
-              );
-            })}
-          </Card>
-        </div>
-      )}
-
-      <div style={{padding:"0 16px 24px"}}>
-        <SecTitle>최근 입출고</SecTitle>
         <Card>
-          {txs.slice(0,4).map((tx,i)=>{
-            const item = items.find(it=>it.id===tx.item_id);
+          {txs.length === 0 ? (
+            <p style={{margin:0, padding:"24px 16px", fontSize:14, color:T.grey400, textAlign:"center"}}>입출고 이력이 없어요</p>
+          ) : txs.slice(0,5).map((tx, i) => {
+            const item = items.find(it => it.id === tx.item_id);
             return (
               <div key={tx.id}>
-                <div style={{display:"flex", alignItems:"center", gap:12, padding:"14px 16px"}}>
-                  <div style={{width:36, height:36, borderRadius:10, background:tx.type==="in"?T.blue50:T.red50, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                    {tx.type==="in"?<ArrowDownToLine size={16} color={T.blue500}/>:<ArrowUpFromLine size={16} color={T.red500}/>}
+                <div style={{display:"flex", alignItems:"center", gap:12, padding:"13px 16px"}}>
+                  <div style={{width:32, height:32, borderRadius:9999, background:tx.type==="in"?T.blue50:T.red50, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                    {tx.type==="in" ? <ArrowDownToLine size={15} color={T.blue500}/> : <ArrowUpFromLine size={15} color={T.red500}/>}
                   </div>
                   <div style={{flex:1, minWidth:0}}>
                     <p style={{margin:0, fontSize:14, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item?.name}</p>
-                    <p style={{margin:"2px 0 0", fontSize:12, color:T.grey500}}>{tx.user} · {fmtDate(tx.created_at)}</p>
+                    <p style={{margin:"1px 0 0", fontSize:12, color:T.grey500}}>{tx.user} · {fmtDate(tx.created_at)}</p>
                   </div>
                   <span style={{fontSize:15, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</span>
                 </div>
-                {i<3&&<Divider/>}
+                {i < Math.min(txs.length,5)-1 && <Divider/>}
               </div>
             );
           })}

@@ -31,7 +31,7 @@ export function OrderRequestSheet({item, currentUser, onSubmit, onClose}) {
         <p style={{flex:1, textAlign:"center", margin:0, fontSize:32, fontWeight:700, color:T.grey900, fontVariantNumeric:"tabular-nums"}}>{qty}</p>
         <button onClick={()=>setQty(q=>q+1)} style={{width:44, height:44, borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}><Plus size={18} color={T.white}/></button>
       </div>
-      <p style={{margin:"0 0 8px", fontSize:13, fontWeight:600, color:T.grey700}}>요청 사유 (선택)</p>
+      <p style={{margin:"0 0 8px", fontSize:13, fontWeight:600, color:T.grey700}}>메모 <span style={{fontWeight:400, color:T.grey400}}>(선택)</span></p>
       <Inp value={note} onChange={e=>setNote(e.target.value)} placeholder="예: 재고 급하게 필요합니다" style={{marginBottom:16}}/>
       <div style={{display:"flex", alignItems:"center", gap:8, padding:"10px 14px", background:T.grey50, borderRadius:12, marginBottom:20, border:`1px solid ${T.grey200}`}}>
         <Avatar name={currentUser.name} role={currentUser.role} size={28}/>
