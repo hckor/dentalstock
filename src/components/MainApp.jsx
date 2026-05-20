@@ -133,23 +133,31 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     }
   }, [currentUser, setUsers, showToast]);
 
-  const runPriceMonitor = useCallback(async () => {
+  const runPriceMonitor = useCallback(async (item = null) => {
     try {
       if (!supabasePriceMonitorApi.isEnabled() || !currentUser?.clinicId) {
         showToast("Supabase 모드에서만 가격 감시를 실행할 수 있습니다");
         return false;
       }
+      if (item && !item.supabase_id) {
+        showToast("서버에 저장된 품목만 가격 확인을 실행할 수 있습니다");
+        return false;
+      }
 
-      const result = await supabasePriceMonitorApi.run({ limit: 30 });
+      const result = await supabasePriceMonitorApi.run({
+        limit: item ? 10 : 30,
+        itemId: item?.supabase_id || "",
+      });
       const remoteItems = await supabaseItemsApi.listByClinic(currentUser.clinicId);
       if (remoteItems.length > 0) setItems(remoteItems);
-      showToast(`가격 감시 완료 · 갱신 ${result.updated || 0}건`);
+      showToast(`${item ? "품목 가격 확인" : "가격 감시"} 완료 · 갱신 ${result.updated || 0}건`);
       return true;
     } catch (error) {
       const messages = {
         authentication_required: "다시 로그인한 뒤 실행해주세요",
         manager_required: "원장 또는 매니저만 가격 감시를 실행할 수 있습니다",
         products_load_failed: "구매 후보를 불러오지 못했습니다",
+        products_sync_failed: "품목 구매 후보를 가격 감시 대상으로 동기화하지 못했습니다",
         server_not_configured: "가격 감시 서버 설정이 필요합니다",
       };
       showToast(messages[error?.message] || "가격 감시 실행에 실패했습니다");
@@ -190,7 +198,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} confirmSurgeryUsage={confirmSurgeryUsage} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
           {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} orders={orders} onItemClick={openDetail} onExpiryClick={openExpiry} onBulkOrderClick={()=>setModal("bulk_order")}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
-          {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} approveOrders={approveOrders} rejectOrder={rejectOrder} startTracking={startTracking} refreshTracking={refreshTracking} confirmReceipt={confirmReceipt}/>}
+          {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} approveOrders={approveOrders} rejectOrder={rejectOrder} startTracking={startTracking} refreshTracking={refreshTracking} confirmReceipt={confirmReceipt} onRunPriceMonitor={runPriceMonitor}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
           {tab==="admin"     && canApprove && <AdminScreen users={users} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
         </Suspense>

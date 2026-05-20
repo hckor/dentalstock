@@ -154,6 +154,89 @@ function updateVendorOption(options: VendorOption[], product: Record<string, unk
   });
 }
 
+function getAppData(row: Record<string, unknown>) {
+  return row?.app_data && typeof row.app_data === "object" ? row.app_data as Record<string, unknown> : {};
+}
+
+function buildVendorProductPayload(itemRow: Record<string, unknown>, option: VendorOption) {
+  const productUrl = String(option.url || "").trim();
+  if (!productUrl) return null;
+
+  let hostname = "";
+  try {
+    hostname = new URL(productUrl).hostname;
+  } catch {
+    hostname = "vendor";
+  }
+
+  const vendorId = String(option.vendor_id || option.vendor_name || hostname).trim();
+  if (!vendorId) return null;
+
+  return {
+    clinic_id: itemRow.clinic_id,
+    item_id: itemRow.id,
+    vendor_id: vendorId,
+    vendor_name: option.vendor_name || vendorId,
+    product_url: productUrl,
+    sku: option.sku || null,
+    min_order_qty: Math.max(1, Number(option.min_order_qty) || 1),
+    is_active: true,
+    app_data: {
+      shipping_fee: toPositiveNumber(option.shipping_fee) || 0,
+      source: "item_vendor_options",
+    },
+  };
+}
+
+async function syncVendorProductsFromItems(
+  adminClient: ReturnType<typeof createClient>,
+  clinicId: string,
+  itemId: string,
+  limit: number,
+) {
+  let itemQuery = adminClient
+    .from("items")
+    .select(ITEM_SELECT)
+    .eq("is_active", true)
+    .limit(limit);
+
+  if (clinicId) itemQuery = itemQuery.eq("clinic_id", clinicId);
+  if (itemId) itemQuery = itemQuery.eq("id", itemId);
+
+  const { data: itemRows, error: itemError } = await itemQuery;
+  if (itemError) return { synced: 0, error: itemError };
+
+  let synced = 0;
+  for (const itemRow of itemRows || []) {
+    const appData = getAppData(itemRow);
+    const vendorOptions = Array.isArray(appData.vendor_options) ? appData.vendor_options as VendorOption[] : [];
+    for (const option of vendorOptions) {
+      const payload = buildVendorProductPayload(itemRow, option);
+      if (!payload) continue;
+
+      const { data: existingRows, error: lookupError } = await adminClient
+        .from("vendor_products")
+        .select("id")
+        .eq("item_id", payload.item_id)
+        .eq("vendor_id", payload.vendor_id)
+        .eq("product_url", payload.product_url)
+        .limit(1);
+      if (lookupError) return { synced, error: lookupError };
+
+      const existing = existingRows?.[0];
+      const write = existing
+        ? adminClient.from("vendor_products").update(payload).eq("id", existing.id)
+        : adminClient.from("vendor_products").insert(payload);
+      const { error: writeError } = await write;
+      if (writeError) return { synced, error: writeError };
+      synced += 1;
+      if (synced >= limit) return { synced, error: null };
+    }
+  }
+
+  return { synced, error: null };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -194,15 +277,20 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => ({}));
   if (hasCronSecret && body.clinic_id) clinicId = String(body.clinic_id);
+  const itemId = body.item_id ? String(body.item_id) : "";
+  const limit = Math.min(Number(body.limit) || MAX_PRODUCTS_PER_RUN, MAX_PRODUCTS_PER_RUN);
+
+  const syncResult = await syncVendorProductsFromItems(adminClient, clinicId, itemId, limit);
+  if (syncResult.error) return json({ error: "products_sync_failed" }, 500);
 
   let query = adminClient
     .from("vendor_products")
-    .select("id, clinic_id, item_id, vendor_id, vendor_name, product_url, shipping_fee:app_data->shipping_fee, app_data")
+    .select("id, clinic_id, item_id, vendor_id, vendor_name, product_url, sku, min_order_qty, shipping_fee:app_data->shipping_fee, app_data")
     .eq("is_active", true)
-    .limit(Math.min(Number(body.limit) || MAX_PRODUCTS_PER_RUN, MAX_PRODUCTS_PER_RUN));
+    .limit(limit);
 
   if (clinicId) query = query.eq("clinic_id", clinicId);
-  if (body.item_id) query = query.eq("item_id", String(body.item_id));
+  if (itemId) query = query.eq("item_id", itemId);
 
   const { data: products, error: productError } = await query;
   if (productError) return json({ error: "products_load_failed" }, 500);
@@ -270,6 +358,7 @@ Deno.serve(async (req) => {
     checked: results.length,
     updated: results.filter(result => result.ok).length,
     failed: results.filter(result => !result.ok).length,
+    synced: syncResult.synced,
     results,
   });
 });

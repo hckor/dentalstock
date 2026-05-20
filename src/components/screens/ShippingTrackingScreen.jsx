@@ -247,9 +247,10 @@ function ReceivedGroupCard({ group, allItems }) {
   );
 }
 
-export function ShippingTrackingScreen({orders, allItems, currentUser, canApprove, openModal, showToast, approveOrder, approveOrders, rejectOrder, startTracking, refreshTracking, confirmReceipt}) {
+export function ShippingTrackingScreen({orders, allItems, currentUser, canApprove, openModal, showToast, approveOrder, approveOrders, rejectOrder, startTracking, refreshTracking, confirmReceipt, onRunPriceMonitor}) {
   const [trackingTab, setTrackingTab] = useState("auto_wait");
   const [deselectedPendingIds, setDeselectedPendingIds] = useState([]);
+  const [priceCheckingIds, setPriceCheckingIds] = useState([]);
 
   const visibleOrders = useMemo(
     () => canApprove ? orders : orders.filter(o => o.requested_by === currentUser.name),
@@ -313,6 +314,34 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
     approveOrders(selectedPendingIds, "일괄 승인");
     setDeselectedPendingIds([]);
     setTrackingTab("in_transit");
+  };
+
+  const handlePriceCheck = async (order) => {
+    if (!canApprove) {
+      showToast("가격 확인 권한이 없습니다");
+      return;
+    }
+    const item = allItems.find(target => target.id === order.item_id);
+    if (!item) {
+      showToast("품목 정보를 찾지 못했습니다");
+      return;
+    }
+    const hasVendorUrl = Array.isArray(item.vendor_options) && item.vendor_options.some(option => option.url);
+    if (!hasVendorUrl) {
+      showToast("품목 편집에서 구매 후보 URL을 먼저 등록해 주세요");
+      return;
+    }
+    if (!onRunPriceMonitor) {
+      showToast("가격 확인 기능이 아직 연결되지 않았습니다");
+      return;
+    }
+
+    setPriceCheckingIds(prev => prev.includes(order.id) ? prev : [...prev, order.id]);
+    try {
+      await onRunPriceMonitor(item);
+    } finally {
+      setPriceCheckingIds(prev => prev.filter(id => id !== order.id));
+    }
   };
 
   const handleActionClick = (order, actionType) => {
@@ -550,6 +579,8 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
                 selectable={trackingTab === "auto_wait" && canApprove}
                 selected={selectedPendingIds.includes(order.id)}
                 onSelectChange={() => togglePendingSelection(order.id)}
+                priceChecking={priceCheckingIds.includes(order.id)}
+                onPriceCheck={() => handlePriceCheck(order)}
               />
             );
           }) : currentOrders.map(order => {
@@ -565,6 +596,8 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
                 selectable={trackingTab === "auto_wait" && canApprove}
                 selected={selectedPendingIds.includes(order.id)}
                 onSelectChange={() => togglePendingSelection(order.id)}
+                priceChecking={priceCheckingIds.includes(order.id)}
+                onPriceCheck={() => handlePriceCheck(order)}
               />
             );
           })}

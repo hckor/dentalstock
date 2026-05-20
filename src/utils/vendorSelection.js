@@ -31,6 +31,29 @@ export function getEffectiveVendorPrice(option, orderQty = 1) {
   return Math.round(itemPrice + (shippingFee / purchasableQty));
 }
 
+export function getVendorPriceCandidates(item, orderQty = 1) {
+  const vendorOptions = Array.isArray(item?.vendor_options) ? item.vendor_options : [];
+  return vendorOptions
+    .map(option => ({
+      vendor_id: normalizeVendorId(option.vendor_id),
+      vendor_name: option.vendor_name || `거래처 ${option.vendor_id || ""}`.trim(),
+      vendor_price: getEffectiveVendorPrice(option, orderQty),
+      vendor_base_price: toPositiveNumber(option.price),
+      vendor_shipping_fee: toPositiveNumber(option.shipping_fee) || 0,
+      vendor_min_order_qty: Math.max(1, Number(option.min_order_qty) || 1),
+      vendor_sku: option.sku || "",
+      vendor_url: option.url || "",
+      vendor_in_stock: option.in_stock !== false,
+      vendor_last_checked_at: option.last_checked_at || null,
+    }))
+    .sort((a, b) => {
+      if (a.vendor_in_stock !== b.vendor_in_stock) return a.vendor_in_stock ? -1 : 1;
+      const aPrice = Number.isFinite(a.vendor_price) ? a.vendor_price : Number.POSITIVE_INFINITY;
+      const bPrice = Number.isFinite(b.vendor_price) ? b.vendor_price : Number.POSITIVE_INFINITY;
+      return aPrice - bPrice;
+    });
+}
+
 export function resolveOrderVendorForQty(item, settings, orderQty = 1) {
   const activeVendors = getActiveVendors(settings);
   const fallbackVendor = activeVendors[0] || settings?.vendors?.[0] || null;

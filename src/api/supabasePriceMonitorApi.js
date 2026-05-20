@@ -23,10 +23,10 @@ export const supabasePriceMonitorApi = {
     return config.isSupabaseMode && isSupabaseConfigured();
   },
 
-  async run({ limit = 20 } = {}) {
+  async run({ limit = 20, itemId = "" } = {}) {
     const { data, error } = await getSupabaseClient()
       .functions
-      .invoke("price-monitor", { body: { limit } });
+      .invoke("price-monitor", { body: { limit, item_id: itemId || undefined } });
 
     if (error) throw new Error(await readFunctionError(error));
     if (data?.error) throw new Error(data.error);

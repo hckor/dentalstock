@@ -1,9 +1,9 @@
 import { memo } from "react";
 import { CheckCircle2, ChevronRight, FileText, Navigation, RefreshCw, XCircle } from "lucide-react";
-import { T, font } from "../../constants/colors";
+import { T, font, monoFont } from "../../constants/colors";
 import { ORDER_ST } from "../../constants/orderStates";
 import { getShippingEvents } from "../../utils/shippingEvents";
-import { getVendorLabel } from "../../utils/vendorSelection";
+import { getVendorLabel, getVendorPriceCandidates } from "../../utils/vendorSelection";
 import { Card } from "./Card";
 import { Chip } from "./Chip";
 
@@ -57,7 +57,116 @@ function StatusHeader({ item, statusMeta, children, compact = false }) {
   );
 }
 
-export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, stage, canApprove, onActionClick, selectable = false, selected = false, onSelectChange }) {
+function formatCurrency(value) {
+  if (!Number.isFinite(Number(value))) return "가격 미확인";
+  return `${Number(value).toLocaleString("ko-KR")}원`;
+}
+
+function formatLastChecked(value) {
+  if (!value) return "확인 전";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "확인 전";
+  return `${parsed.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })} ${parsed.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+function PriceCandidatePanel({ item, order, canApprove, checking = false, onPriceCheck }) {
+  const candidates = getVendorPriceCandidates(item, order.qty);
+  const visibleCandidates = candidates.slice(0, 3);
+  const hasCheckableUrl = candidates.some(candidate => candidate.vendor_url);
+  const canRunCheck = Boolean(onPriceCheck) && hasCheckableUrl && !checking;
+
+  return (
+    <div style={{ margin: "2px 0 14px", borderRadius: 14, background: T.grey50, padding: "12px 14px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: visibleCandidates.length ? 10 : 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.grey900 }}>품목별 가격 확인</p>
+          <p style={{ margin: "3px 0 0", fontSize: 13, color: T.grey500 }}>
+            승인 전에 최저가 후보를 확인합니다
+          </p>
+        </div>
+        {canApprove && (
+          <button
+            type="button"
+            onClick={onPriceCheck}
+            disabled={!canRunCheck}
+            style={{
+              minHeight: 34,
+              padding: "7px 11px",
+              borderRadius: 9999,
+              border: "none",
+              background: !canRunCheck ? T.grey200 : T.blue50,
+              color: !canRunCheck ? T.grey500 : T.blue500,
+              fontFamily: font,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: canRunCheck ? "pointer" : "default",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <RefreshCw size={15} style={{ flexShrink: 0 }} />
+            {checking ? "확인 중" : "가격 확인"}
+          </button>
+        )}
+      </div>
+
+      {visibleCandidates.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          {visibleCandidates.map((candidate, index) => {
+            const isBest = index === 0 && candidate.vendor_in_stock && Number.isFinite(Number(candidate.vendor_price));
+            return (
+              <div
+                key={`${candidate.vendor_id}-${candidate.vendor_url || index}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 9,
+                  padding: "9px 10px",
+                  borderRadius: 12,
+                  background: isBest ? T.white : "transparent",
+                  border: isBest ? `1px solid ${T.blue500}22` : `1px solid ${T.grey100}`,
+                }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: 9999, background: candidate.vendor_in_stock ? (isBest ? T.blue500 : T.grey400) : T.red500, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.grey800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
+                      {candidate.vendor_name || "거래처 미정"}
+                    </p>
+                    {isBest && (
+                      <span style={{ borderRadius: 9999, background: T.blue50, color: T.blue500, padding: "2px 7px", fontSize: 11, fontWeight: 700 }}>
+                        최저
+                      </span>
+                    )}
+                    {!candidate.vendor_in_stock && (
+                      <span style={{ borderRadius: 9999, background: T.red50, color: T.red500, padding: "2px 7px", fontSize: 11, fontWeight: 700 }}>
+                        품절
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: T.grey500 }}>
+                    기본 {formatCurrency(candidate.vendor_base_price)} · 배송 {formatCurrency(candidate.vendor_shipping_fee)} · {formatLastChecked(candidate.vendor_last_checked_at)}
+                  </p>
+                </div>
+                <p style={{ margin: 0, flexShrink: 0, fontFamily: monoFont, fontSize: 14, fontWeight: 700, color: isBest ? T.blue500 : T.grey800 }}>
+                  {formatCurrency(candidate.vendor_price)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p style={{ margin: "10px 0 0", fontSize: 13, color: T.grey500, lineHeight: 1.45 }}>
+          구매 후보가 아직 없습니다. 품목 편집에서 후보 거래처와 상품 URL을 등록하면 승인 전에 가격을 확인할 수 있어요.
+        </p>
+      )}
+    </div>
+  );
+}
+
+export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, stage, canApprove, onActionClick, selectable = false, selected = false, onSelectChange, priceChecking = false, onPriceCheck }) {
   const os = ORDER_ST[order.status];
   const vendorLabel = getVendorLabel(order);
 
@@ -104,6 +213,14 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                 </StatusHeader>
               </div>
             </div>
+
+            <PriceCandidatePanel
+              item={item}
+              order={order}
+              canApprove={canApprove}
+              checking={priceChecking}
+              onPriceCheck={onPriceCheck}
+            />
 
             {canApprove ? (
               <div style={actionRowStyle}>
