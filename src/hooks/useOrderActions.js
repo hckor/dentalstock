@@ -1,5 +1,6 @@
 import { getActiveOrder } from "../utils/helpers";
 import { can } from "../constants/permissions";
+import { addReceiptShippingEvent, buildInitialShippingEvents } from "../utils/shippingEvents";
 
 export function useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal }) {
   // ── 발주 요청 → pending 주문 즉시 생성 ───────────────
@@ -97,7 +98,8 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
     const after = item.current_qty + actualQty;
     setItems(p=>p.map(i=>i.id===item.id?{...i, current_qty:after}:i));
     setTxs(p=>[{id:`t${Date.now()}`, item_id:item.id, type:"in", qty:actualQty, note:`발주 입고 확인 (요청자: ${order.requested_by})${note?` · ${note}`:""}`, created_at:new Date().toISOString(), user:currentUser.name},...p]);
-    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"received"}:o));
+    const receivedAt = new Date().toISOString();
+    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"received", received_at:receivedAt, shipping_events:addReceiptShippingEvent(o, receivedAt)}:o));
     setNotifs(p=>[{id:`n${Date.now()}`, type:"received", item_id:item.id, message:`${item.name} 입고 확인 완료`, sub:`${currentUser.name} 확인 · ${actualQty}${item.unit} 입고`, is_read:false, created_at:new Date().toISOString()},...p]);
     showToast(`${actualQty}${item.unit} 입고 확인 완료`);
     setModal(null);
@@ -115,8 +117,9 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
       return;
     }
     const item = items.find(i => i.id === order.item_id);
+    const trackingStartedAt = new Date().toISOString();
     setOrders(p => p.map(o => o.id === orderId
-      ? { ...o, carrier, tracking_number: trackingNumber }
+      ? { ...o, carrier, tracking_number: trackingNumber, shipping_events: buildInitialShippingEvents({ order: o, carrier, timestamp: trackingStartedAt }) }
       : o
     ));
     if (item) {

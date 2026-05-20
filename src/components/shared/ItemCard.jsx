@@ -2,6 +2,15 @@ import { Clock } from "lucide-react";
 import { T, CS, monoFont } from "../../constants/colors";
 import { getStatus, catName, daysUntil } from "../../utils/helpers";
 
+const twoLineText = {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+  overflowWrap: "break-word",
+  wordBreak: "keep-all",
+};
+
 export function ItemCard({ item, isOrdered, ao, onCardClick }) {
   const st   = getStatus(item);
   const days = daysUntil(item.expiry);
@@ -22,18 +31,17 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
       <div style={{ padding: "16px", minWidth: 0 }}>
 
         {/* 품목명 + 상태칩 */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <div style={{ width: 9, height: 9, borderRadius: 9999, background: isOk ? T.green500 : T.red500, flexShrink: 0 }} />
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
+          <div style={{ width: 9, height: 9, marginTop: 8, borderRadius: 9999, background: isOk ? T.green500 : T.red500, flexShrink: 0 }} />
           <p style={{
             margin: 0,
             fontSize: 20,
+            lineHeight: "26px",
             fontWeight: 700,
             color: T.grey900,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
             flex: 1,
             minWidth: 0,
+            ...twoLineText,
           }}>
             {item.name}
           </p>
@@ -50,7 +58,7 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
         </div>
 
         {/* 카테고리 · 위치 */}
-        <p style={{ margin: "0 0 12px", fontSize: 12, color: T.grey400 }}>
+        <p style={{ margin: "0 0 12px", fontSize: 12, lineHeight: "18px", color: T.grey400, overflowWrap: "break-word", wordBreak: "keep-all" }}>
           {catName(item.category_id)} · {item.location}
         </p>
 
@@ -65,7 +73,7 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
               transition: "width 300ms",
             }} />
           </div>
-          <span style={{ flexShrink: 0, fontSize: 16, fontWeight: 700, color: T.grey900, fontFamily: monoFont, fontVariantNumeric: "tabular-nums" }}>
+          <span style={{ flexShrink: 0, minWidth: 96, textAlign: "right", fontSize: 16, fontWeight: 700, color: T.grey900, fontFamily: monoFont, fontVariantNumeric: "tabular-nums" }}>
             {item.current_qty}
             <span style={{ fontSize: 12, fontWeight: 400, color: T.grey500, fontFamily: "inherit" }}>
               {item.unit} / 최소 {item.min_qty}

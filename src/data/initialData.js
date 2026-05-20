@@ -112,8 +112,23 @@ export const INIT_TXS = [
 
 export const INIT_ORDERS = [
   { id:"o1", item_id:"12", requested_by:"박위생사", requested_at:"2026-05-19T08:10:00", qty:10, note:"에피네프린 재고 부족",  status:"pending",  reviewed_by:null,      reviewed_at:null,                   review_note:"" },
-  { id:"o2", item_id:"18", requested_by:"최위생사", requested_at:"2026-05-18T16:30:00", qty:5,  note:"레진 A3 시급",         status:"ordered",  reviewed_by:"이매니저", reviewed_at:"2026-05-18T17:00:00", review_note:"승인합니다", carrier:"CJ대한통운", tracking_number:"9876543210" },
-  { id:"o3", item_id:"6",  requested_by:"정위생사", requested_at:"2026-05-12T10:00:00", qty:10, note:"거즈 부족",            status:"received", reviewed_by:"이매니저", reviewed_at:"2026-05-12T11:00:00", review_note:"" },
+  {
+    id:"o2", item_id:"18", requested_by:"최위생사", requested_at:"2026-05-18T16:30:00", qty:5,  note:"레진 A3 시급", status:"ordered",
+    reviewed_by:"이매니저", reviewed_at:"2026-05-18T17:00:00", review_note:"승인합니다", carrier:"CJ대한통운", tracking_number:"9876543210",
+    shipping_events:[
+      { status:"배송중", timestamp:"2026-05-19T09:20:00", location:"서울 집배센터", completed:true },
+      { status:"주문접수", timestamp:"2026-05-18T17:00:00", location:"도매 사이트", completed:true },
+    ],
+  },
+  {
+    id:"o3", item_id:"6", requested_by:"정위생사", requested_at:"2026-05-12T10:00:00", qty:10, note:"거즈 부족", status:"received",
+    reviewed_by:"이매니저", reviewed_at:"2026-05-12T11:00:00", review_note:"", carrier:"롯데택배", tracking_number:"5522331144",
+    shipping_events:[
+      { status:"입고완료", timestamp:"2026-05-14T10:30:00", location:"치과 재고실", completed:true },
+      { status:"배송중", timestamp:"2026-05-13T15:10:00", location:"서울 물류센터", completed:true },
+      { status:"주문접수", timestamp:"2026-05-12T11:00:00", location:"도매 사이트", completed:true },
+    ],
+  },
   { id:"o4", item_id:"5",  requested_by:"박위생사", requested_at:"2026-05-10T09:00:00", qty:5,  note:"덴탈 마스크 부족",    status:"rejected", reviewed_by:"이매니저", reviewed_at:"2026-05-10T14:00:00", review_note:"이번달 예산 초과" },
 ];
 

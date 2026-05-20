@@ -5,6 +5,15 @@ import { dateKey, todayKey } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
 
+const twoLineText = {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+  overflowWrap: "break-word",
+  wordBreak: "keep-all",
+};
+
 function groupByDate(txs) {
   const map = {};
   txs.forEach(tx => {
@@ -45,7 +54,7 @@ export function InOutScreen({items, txs, openModal}) {
   const todayOut = todayTxs.filter(tx=>tx.type==="out").reduce((s,tx)=>s+tx.qty,0);
 
   return (
-    <div style={{paddingBottom:96}}>
+    <div style={{paddingBottom:160}}>
       {/* 오늘 요약 카드 */}
       {todayTxs.length > 0 && (
         <div style={{padding:"12px 16px 0"}}>
@@ -101,18 +110,18 @@ export function InOutScreen({items, txs, openModal}) {
                   const item = items.find(it=>it.id===tx.item_id);
                   return (
                     <div key={tx.id}>
-                      <div style={{display:"flex", alignItems:"center", gap:12, padding:"18px 20px"}}>
+                      <div style={{display:"flex", alignItems:"flex-start", gap:12, padding:"18px 20px"}}>
                         <div style={{width:44, height:44, borderRadius:9999, background:tx.type==="in"?T.blue50:T.red50, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                           {tx.type==="in"?<ArrowDownToLine size={18} color={T.blue500}/>:<ArrowUpFromLine size={18} color={T.red500}/>}
                         </div>
                         <div style={{flex:1, minWidth:0}}>
-                          <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item?.name}</p>
-                          <p style={{margin:"1px 0 0", fontSize: 16, color:T.grey500}}>
+                          <p style={{margin:0, fontSize: 16, lineHeight:"22px", fontWeight:600, color:T.grey900, ...twoLineText}}>{item?.name}</p>
+                          <p style={{margin:"1px 0 0", fontSize: 16, lineHeight:"22px", color:T.grey500, overflowWrap:"break-word", wordBreak:"keep-all"}}>
                             {tx.note||""}
                             {tx.note ? " · " : ""}{tx.user}
                           </p>
                         </div>
-                        <div style={{textAlign:"right", flexShrink:0}}>
+                        <div style={{textAlign:"right", flexShrink:0, minWidth:54}}>
                           <p style={{margin:0, fontSize: 16, fontWeight:700, color:tx.type==="in"?T.blue500:T.red500, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{tx.type==="in"?"+":"-"}{tx.qty}</p>
                           <p style={{margin:"1px 0 0", fontSize: 16, color:T.grey400}}>{formatTime(tx.created_at)}</p>
                         </div>
@@ -127,7 +136,7 @@ export function InOutScreen({items, txs, openModal}) {
         })}
       </div>
 
-      <div style={{position:"sticky",left:16,right:16,bottom:16,zIndex:5,margin:"0 16px",background:T.white,border:`1px solid ${T.grey200}`,borderRadius:24,padding:8,display:"flex",gap:8,boxShadow:"0px 8px 24px rgba(0,0,0,0.16)"}}>
+      <div style={{position:"absolute",left:16,right:16,bottom:86,zIndex:20,background:T.white,border:`1px solid ${T.grey200}`,borderRadius:24,padding:8,display:"flex",gap:8,boxShadow:"0px 8px 24px rgba(0,0,0,0.16)"}}>
         <button onClick={()=>openModal("in")} style={{flex:1,minHeight:52,padding:"14px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap"}}>
           <ArrowDownToLine size={18} style={{flexShrink:0}}/> 입고 등록
         </button>

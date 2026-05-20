@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { storage } from '../services/storage';
 import { itemsApi } from '../api/itemsApi';
 import { ordersApi } from '../api/ordersApi';
+import { settingsApi } from '../api/settingsApi';
+import { STORAGE_KEYS } from '../api/keys';
 import { seedIfEmpty, resetToInitial } from '../api/seed';
 import { INIT_ITEMS, INIT_ORDERS } from '../data/initialData';
 
@@ -35,5 +37,26 @@ describe('영속화 (persistence)', () => {
     expect(itemsApi.list()).toEqual([]);
     resetToInitial();
     expect(itemsApi.list().length).toBe(INIT_ITEMS.length);
+  });
+
+  it('settingsApi.load는 기존 도매 설정에 자동발주 기본값을 보강', () => {
+    storage.save(STORAGE_KEYS.settings, {
+      vendors: [{ id: 1, name: '덴올', connected: true, username: 'demo', password: 'pw' }],
+      preferredVendor: 'lowest',
+      maxOrderAmount: 75000,
+    });
+
+    const settings = settingsApi.load();
+
+    expect(settings.preferredVendor).toBe('1');
+    expect(settings.maxOrderAmount).toBe('75000');
+    expect(settings.vendors).toHaveLength(3);
+    expect(settings.vendors[0]).toMatchObject({
+      id: 1,
+      username: 'demo',
+      password: 'pw',
+      automaticOrdering: true,
+    });
+    expect(settings.vendors[2].automaticOrdering).toBe(false);
   });
 });

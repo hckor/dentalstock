@@ -263,7 +263,7 @@ describe('StatusCard', () => {
   });
 
   describe('엣지 케이스', () => {
-    it('긴 제목과 서브텍스트가 ellipsis로 자름', () => {
+    it('긴 제목과 서브텍스트를 두 줄까지 안정적으로 표시함', () => {
       render(
         <StatusCard
           icon={mockIcon}
@@ -277,7 +277,11 @@ describe('StatusCard', () => {
         />
       );
       const subtitle = screen.getByText(/이것도 긴 서브텍스트/);
-      expect(subtitle).toHaveStyle('textOverflow: ellipsis');
+      expect(subtitle).toHaveStyle('display: -webkit-box');
+      expect(subtitle.style.WebkitLineClamp).toBe('2');
+      expect(subtitle).toHaveStyle('overflow: hidden');
+      expect(subtitle).toHaveStyle('overflowWrap: break-word');
+      expect(subtitle).toHaveStyle('wordBreak: keep-all');
     });
 
     it('actionLabel이 빈 문자열일 때 렌더링하지 않음', () => {

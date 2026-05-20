@@ -371,4 +371,41 @@ describe('useOrderActions', () => {
     const newTxs = txsUpdater([]);
     expect(newTxs[0].note).toBe('발주 입고 확인 (요청자: 김원장)');
   });
+
+  it('startTracking: 송장 등록 시 shipping_events 초기 데이터를 저장', () => {
+    const orderedOrder = {
+      ...orders[0],
+      status: 'ordered',
+      reviewed_at: '2026-05-01T11:00:00Z',
+    };
+    const { result } = renderHook(() =>
+      useOrderActions({
+        orders: [orderedOrder],
+        setOrders: mockSetOrders,
+        items,
+        setItems: mockSetItems,
+        setTxs: mockSetTxs,
+        setNotifs: mockSetNotifs,
+        currentUser,
+        showToast: mockShowToast,
+        setModal: mockSetModal
+      })
+    );
+
+    act(() => {
+      result.current.startTracking('o1', 'CJ대한통운', '1234567890');
+    });
+
+    const ordersUpdater = mockSetOrders.mock.calls[0][0];
+    const newOrders = ordersUpdater([orderedOrder]);
+    const updated = newOrders.find(o => o.id === 'o1');
+
+    expect(updated.carrier).toBe('CJ대한통운');
+    expect(updated.tracking_number).toBe('1234567890');
+    expect(updated.shipping_events).toEqual([
+      expect.objectContaining({ status: '배송중', location: 'CJ대한통운', completed: true }),
+      expect.objectContaining({ status: '주문접수', timestamp: '2026-05-01T11:00:00Z', completed: true }),
+    ]);
+    expect(mockShowToast).toHaveBeenCalledWith('송장이 등록됐습니다');
+  });
 });

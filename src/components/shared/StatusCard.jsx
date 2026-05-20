@@ -1,6 +1,15 @@
 import { memo } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 
+const twoLineText = {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+  overflowWrap: "break-word",
+  wordBreak: "keep-all",
+};
+
 // 배송 상태, 주문 승인 상태 등 통일된 상태 카드
 export const StatusCard = memo(function StatusCard({
   icon: Icon,
@@ -44,7 +53,7 @@ export const StatusCard = memo(function StatusCard({
         {Icon && <Icon size={20} color={iconColor} />}
       </div>
       <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: T.grey900 }}>
+        <p style={{ margin: 0, fontSize: 16, lineHeight: "22px", fontWeight: 600, color: T.grey900, overflowWrap: "break-word", wordBreak: "keep-all" }}>
           {title}
         </p>
         {subtitle && (
@@ -52,10 +61,9 @@ export const StatusCard = memo(function StatusCard({
             style={{
               margin: "2px 0 0",
               fontSize: 16,
+              lineHeight: "22px",
               color: T.grey500,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              ...twoLineText,
             }}
           >
             {subtitle}
@@ -66,12 +74,16 @@ export const StatusCard = memo(function StatusCard({
         <span
           style={{
             flexShrink: 0,
+            minWidth: 86,
+            boxSizing: "border-box",
             padding: "12px 18px",
             borderRadius: 9999,
             background: actionBgColor,
             color: T.white,
             fontSize: 16,
             fontWeight: 700,
+            lineHeight: "20px",
+            textAlign: "center",
           }}
         >
           {actionLabel}

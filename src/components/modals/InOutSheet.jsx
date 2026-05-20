@@ -15,7 +15,7 @@ export function InOutSheet({modal, selItem, form, setForm, onCommit, onClose}) {
     <div style={{padding:"16px 20px 0"}}>
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16}}>
         <h2 style={{margin:0, fontSize: 22, lineHeight:"30px", fontWeight:700, color:accent}}>{isOut?"출고 등록":"입고 등록"}</h2>
-        <button onClick={onClose} style={{border:"none", background:"none", cursor:"pointer"}}><X size={24} color={T.grey500}/></button>
+        <button aria-label="닫기" onClick={onClose} style={{border:"none", background:"none", cursor:"pointer"}}><X size={24} color={T.grey500}/></button>
       </div>
       <div style={{background:T.grey50, borderRadius:12, padding:"16px 18px", marginBottom:20, border:`1.5px solid ${accentBorder}`}}>
         <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900}}>{selItem.name}</p>

@@ -5,6 +5,15 @@ import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
 import { font, monoFont } from "../../../constants/colors";
 
+const twoLineText = {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+  overflowWrap: "break-word",
+  wordBreak: "keep-all",
+};
+
 export function TasksCard({
   canApprove,
   approvalOrders = [],
@@ -104,22 +113,26 @@ export function TasksCard({
                   <Icon size={20} color={task.iconColor} />
                 </div>
                 <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: T.grey900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p style={{ margin: 0, fontSize: 16, lineHeight: "22px", fontWeight: 600, color: T.grey900, ...twoLineText }}>
                     {task.title}
                   </p>
-                  <p style={{ margin: "2px 0 0", fontSize: 16, color: T.grey500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p style={{ margin: "2px 0 0", fontSize: 16, lineHeight: "22px", color: T.grey500, ...twoLineText }}>
                     {task.subtitle}
                   </p>
                 </div>
                 <span
                   style={{
                     flexShrink: 0,
+                    minWidth: 86,
+                    boxSizing: "border-box",
                     padding: "10px 14px",
                     borderRadius: 9999,
                     background: task.actionBg,
                     color: T.white,
                     fontSize: 14,
                     fontWeight: 700,
+                    lineHeight: "20px",
+                    textAlign: "center",
                   }}
                 >
                   {task.actionLabel}

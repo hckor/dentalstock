@@ -1,23 +1,12 @@
 import { X, Check, Circle } from "lucide-react";
 import { T, font } from "../../constants/colors";
+import { getShippingEvents, getShippingEventTimeLabel } from "../../utils/shippingEvents";
 
 export function ShippingDetailModal({ order, item, onClose, openModal, canApprove }) {
   if (!order || !item) return null;
 
   const hasPrice = Number.isFinite(order.price) && order.price > 0;
-  const shippingTimeline = order.shipping_timeline || (
-    order.status === "received"
-      ? [
-          { status: "배달완료", timestamp: "입고 확인됨", location: "수령처", completed: true },
-          { status: "배송중", timestamp: "배송 진행", location: order.carrier || "배송사", completed: true },
-          { status: "주문접수", timestamp: "발주 승인", location: "도매 사이트", completed: true },
-        ]
-      : [
-          { status: "배송중", timestamp: "배송 진행", location: order.carrier || "배송사", completed: true },
-          { status: "집하완료", timestamp: "상품 이동 시작", location: "출발지", completed: true },
-          { status: "주문접수", timestamp: "발주 승인", location: "도매 사이트", completed: true },
-        ]
-  );
+  const shippingTimeline = getShippingEvents(order);
 
   return (
     <div style={{ padding: "16px 20px 0" }}>
@@ -50,7 +39,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal, canApprov
           {order.carrier || "배송사 미지정"}
         </p>
         <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900, fontFamily: "monospace" }}>
-          {order.tracking_number || "1234567890"}
+          {order.tracking_number || "송장 미등록"}
         </p>
       </div>
 
@@ -85,7 +74,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal, canApprov
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
                 <span style={{ fontSize: 16, fontWeight: 600, color: T.grey900 }}>{event.status}</span>
-                <span style={{ fontSize: 16, color: T.grey500 }}>— {event.timestamp}</span>
+                <span style={{ fontSize: 16, color: T.grey500 }}>— {getShippingEventTimeLabel(event)}</span>
               </div>
               <p style={{ margin: 0, fontSize: 16, color: T.grey600 }}>{event.location}</p>
             </div>
