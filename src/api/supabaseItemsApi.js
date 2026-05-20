@@ -55,4 +55,17 @@ export const supabaseItemsApi = {
     if (error) throw error;
     return (data || []).map(mapSupabaseItem).sort(compareAppItems);
   },
+
+  async applyStockTransaction({ itemId, type, quantity, reason = "" }) {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.rpc("apply_stock_transaction", {
+      p_item_id: itemId,
+      p_type: type,
+      p_quantity: quantity,
+      p_reason: reason,
+    });
+
+    if (error) throw error;
+    return mapSupabaseItem(data);
+  },
 };

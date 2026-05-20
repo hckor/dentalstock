@@ -17,6 +17,7 @@ Current required order:
 1. `20260520_initial_dentalstock_schema.sql`
 2. `20260520_rls_hardening.sql`
 3. `20260520_items_bridge_and_seed.sql`
+4. `20260520_stock_transaction_rpc.sql`
 
 The migration creates the first production-ready tables with RLS enabled:
 
