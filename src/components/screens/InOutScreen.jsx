@@ -45,17 +45,7 @@ export function InOutScreen({items, txs, openModal}) {
   const todayOut = todayTxs.filter(tx=>tx.type==="out").reduce((s,tx)=>s+tx.qty,0);
 
   return (
-    <div>
-      {/* 상단 액션 버튼 */}
-      <div style={{padding:"12px 16px 0", display:"flex", gap:8}}>
-        <button onClick={()=>openModal("in")} style={{flex:1, minHeight:56, padding:"14px 0", borderRadius:9999, border:"none", background:T.blue500, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
-          <ArrowDownToLine size={18}/> 입고 등록
-        </button>
-        <button onClick={()=>openModal("out")} style={{flex:1, minHeight:56, padding:"14px 0", borderRadius:9999, border:"none", background:T.grey100, color:T.red500, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
-          <ArrowUpFromLine size={18}/> 출고 등록
-        </button>
-      </div>
-
+    <div style={{paddingBottom:96}}>
       {/* 오늘 요약 카드 */}
       {todayTxs.length > 0 && (
         <div style={{padding:"12px 16px 0"}}>
@@ -135,6 +125,15 @@ export function InOutScreen({items, txs, openModal}) {
             </div>
           );
         })}
+      </div>
+
+      <div style={{position:"sticky",bottom:0,zIndex:5,background:T.white,borderTop:`1px solid ${T.grey200}`,padding:"12px 16px 14px",display:"flex",gap:8,boxShadow:"0px -4px 12px rgba(0,0,0,0.06)"}}>
+        <button onClick={()=>openModal("in")} style={{flex:1,minHeight:52,padding:"14px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap"}}>
+          <ArrowDownToLine size={18} style={{flexShrink:0}}/> 입고 등록
+        </button>
+        <button onClick={()=>openModal("out")} style={{flex:1,minHeight:52,padding:"14px 0",borderRadius:9999,border:"none",background:T.grey100,color:T.red500,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap"}}>
+          <ArrowUpFromLine size={18} style={{flexShrink:0}}/> 출고 등록
+        </button>
       </div>
     </div>
   );
