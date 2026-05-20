@@ -16,6 +16,7 @@ import { supabaseAuthApi } from "./api/supabaseAuthApi";
 import { supabaseItemsApi } from "./api/supabaseItemsApi";
 import { supabaseOrdersApi } from "./api/supabaseOrdersApi";
 import { supabaseSettingsApi } from "./api/supabaseSettingsApi";
+import { supabaseSurgeriesApi } from "./api/supabaseSurgeriesApi";
 import { usePersistedState } from "./hooks/usePersistedState";
 import { LoginSelect } from "./components/auth/LoginSelect";
 import { LoginPin } from "./components/auth/LoginPin";
@@ -106,6 +107,22 @@ function DentalStockInner() {
       ignore = true;
     };
   }, [currentUser?.clinicId, isSupabaseMode, setOrders]);
+
+  useEffect(() => {
+    if (!isSupabaseMode || !currentUser?.clinicId) return;
+    let ignore = false;
+    supabaseSurgeriesApi.listByClinic(currentUser.clinicId)
+      .then(remoteSurgeries => {
+        if (ignore) return;
+        if (remoteSurgeries.length > 0) setSurgeries(remoteSurgeries);
+      })
+      .catch(() => {
+        if (!ignore) setSyncStatus("Supabase 수술 데이터를 불러오지 못했습니다");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [currentUser?.clinicId, isSupabaseMode, setSurgeries]);
 
   useEffect(() => {
     if (!isSupabaseMode || !currentUser?.clinicId) return;

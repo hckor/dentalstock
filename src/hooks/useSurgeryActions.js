@@ -1,7 +1,12 @@
 import { useEffect } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
+import { supabaseSurgeriesApi } from "../api/supabaseSurgeriesApi";
 import { SURGERY_PRESETS } from "../constants/surgeryPresets";
 import { todayKey } from "../utils/helpers";
+
+function mergeUpdatedItem(prevItems, updatedItem) {
+  return prevItems.map(item => item.id === updatedItem.id ? { ...item, ...updatedItem } : item);
+}
 
 export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItems, setTxs, setNotifs, currentUser, showToast, firePush, firedRemindersRef }) {
   const addSurgery = (data) => {
@@ -25,6 +30,36 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
       usage_confirmed_at:null,
       actual_items:null,
     };
+
+    if (supabaseSurgeriesApi.isEnabled()) {
+      void supabaseSurgeriesApi.createSurgery(currentUser.clinicId, surgery, currentUser)
+        .then(savedSurgery => {
+          setSurgeries(p=>[savedSurgery,...p]);
+          auditLogsApi.record({
+            action: "surgery.created",
+            entityType: "surgery",
+            entityId: savedSurgery.id,
+            actor: currentUser,
+            metadata: {
+              type: savedSurgery.type,
+              scheduled_date: savedSurgery.scheduled_date,
+              scheduled_time: savedSurgery.scheduled_time,
+              required_count: savedSurgery.required_items.length,
+              has_patient: Boolean(savedSurgery.patient && savedSurgery.patient !== "-"),
+            },
+          });
+          if (savedSurgery.scheduled_date===todayKey()) {
+            setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_today", surgery_id:savedSurgery.id, item_id:null, message:"오늘 예정된 수술 준비가 필요합니다", sub:`${savedSurgery.title} · ${savedSurgery.scheduled_time}`, is_read:false, created_at:new Date().toISOString()},...p]);
+            firePush(`today:${savedSurgery.id}`, "오늘 수술 일정", `${savedSurgery.title} · ${savedSurgery.scheduled_time}`);
+          }
+          showToast("수술 일정이 등록되었습니다.");
+        })
+        .catch(() => {
+          showToast("수술 일정 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setSurgeries(p=>[surgery,...p]);
     auditLogsApi.record({
       action: "surgery.created",
@@ -50,6 +85,29 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
     const surgery = surgeries.find(s=>s.id===surgeryId);
     if (!surgery) return;
     const preparedAt = new Date().toISOString();
+
+    if (supabaseSurgeriesApi.isEnabled()) {
+      const nextSurgery = {...surgery, prep_confirmed:true, prepared_by:currentUser.name, prepared_at:preparedAt};
+      void supabaseSurgeriesApi.updateSurgery(surgery, nextSurgery, currentUser)
+        .then(savedSurgery => {
+          setSurgeries(p=>p.map(s=>s.id===surgeryId?savedSurgery:s));
+          auditLogsApi.record({
+            action: "surgery.prep_confirmed",
+            entityType: "surgery",
+            entityId: surgeryId,
+            actor: currentUser,
+            metadata: { scheduled_date: surgery.scheduled_date, scheduled_time: surgery.scheduled_time },
+            at: preparedAt,
+          });
+          setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_ready", surgery_id:surgeryId, item_id:null, message:"수술 준비 확인이 완료되었습니다", sub:`${surgery.title} · ${currentUser.name}`, is_read:false, created_at:new Date().toISOString()},...p]);
+          showToast("수술 준비가 확인되었습니다.");
+        })
+        .catch(() => {
+          showToast("수술 준비 확인 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setSurgeries(p=>p.map(s=>s.id===surgeryId?{...s, prep_confirmed:true, prepared_by:currentUser.name, prepared_at:preparedAt}:s));
     auditLogsApi.record({
       action: "surgery.prep_confirmed",
@@ -65,6 +123,29 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
 
   const updateSurgeryItems = (surgeryId, newItems) => {
     const surgery = surgeries.find(s=>s.id===surgeryId);
+
+    if (supabaseSurgeriesApi.isEnabled() && surgery) {
+      void supabaseSurgeriesApi.updateSurgery(surgery, { ...surgery, required_items:newItems }, currentUser)
+        .then(savedSurgery => {
+          setSurgeries(p=>p.map(s=>s.id===surgeryId?savedSurgery:s));
+          auditLogsApi.record({
+            action: "surgery.items_updated",
+            entityType: "surgery",
+            entityId: surgeryId,
+            actor: currentUser,
+            metadata: {
+              before_count: surgery?.required_items?.length ?? 0,
+              after_count: newItems.length,
+            },
+          });
+          showToast("준비 품목이 수정되었습니다.");
+        })
+        .catch(() => {
+          showToast("준비 품목 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setSurgeries(p=>p.map(s=>s.id===surgeryId?{...s, required_items:newItems}:s));
     auditLogsApi.record({
       action: "surgery.items_updated",
@@ -109,6 +190,60 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
     const usedRows = usageRows.filter(row => row.qty > 0);
     const usageConfirmedAt = new Date().toISOString();
     const qtyByItemId = new Map(usedRows.map(row => [row.item_id, row.qty]));
+
+    if (supabaseSurgeriesApi.isEnabled()) {
+      void supabaseSurgeriesApi.confirmUsage(surgery, { usageItems: usageRows, note })
+        .then(({ surgery: savedSurgery, items: updatedItems }) => {
+          if (updatedItems.length > 0 && setItems) {
+            setItems(prev => updatedItems.reduce((nextItems, updatedItem) => (
+              mergeUpdatedItem(nextItems, updatedItem)
+            ), prev));
+          }
+          if (usedRows.length > 0 && setTxs) {
+            setTxs(prev => [
+              ...usedRows.map((row, index) => {
+                const item = itemMap.get(row.item_id);
+                return {
+                  id: `t${Date.now()}-s${index}`,
+                  item_id: row.item_id,
+                  type: "out",
+                  qty: row.qty,
+                  note: `수술 실사용 확정 (${surgery.title})${note ? ` · ${note}` : ""}`,
+                  created_at: usageConfirmedAt,
+                  user: currentUser.name,
+                  surgery_id: surgeryId,
+                  item_name: item?.name,
+                };
+              }),
+              ...prev,
+            ]);
+          }
+          setSurgeries(p=>p.map(s=>s.id===surgeryId?savedSurgery:s));
+          auditLogsApi.record({
+            action: "surgery.usage_confirmed",
+            entityType: "surgery",
+            entityId: surgeryId,
+            actor: currentUser,
+            metadata: {
+              scheduled_date: surgery.scheduled_date,
+              scheduled_time: surgery.scheduled_time,
+              used_count: usedRows.length,
+              used_items: usedRows.map(row => {
+                const item = itemMap.get(row.item_id);
+                return `${item?.name || row.item_id}:${row.qty}${item?.unit || ""}`;
+              }).join(", "),
+              note: note || "",
+            },
+            at: usageConfirmedAt,
+          });
+          setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_usage", surgery_id:surgeryId, item_id:null, message:"수술 실사용량 확인이 완료되었습니다", sub:`${surgery.title} · ${usedRows.length}개 품목 출고`, is_read:false, created_at:usageConfirmedAt},...p]);
+          showToast(usedRows.length ? `실사용 ${usedRows.length}개 품목 출고 완료` : "사용 품목 없이 수술을 완료했습니다");
+        })
+        .catch(() => {
+          showToast("수술 실사용량 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
 
     if (usedRows.length > 0 && setItems) {
       setItems(prev => prev.map(item => qtyByItemId.has(item.id)
@@ -170,6 +305,33 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
   const deleteSurgery = (surgeryId) => {
     const surgery = surgeries.find(s=>s.id===surgeryId);
     if (!surgery) return;
+
+    if (supabaseSurgeriesApi.isEnabled()) {
+      void supabaseSurgeriesApi.cancelSurgery(surgery, currentUser)
+        .then(() => {
+          setSurgeries(p=>p.filter(s=>s.id!==surgeryId));
+          setNotifs(p=>p.filter(n=>n.surgery_id!==surgeryId));
+          firedRemindersRef.current.delete(surgeryId);
+          auditLogsApi.record({
+            action: "surgery.deleted",
+            entityType: "surgery",
+            entityId: surgeryId,
+            actor: currentUser,
+            metadata: {
+              scheduled_date: surgery.scheduled_date,
+              scheduled_time: surgery.scheduled_time,
+              required_count: surgery.required_items.length,
+              had_patient: Boolean(surgery.patient && surgery.patient !== "-"),
+            },
+          });
+          showToast("수술 일정이 삭제되었습니다.");
+        })
+        .catch(() => {
+          showToast("수술 일정 삭제에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setSurgeries(p=>p.filter(s=>s.id!==surgeryId));
     setNotifs(p=>p.filter(n=>n.surgery_id!==surgeryId));
     firedRemindersRef.current.delete(surgeryId);
