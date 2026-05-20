@@ -10,4 +10,5 @@ export const STORAGE_KEYS = {
   settings:  "settings",
   authAttempts: "auth_attempts",
   vendorCredentials: "vendor_credentials",
+  auditLogs: "audit_logs",
 };

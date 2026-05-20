@@ -166,3 +166,14 @@
 - 기존 설정에 섞여 있던 도매몰 ID/PW는 로드 시 `vendorCredentials`로 이관하고, 이후 `settings` 저장 시에는 계정 필드를 다시 쓰지 않도록 막았습니다.
 - server-only 필드 정책에 `vendors.username`과 `vendorCredentials.username*` 암호화 필드를 추가해 ID도 비밀번호와 같은 민감 정보로 다루게 했습니다.
 - `npm run lint`, `npm test` 15개 파일 136개 테스트, `npm run build`, 최신 UX E2E 7개, 최종 회귀 E2E 21개를 모두 통과했습니다.
+
+## 감사 로그 추가
+
+운영 중 “누가 언제 무엇을 바꿨는지” 추적할 수 있도록 audit log 기반을 추가했습니다.
+
+- `auditLogs` repository/API를 추가하고, 로컬에서도 clinic namespace 아래에 저장되도록 연결했습니다.
+- 입출고 등록, 발주 요청/승인/반려, 송장 등록, 입고 확인, 수술 등록/준비확인/품목수정/삭제가 audit log 이벤트를 남기도록 했습니다.
+- 감사 로그에는 actor, action, entity, metadata, created_at을 남기되 `username/password/token/session/pin/card` 계열 metadata 키는 저장 전에 `[redacted]`로 마스킹합니다.
+- 수술 로그에는 환자명을 직접 남기지 않고, 환자 정보 존재 여부만 기록하도록 했습니다.
+- audit log API 테스트와 보안 정책 테스트를 추가했습니다.
+- `npm run lint`, `npm test` 16개 파일 138개 테스트, `npm run build`, 최신 UX E2E 7개, 최종 회귀 E2E 21개를 모두 통과했습니다.

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { auditLogsApi } from "../api/auditLogsApi";
 import { SURGERY_PRESETS } from "../constants/surgeryPresets";
 import { todayKey } from "../utils/helpers";
 
@@ -21,6 +22,19 @@ export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentU
       prepared_at:null,
     };
     setSurgeries(p=>[surgery,...p]);
+    auditLogsApi.record({
+      action: "surgery.created",
+      entityType: "surgery",
+      entityId: surgery.id,
+      actor: currentUser,
+      metadata: {
+        type: surgery.type,
+        scheduled_date: surgery.scheduled_date,
+        scheduled_time: surgery.scheduled_time,
+        required_count: surgery.required_items.length,
+        has_patient: Boolean(surgery.patient && surgery.patient !== "-"),
+      },
+    });
     if (surgery.scheduled_date===todayKey()) {
       setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_today", surgery_id:surgery.id, item_id:null, message:"오늘 예정된 수술 준비가 필요합니다", sub:`${surgery.title} · ${surgery.scheduled_time}`, is_read:false, created_at:new Date().toISOString()},...p]);
       firePush(`today:${surgery.id}`, "오늘 수술 일정", `${surgery.title} · ${surgery.scheduled_time}`);
@@ -31,13 +45,33 @@ export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentU
   const confirmSurgeryPrep = (surgeryId) => {
     const surgery = surgeries.find(s=>s.id===surgeryId);
     if (!surgery) return;
-    setSurgeries(p=>p.map(s=>s.id===surgeryId?{...s, prep_confirmed:true, prepared_by:currentUser.name, prepared_at:new Date().toISOString()}:s));
+    const preparedAt = new Date().toISOString();
+    setSurgeries(p=>p.map(s=>s.id===surgeryId?{...s, prep_confirmed:true, prepared_by:currentUser.name, prepared_at:preparedAt}:s));
+    auditLogsApi.record({
+      action: "surgery.prep_confirmed",
+      entityType: "surgery",
+      entityId: surgeryId,
+      actor: currentUser,
+      metadata: { scheduled_date: surgery.scheduled_date, scheduled_time: surgery.scheduled_time },
+      at: preparedAt,
+    });
     setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_ready", surgery_id:surgeryId, item_id:null, message:"수술 준비 확인이 완료되었습니다", sub:`${surgery.title} · ${currentUser.name}`, is_read:false, created_at:new Date().toISOString()},...p]);
     showToast("수술 준비가 확인되었습니다.");
   };
 
   const updateSurgeryItems = (surgeryId, newItems) => {
+    const surgery = surgeries.find(s=>s.id===surgeryId);
     setSurgeries(p=>p.map(s=>s.id===surgeryId?{...s, required_items:newItems}:s));
+    auditLogsApi.record({
+      action: "surgery.items_updated",
+      entityType: "surgery",
+      entityId: surgeryId,
+      actor: currentUser,
+      metadata: {
+        before_count: surgery?.required_items?.length ?? 0,
+        after_count: newItems.length,
+      },
+    });
     showToast("준비 품목이 수정되었습니다.");
   };
 
@@ -47,6 +81,18 @@ export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentU
     setSurgeries(p=>p.filter(s=>s.id!==surgeryId));
     setNotifs(p=>p.filter(n=>n.surgery_id!==surgeryId));
     firedRemindersRef.current.delete(surgeryId);
+    auditLogsApi.record({
+      action: "surgery.deleted",
+      entityType: "surgery",
+      entityId: surgeryId,
+      actor: currentUser,
+      metadata: {
+        scheduled_date: surgery.scheduled_date,
+        scheduled_time: surgery.scheduled_time,
+        required_count: surgery.required_items.length,
+        had_patient: Boolean(surgery.patient && surgery.patient !== "-"),
+      },
+    });
     showToast("수술 일정이 삭제되었습니다.");
   };
 

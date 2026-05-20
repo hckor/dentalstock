@@ -1,3 +1,4 @@
+import { auditLogsApi } from "../api/auditLogsApi";
 import { getActiveOrder } from "../utils/helpers";
 import { can } from "../constants/permissions";
 import { addReceiptShippingEvent, buildInitialShippingEvents } from "../utils/shippingEvents";
@@ -24,6 +25,14 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
       review_note: "",
     };
     setOrders(p => [newOrder, ...p]);
+    auditLogsApi.record({
+      action: "order.requested",
+      entityType: "order",
+      entityId: newOrder.id,
+      actor: currentUser,
+      metadata: { item_id: item.id, item_name: item.name, qty, note: note || "" },
+      at: now,
+    });
     setNotifs(p => [{
       id: `n${Date.now()}`,
       type: "order_req",
@@ -53,7 +62,16 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
       showToast("발주 품목을 찾을 수 없습니다.");
       return;
     }
-    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"ordered", reviewed_by:currentUser.name, reviewed_at:new Date().toISOString(), review_note:reviewNote}:o));
+    const reviewedAt = new Date().toISOString();
+    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"ordered", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote}:o));
+    auditLogsApi.record({
+      action: "order.approved",
+      entityType: "order",
+      entityId: orderId,
+      actor: currentUser,
+      metadata: { item_id: item.id, item_name: item.name, qty: order.qty, review_note: reviewNote || "" },
+      at: reviewedAt,
+    });
     setNotifs(p=>[{id:`n${Date.now()}`, type:"ordered", item_id:item.id, message:`${item.name} 발주가 완료되었습니다`, sub:`${currentUser.name} 승인 · ${order.qty}${item.unit} 배송 대기`, is_read:false, created_at:new Date().toISOString()},...p]);
     showToast("발주가 승인되었습니다.");
   };
@@ -74,7 +92,16 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
       showToast("발주 품목을 찾을 수 없습니다.");
       return;
     }
-    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"rejected", reviewed_by:currentUser.name, reviewed_at:new Date().toISOString(), review_note:reviewNote}:o));
+    const reviewedAt = new Date().toISOString();
+    setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"rejected", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote}:o));
+    auditLogsApi.record({
+      action: "order.rejected",
+      entityType: "order",
+      entityId: orderId,
+      actor: currentUser,
+      metadata: { item_id: item.id, item_name: item.name, qty: order.qty, review_note: reviewNote || "" },
+      at: reviewedAt,
+    });
     setNotifs(p=>[{id:`n${Date.now()}`, type:"order_rejected", item_id:item.id, message:`${item.name} 발주가 거절되었습니다`, sub:`${currentUser.name} · ${reviewNote||"사유 없음"}`, is_read:false, created_at:new Date().toISOString()},...p]);
     showToast("발주 요청이 거절되었습니다");
   };
@@ -100,6 +127,22 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
     setTxs(p=>[{id:`t${Date.now()}`, item_id:item.id, type:"in", qty:actualQty, note:`발주 입고 확인 (요청자: ${order.requested_by})${note?` · ${note}`:""}`, created_at:new Date().toISOString(), user:currentUser.name},...p]);
     const receivedAt = new Date().toISOString();
     setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"received", received_at:receivedAt, shipping_events:addReceiptShippingEvent(o, receivedAt)}:o));
+    auditLogsApi.record({
+      action: "order.received",
+      entityType: "order",
+      entityId: orderId,
+      actor: currentUser,
+      metadata: {
+        item_id: item.id,
+        item_name: item.name,
+        ordered_qty: order.qty,
+        received_qty: actualQty,
+        before_qty: item.current_qty,
+        after_qty: after,
+        note: note || "",
+      },
+      at: receivedAt,
+    });
     setNotifs(p=>[{id:`n${Date.now()}`, type:"received", item_id:item.id, message:`${item.name} 입고 확인 완료`, sub:`${currentUser.name} 확인 · ${actualQty}${item.unit} 입고`, is_read:false, created_at:new Date().toISOString()},...p]);
     showToast(`${actualQty}${item.unit} 입고 확인 완료`);
     setModal(null);
@@ -122,6 +165,18 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
       ? { ...o, carrier, tracking_number: trackingNumber, shipping_events: buildInitialShippingEvents({ order: o, carrier, timestamp: trackingStartedAt }) }
       : o
     ));
+    auditLogsApi.record({
+      action: "order.tracking_registered",
+      entityType: "order",
+      entityId: orderId,
+      actor: currentUser,
+      metadata: {
+        item_id: order.item_id,
+        carrier,
+        tracking_number_last4: String(trackingNumber || "").slice(-4),
+      },
+      at: trackingStartedAt,
+    });
     if (item) {
       setNotifs(p => [{ id: `n${Date.now()}`, type: "ordered", item_id: item.id, message: `${item.name} 송장이 등록됐습니다`, sub: `${carrier} · ${trackingNumber}`, is_read: false, created_at: new Date().toISOString() }, ...p]);
     }

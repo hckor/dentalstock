@@ -8,6 +8,7 @@ import {
 
 describe('security policy', () => {
   it('도매 계정과 세션성 데이터는 server-only로 분류한다', () => {
+    expect(DATA_SECURITY_POLICY.auditLogs.classification).toBe(DATA_CLASSIFICATION.CLINIC_INTERNAL);
     expect(DATA_SECURITY_POLICY.vendorCredentials.classification).toBe(DATA_CLASSIFICATION.SECRET);
     expect(DATA_SECURITY_POLICY.session.classification).toBe(DATA_CLASSIFICATION.SECRET);
     expect(SERVER_ONLY_FIELDS).toContain('vendors.username');

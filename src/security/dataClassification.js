@@ -30,6 +30,10 @@ export const DATA_SECURITY_POLICY = {
     classification: DATA_CLASSIFICATION.CLINIC_INTERNAL,
     notes: "알림은 사용자별 읽음 상태 분리를 고려한다.",
   },
+  auditLogs: {
+    classification: DATA_CLASSIFICATION.CLINIC_INTERNAL,
+    notes: "입출고/발주/수술 변경 이력을 append-only로 남긴다. 환자명, 비밀번호, 세션 토큰은 기록하지 않는다.",
+  },
   vendorCredentials: {
     classification: DATA_CLASSIFICATION.SECRET,
     notes: "도매몰 ID/PW는 클라이언트 저장 금지. 서버에서 AES-256-GCM/KMS로 암호화해 별도 컬렉션에 둔다.",
