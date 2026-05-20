@@ -23,6 +23,7 @@ Current required order:
 7. `20260520_surgeries_bridge_and_usage_rpc.sql`
 8. `20260520_activity_bridge.sql`
 9. `20260520_staff_management.sql`
+10. `20260520_price_monitoring.sql`
 
 The migration creates the first production-ready tables with RLS enabled:
 
@@ -35,6 +36,8 @@ The migration creates the first production-ready tables with RLS enabled:
 - `notifs`
 - `settings`
 - `audit_logs`
+- `vendor_products`
+- `price_snapshots`
 - server-only `vendor_credentials`
 - server-only `order_jobs`
 

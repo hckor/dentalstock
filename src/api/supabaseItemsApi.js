@@ -36,6 +36,26 @@ export function mapSupabaseItem(row = {}) {
   };
 }
 
+function toItemPayload(item) {
+  const appData = {
+    ...(item || {}),
+    id: item.id,
+    category_id: item.category_id,
+    location: item.location || "",
+    expiry: item.expiry ?? null,
+    vendor_options: Array.isArray(item.vendor_options) ? item.vendor_options : [],
+  };
+
+  return {
+    name: item.name,
+    category: item.category_id,
+    unit: item.unit || "개",
+    min_stock: Number(item.min_qty) || 0,
+    memo: item.location || "",
+    app_data: appData,
+  };
+}
+
 export const supabaseItemsApi = {
   isEnabled() {
     const config = getApiConfig();
@@ -64,6 +84,21 @@ export const supabaseItemsApi = {
       p_quantity: quantity,
       p_reason: reason,
     });
+
+    if (error) throw error;
+    return mapSupabaseItem(data);
+  },
+
+  async updateItemDetails(item) {
+    const itemId = item?.supabase_id;
+    if (!itemId) throw new Error("item_id_required");
+
+    const { data, error } = await getSupabaseClient()
+      .from("items")
+      .update(toItemPayload(item))
+      .eq("id", itemId)
+      .select("id, legacy_id, name, category, unit, stock, min_stock, desired_stock, memo, app_data, updated_at")
+      .single();
 
     if (error) throw error;
     return mapSupabaseItem(data);

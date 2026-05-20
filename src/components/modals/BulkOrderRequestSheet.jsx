@@ -4,7 +4,7 @@ import { T, font, monoFont } from "../../constants/colors";
 import { ST } from "../../constants/itemStates";
 import { settingsApi } from "../../api/settingsApi";
 import { catColor, getActiveOrder, getStatus } from "../../utils/helpers";
-import { resolveOrderVendor } from "../../utils/vendorSelection";
+import { resolveOrderVendorForQty } from "../../utils/vendorSelection";
 import { Inp } from "../shared/Inp";
 
 const buildInitialRows = (items, orders) =>
@@ -21,7 +21,7 @@ export function BulkOrderRequestSheet({ items, orders, onSubmit, onClose }) {
   const [rows, setRows] = useState(() => buildInitialRows(items, orders));
   const [note, setNote] = useState("부족 품목 일괄 발주");
   const settings = useMemo(() => settingsApi.load(), []);
-  const vendorByItemId = useMemo(() => new Map(rows.map(row => [row.item.id, resolveOrderVendor(row.item, settings)])), [rows, settings]);
+  const vendorByItemId = useMemo(() => new Map(rows.map(row => [row.item.id, resolveOrderVendorForQty(row.item, settings, row.qty)])), [rows, settings]);
 
   const selectedRows = useMemo(() => rows.filter(row => row.selected && !row.blocked), [rows]);
   const blockedCount = rows.filter(row => row.blocked).length;

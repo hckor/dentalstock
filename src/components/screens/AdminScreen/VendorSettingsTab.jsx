@@ -8,6 +8,7 @@ import { Inp } from "../../shared/Inp";
 import { settingsApi } from "../../../api/settingsApi";
 import { supabaseSettingsApi } from "../../../api/supabaseSettingsApi";
 import { vendorCredentialsApi } from "../../../api/vendorCredentialsApi";
+import { resolveOrderVendorForQty } from "../../../utils/vendorSelection";
 
 const MIN_ORDER_AMOUNT = 1000;
 
@@ -54,7 +55,7 @@ function TogglePill({ active, label, onClick, icon: Icon }) {
   );
 }
 
-export function VendorSettingsTab({ currentUser, showToast }) {
+export function VendorSettingsTab({ currentUser, items = [], showToast }) {
   const [initial, setInitial] = useState(() => settingsApi.load());
   const [vendors, setVendors] = useState(initial.vendors);
   const [credentials, setCredentials] = useState({});
@@ -69,6 +70,25 @@ export function VendorSettingsTab({ currentUser, showToast }) {
   const hasDraftCredentials = useMemo(() => (
     Object.values(credentials).some(credential => credential?.username || credential?.password)
   ), [credentials]);
+  const monitorSummary = useMemo(() => {
+    const settings = { vendors, preferredVendor, maxOrderAmount };
+    const monitoredItems = items.filter(item => Array.isArray(item.vendor_options) && item.vendor_options.length > 0);
+    const lowStockRecommendations = monitoredItems
+      .filter(item => item.current_qty < item.min_qty)
+      .map(item => ({
+        item,
+        qty: Math.max(1, item.min_qty - item.current_qty),
+        vendor: resolveOrderVendorForQty(item, settings, Math.max(1, item.min_qty - item.current_qty)),
+      }))
+      .filter(row => row.vendor.vendor_selection !== "unassigned")
+      .slice(0, 5);
+
+    return {
+      monitoredCount: monitoredItems.length,
+      candidateCount: monitoredItems.reduce((sum, item) => sum + item.vendor_options.length, 0),
+      lowStockRecommendations,
+    };
+  }, [items, vendors, preferredVendor, maxOrderAmount]);
 
   const isDirty =
     JSON.stringify(vendors) !== JSON.stringify(initial.vendors) ||
@@ -252,6 +272,36 @@ export function VendorSettingsTab({ currentUser, showToast }) {
             {idx < vendors.length - 1 && <Divider />}
           </div>
         ))}
+      </Card>
+
+      <p style={sectionTitleStyle}>최저가 감시</p>
+      <Card style={{ marginBottom: 20, padding: "18px 16px" }}>
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14}}>
+          <div style={{padding:"12px 14px", borderRadius:12, background:T.blue50}}>
+            <p style={{margin:0, fontSize:13, fontWeight:700, color:T.blue500}}>감시 품목</p>
+            <p style={{margin:"4px 0 0", fontSize:22, fontWeight:700, color:T.grey900}}>{monitorSummary.monitoredCount}개</p>
+          </div>
+          <div style={{padding:"12px 14px", borderRadius:12, background:T.grey100}}>
+            <p style={{margin:0, fontSize:13, fontWeight:700, color:T.grey600}}>구매 후보</p>
+            <p style={{margin:"4px 0 0", fontSize:22, fontWeight:700, color:T.grey900}}>{monitorSummary.candidateCount}개</p>
+          </div>
+        </div>
+        {monitorSummary.lowStockRecommendations.length > 0 ? (
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {monitorSummary.lowStockRecommendations.map(({item, qty, vendor}) => (
+              <div key={item.id} style={{padding:"12px 0", borderTop:`1px solid ${T.grey100}`}}>
+                <p style={{margin:0, fontSize:15, fontWeight:700, color:T.grey900}}>{item.name}</p>
+                <p style={{margin:"4px 0 0", fontSize:13, color:T.grey500}}>
+                  추천 {vendor.vendor_name} · {qty}{item.unit} · 실효가 {Number(vendor.vendor_price || 0).toLocaleString()}원
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{margin:0, fontSize:14, color:T.grey500, lineHeight:1.5}}>
+            품목 수정 화면에서 구매 후보 URL과 가격을 등록하면 부족 품목 발주 시 최저가 거래처가 자동 추천됩니다.
+          </p>
+        )}
       </Card>
 
       {/* 자동발주 설정 섹션 */}

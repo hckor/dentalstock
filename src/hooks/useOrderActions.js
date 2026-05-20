@@ -4,7 +4,7 @@ import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
 import { appRepository } from "../repositories/appRepository";
 import { remoteRepository } from "../repositories/remoteRepository";
 import { getActiveOrder } from "../utils/helpers";
-import { getOrderVendorKey, resolveOrderVendor } from "../utils/vendorSelection";
+import { getOrderVendorKey, resolveOrderVendorForQty } from "../utils/vendorSelection";
 import { can } from "../constants/permissions";
 import {
   addReceiptShippingEvent,
@@ -37,7 +37,7 @@ const getShipmentPeerOrders = (order, orders) => {
   return [order];
 };
 
-const buildVendorSnapshot = (item) => resolveOrderVendor(item, settingsApi.load());
+const buildVendorSnapshot = (item, qty = 1) => resolveOrderVendorForQty(item, settingsApi.load(), qty);
 
 function mergeUpdatedOrder(prevOrders, updatedOrder) {
   return prevOrders.map(order => order.id === updatedOrder.id ? updatedOrder : order);
@@ -68,7 +68,7 @@ export function useOrderActions({
       return;
     }
     const now = new Date().toISOString();
-    const vendorSnapshot = buildVendorSnapshot(item);
+    const vendorSnapshot = buildVendorSnapshot(item, qty);
     const newOrder = {
       id: `o${Date.now()}`,
       item_id: item.id,
@@ -163,7 +163,7 @@ export function useOrderActions({
       reviewed_by: null,
       reviewed_at: null,
       review_note: "",
-      ...buildVendorSnapshot(item),
+      ...buildVendorSnapshot(item, qty),
     }));
 
     if (supabaseOrdersApi.isEnabled()) {
@@ -245,7 +245,7 @@ export function useOrderActions({
       return;
     }
     const reviewedAt = new Date().toISOString();
-    const vendorSnapshot = buildVendorSnapshot(item);
+    const vendorSnapshot = buildVendorSnapshot(item, order.qty);
     const nextOrder = { ...order, status:"ordered", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote, ...vendorSnapshot };
 
     if (supabaseOrdersApi.isEnabled()) {
@@ -299,7 +299,7 @@ export function useOrderActions({
     const reviewedAt = new Date().toISOString();
     const vendorSnapshots = new Map(targetOrders.map(order => {
       const item = itemMap.get(order.item_id);
-      return [order.id, item ? buildVendorSnapshot(item) : {
+      return [order.id, item ? buildVendorSnapshot(item, order.qty) : {
         vendor_id: order.vendor_id || "",
         vendor_name: order.vendor_name || "거래처 미정",
         vendor_price: order.vendor_price || null,

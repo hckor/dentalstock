@@ -1,6 +1,10 @@
 export const LOWEST_VENDOR_VALUE = "lowest";
 
 const normalizeVendorId = (value) => String(value || "");
+const toPositiveNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : null;
+};
 
 const getActiveVendors = (settings) => {
   const vendors = Array.isArray(settings?.vendors) ? settings.vendors : [];
@@ -14,6 +18,20 @@ export function getVendorLabel(vendorSnapshot) {
 }
 
 export function resolveOrderVendor(item, settings) {
+  return resolveOrderVendorForQty(item, settings, 1);
+}
+
+export function getEffectiveVendorPrice(option, orderQty = 1) {
+  const itemPrice = toPositiveNumber(option?.price);
+  if (!itemPrice) return null;
+  const qty = Math.max(1, Number(orderQty) || 1);
+  const minOrderQty = Math.max(1, Number(option?.min_order_qty) || 1);
+  const purchasableQty = Math.max(qty, minOrderQty);
+  const shippingFee = toPositiveNumber(option?.shipping_fee) || 0;
+  return Math.round(itemPrice + (shippingFee / purchasableQty));
+}
+
+export function resolveOrderVendorForQty(item, settings, orderQty = 1) {
   const activeVendors = getActiveVendors(settings);
   const fallbackVendor = activeVendors[0] || settings?.vendors?.[0] || null;
   const preferredVendor = normalizeVendorId(settings?.preferredVendor);
@@ -26,8 +44,14 @@ export function resolveOrderVendor(item, settings) {
       return {
         vendor_id: normalizeVendorId(option.vendor_id),
         vendor_name: option.vendor_name || vendor?.name || `거래처 ${option.vendor_id}`,
-        vendor_price: Number(option.price) || null,
+        vendor_price: getEffectiveVendorPrice(option, orderQty),
+        vendor_base_price: toPositiveNumber(option.price),
+        vendor_shipping_fee: toPositiveNumber(option.shipping_fee) || 0,
+        vendor_min_order_qty: Math.max(1, Number(option.min_order_qty) || 1),
         vendor_sku: option.sku || "",
+        vendor_url: option.url || "",
+        vendor_in_stock: option.in_stock !== false,
+        vendor_last_checked_at: option.last_checked_at || null,
       };
     });
 
@@ -35,7 +59,7 @@ export function resolveOrderVendor(item, settings) {
     ? candidateOptions.find(option => option.vendor_id === preferredVendor)
     : null;
   const lowestOption = candidateOptions
-    .filter(option => Number.isFinite(option.vendor_price) && option.vendor_price > 0)
+    .filter(option => option.vendor_in_stock && Number.isFinite(option.vendor_price) && option.vendor_price > 0)
     .sort((a, b) => a.vendor_price - b.vendor_price)[0];
   const option = selectedOption || lowestOption || candidateOptions[0];
 
@@ -44,7 +68,13 @@ export function resolveOrderVendor(item, settings) {
       vendor_id: option.vendor_id,
       vendor_name: option.vendor_name,
       vendor_price: option.vendor_price,
+      vendor_base_price: option.vendor_base_price,
+      vendor_shipping_fee: option.vendor_shipping_fee,
+      vendor_min_order_qty: option.vendor_min_order_qty,
       vendor_sku: option.vendor_sku,
+      vendor_url: option.vendor_url,
+      vendor_in_stock: option.vendor_in_stock,
+      vendor_last_checked_at: option.vendor_last_checked_at,
       vendor_selection: selectedOption ? "preferred" : lowestOption ? "lowest" : "available",
     };
   }
