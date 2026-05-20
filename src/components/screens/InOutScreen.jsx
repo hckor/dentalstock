@@ -127,7 +127,7 @@ export function InOutScreen({items, txs, openModal}) {
         })}
       </div>
 
-      <div style={{position:"sticky",bottom:0,zIndex:5,background:T.white,borderTop:`1px solid ${T.grey200}`,padding:"12px 16px 14px",display:"flex",gap:8,boxShadow:"0px -4px 12px rgba(0,0,0,0.06)"}}>
+      <div style={{position:"sticky",left:16,right:16,bottom:16,zIndex:5,margin:"0 16px",background:T.white,border:`1px solid ${T.grey200}`,borderRadius:24,padding:8,display:"flex",gap:8,boxShadow:"0px 8px 24px rgba(0,0,0,0.16)"}}>
         <button onClick={()=>openModal("in")} style={{flex:1,minHeight:52,padding:"14px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap"}}>
           <ArrowDownToLine size={18} style={{flexShrink:0}}/> 입고 등록
         </button>
