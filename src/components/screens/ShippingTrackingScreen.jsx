@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Truck, Package, PackageCheck, AlertCircle, XCircle } from "lucide-react";
+import { Package } from "lucide-react";
 import { T, font } from "../../constants/colors";
 import { Card } from "../shared/Card";
 import { ShippingOrderCard } from "../shared/ShippingOrderCard";
@@ -36,10 +36,10 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
   }, [visibleOrders]);
 
   const tabDefs = [
-    {id: "auto_wait", label: "승인대기", icon: AlertCircle, count: groupedOrders.auto_wait.length},
-    {id: "in_transit", label: "진행중", icon: Truck, count: groupedOrders.in_transit.length},
-    {id: "completed", label: "완료", icon: PackageCheck, count: groupedOrders.completed.length},
-    {id: "rejected", label: "반려", icon: XCircle, count: groupedOrders.rejected.length},
+    {id: "auto_wait", label: "승인대기", count: groupedOrders.auto_wait.length},
+    {id: "in_transit", label: "진행중", count: groupedOrders.in_transit.length},
+    {id: "completed", label: "완료", count: groupedOrders.completed.length},
+    {id: "rejected", label: "반려", count: groupedOrders.rejected.length},
   ];
 
   const currentOrders = groupedOrders[trackingTab];
@@ -89,13 +89,15 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
             onClick={() => setTrackingTab(tab.id)}
             style={{
               flex: 1,
-              padding: "12px 8px",
+              minWidth: 0,
+              padding: "10px 4px",
               border: "none",
               borderRadius: 9999,
               cursor: "pointer",
               fontFamily: font,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 600,
+              lineHeight: "18px",
               background: trackingTab === tab.id ? T.white : "transparent",
               boxShadow: trackingTab === tab.id ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
               color: trackingTab === tab.id ? T.grey900 : T.grey500,
@@ -103,10 +105,11 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
               alignItems: "center",
               justifyContent: "center",
               gap: 4,
+              whiteSpace: "nowrap",
+              wordBreak: "keep-all",
               transition: "all 150ms",
             }}
           >
-            <tab.icon size={14} />
             {tab.label}
             {tab.count > 0 && (
               <span
@@ -118,6 +121,7 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
                   fontWeight: 700,
                   padding: "1px 5px",
                   marginLeft: 2,
+                  flexShrink: 0,
                 }}
               >
                 {tab.count}

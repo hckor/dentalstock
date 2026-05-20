@@ -9,20 +9,24 @@ const bodyStyle = { padding: "18px 20px" };
 const headerStyle = { display: "flex", alignItems: "flex-start", gap: 12 };
 const titleStyle = { margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900 };
 const metaStyle = { margin: "4px 0 0", fontSize: 16, color: T.grey500 };
-const actionRowStyle = { display: "flex", gap: 8 };
+const actionRowStyle = { display: "flex", alignItems: "stretch", gap: 8 };
 const noticeStyle = { padding: "12px 14px", borderRadius: 12, background: T.grey50, color: T.grey600, fontSize: 16, fontWeight: 600 };
 const actionButtonBase = {
   flex: 1,
-  padding: "12px 16px",
+  minWidth: 0,
+  padding: "12px 12px",
   borderRadius: 9999,
   cursor: "pointer",
   fontFamily: font,
-  fontSize: 16,
+  fontSize: 15,
   fontWeight: 600,
+  lineHeight: "20px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   gap: 6,
+  whiteSpace: "nowrap",
+  wordBreak: "keep-all",
 };
 
 const actionButtonVariants = {
@@ -72,11 +76,11 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
             {canApprove ? (
               <div style={actionRowStyle}>
                 <ActionButton variant="dangerOutline" onClick={() => onActionClick("reject")}>
-                  <XCircle size={18} />
+                  <XCircle size={18} style={{ flexShrink: 0 }} />
                   반려
                 </ActionButton>
                 <ActionButton onClick={() => onActionClick("approve")}>
-                  <CheckCircle2 size={18} />
+                  <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
                   승인
                 </ActionButton>
               </div>
@@ -109,13 +113,13 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                   variant="neutralOutline"
                   onClick={() => onActionClick(hasTracking ? "tracking_detail" : "tracking_start")}
                 >
-                  {hasTracking ? <FileText size={18} /> : <Navigation size={18} />}
+                  {hasTracking ? <FileText size={18} style={{ flexShrink: 0 }} /> : <Navigation size={18} style={{ flexShrink: 0 }} />}
                   {hasTracking ? "송장 상세" : "송장 등록"}
-                  {hasTracking && <ChevronRight size={18} style={{ marginLeft: "auto" }} />}
+                  {hasTracking && <ChevronRight size={18} style={{ flexShrink: 0 }} />}
                 </ActionButton>
                 {canApprove && (
                   <ActionButton onClick={() => onActionClick("confirm_receipt")}>
-                    <CheckCircle2 size={18} />
+                    <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
                     입고 확인
                   </ActionButton>
                 )}

@@ -12,7 +12,7 @@ import { VendorSettingsTab } from "./VendorSettingsTab";
 import { BottomSheet } from "../../shared/BottomSheet";
 import { InitialInventoryModal } from "../../modals/InitialInventoryModal";
 
-export function AdminScreen({users, setUsers, currentUser, orders, items, setItems, txs, surgeries, addSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast}) {
+export function AdminScreen({users, setUsers, currentUser, orders, items, setItems, txs, surgeries, addSurgery, deleteSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast}) {
   const [adminTab, setAdminTab] = useState("surgery");
   const [showInitialInventory, setShowInitialInventory] = useState(false);
 
@@ -60,7 +60,7 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
         {adminTab === "analytics" && <AnalyticsTab items={items} txs={txs} orders={orders}/>}
 
         {adminTab === "surgery" && (
-          <SurgeryAdminTab items={items} surgeries={surgeries} addSurgery={addSurgery} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>
+          <SurgeryAdminTab items={items} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>
         )}
 
         {adminTab === "staff" && (

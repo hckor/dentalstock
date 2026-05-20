@@ -41,6 +41,15 @@ export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentU
     showToast("준비 품목이 수정되었습니다.");
   };
 
+  const deleteSurgery = (surgeryId) => {
+    const surgery = surgeries.find(s=>s.id===surgeryId);
+    if (!surgery) return;
+    setSurgeries(p=>p.filter(s=>s.id!==surgeryId));
+    setNotifs(p=>p.filter(n=>n.surgery_id!==surgeryId));
+    firedRemindersRef.current.delete(surgeryId);
+    showToast("수술 일정이 삭제되었습니다.");
+  };
+
   // ── 로그인 직후: 브라우저 푸쉬 권한 요청 + 당일 수술 인앱 알림 자동 생성 ──
   useEffect(() => {
     const today = todayKey();
@@ -90,5 +99,5 @@ export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentU
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surgeries]);
 
-  return { addSurgery, confirmSurgeryPrep, updateSurgeryItems };
+  return { addSurgery, confirmSurgeryPrep, updateSurgeryItems, deleteSurgery };
 }

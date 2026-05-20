@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Edit2, CalendarDays, ClipboardCheck } from "lucide-react";
+import { Edit2, CalendarDays, ClipboardCheck, Trash2 } from "lucide-react";
 import { T, font } from "../../../constants/colors";
 import { SURGERY_PRESETS } from "../../../constants/surgeryPresets";
 import { todayKey } from "../../../utils/helpers";
@@ -9,7 +9,7 @@ import { Chip } from "../../shared/Chip";
 import { SecTitle } from "../../shared/SecTitle";
 import { Inp } from "../../shared/Inp";
 
-export function SurgeryAdminTab({items, surgeries, addSurgery, openItemsEditor, updateSurgeryItems}) {
+export function SurgeryAdminTab({items, surgeries, addSurgery, deleteSurgery, openItemsEditor, updateSurgeryItems}) {
   const [type, setType] = useState("implant");
   const [title, setTitle] = useState("오전 임플란트 수술");
   const [patient, setPatient] = useState("");
@@ -43,6 +43,9 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, openItemsEditor, 
     `${preset.label} · ${title || preset.label}`,
   );
   const resetDraft = () => { setDraftItems(preset.items.map(r=>({...r}))); setDraftCustomized(false); };
+  const removeSurgery = (surgery) => {
+    if (window.confirm(`${surgery.title} 수술 일정을 삭제할까요?`)) deleteSurgery(surgery.id);
+  };
 
   return (
     <>
@@ -91,7 +94,9 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, openItemsEditor, 
 
       <SecTitle>예정 수술</SecTitle>
       <Card>
-        {sortedSurgeries.map((s,i)=>(
+        {sortedSurgeries.length===0 ? (
+          <p style={{margin:0,padding:"28px 20px",fontSize: 16,color:T.grey500,textAlign:"center"}}>예정 수술이 없어요.</p>
+        ) : sortedSurgeries.map((s,i)=>(
           <div key={s.id}>
             <div style={{display:"flex",alignItems:"center",gap:12,padding:"18px 20px"}}>
               <div style={{width:36,height:36,borderRadius:10,background:s.prep_confirmed?T.green50:T.blue50,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -101,14 +106,23 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, openItemsEditor, 
                 <p style={{margin:0,fontSize: 16,fontWeight:600,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.title}</p>
                 <p style={{margin:"2px 0 0",fontSize: 16,color:T.grey500}}>{s.scheduled_date} {s.scheduled_time} · {s.patient} · 품목 {s.required_items.length}개</p>
               </div>
-              <Chip label={s.prep_confirmed?"준비완료":"준비전"} color={s.prep_confirmed?T.green500:T.orange500} bg={s.prep_confirmed?T.green50:T.orange50} border={T.grey200}/>
-              {!s.prep_confirmed&&(
+              <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                <Chip label={s.prep_confirmed?"준비완료":"준비전"} color={s.prep_confirmed?T.green500:T.orange500} bg={s.prep_confirmed?T.green50:T.orange50} border={T.grey200}/>
+                {!s.prep_confirmed&&(
+                  <button
+                    aria-label={`${s.title} 품목 편집`}
+                    onClick={()=>openItemsEditor(s.required_items, (newItems)=>updateSurgeryItems(s.id, newItems), `${s.scheduled_date} ${s.scheduled_time} · ${s.title}`)}
+                    title="품목 편집"
+                    style={{border:"none",background:T.grey100,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
+                  ><Edit2 size={18} color={T.grey700}/></button>
+                )}
                 <button
-                  onClick={()=>openItemsEditor(s.required_items, (newItems)=>updateSurgeryItems(s.id, newItems), `${s.scheduled_date} ${s.scheduled_time} · ${s.title}`)}
-                  title="품목 편집"
-                  style={{border:"none",background:T.grey100,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
-                ><Edit2 size={18} color={T.grey700}/></button>
-              )}
+                  aria-label={`${s.title} 삭제`}
+                  onClick={()=>removeSurgery(s)}
+                  title="수술 삭제"
+                  style={{border:"none",background:T.red50,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
+                ><Trash2 size={16} color={T.red500}/></button>
+              </div>
             </div>
             {i<sortedSurgeries.length-1&&<Divider/>}
           </div>

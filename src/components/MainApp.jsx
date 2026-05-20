@@ -56,7 +56,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   const { firePush, requestPushPermission, firedRemindersRef } = usePushNotifications();
   const { commit } = useStockActions({ items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
   const { submitOrder, approveOrder, rejectOrder, confirmReceipt, startTracking } = useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
-  const { addSurgery, confirmSurgeryPrep, updateSurgeryItems } = useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentUser, showToast, firePush, firedRemindersRef });
+  const { addSurgery, confirmSurgeryPrep, updateSurgeryItems, deleteSurgery } = useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentUser, showToast, firePush, firedRemindersRef });
 
   useEffect(() => { requestPushPermission(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -98,7 +98,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} rejectOrder={rejectOrder} startTracking={startTracking} confirmReceipt={confirmReceipt}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
-          {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast}/>}
+          {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast}/>}
         </Suspense>
       </div>
 
