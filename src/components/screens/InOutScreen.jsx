@@ -93,17 +93,11 @@ export function InOutScreen({items, txs, openModal}) {
             <p style={{margin:0, fontSize: 16, color:T.grey400}}>입출고 이력이 없어요</p>
           </div>
         ) : grouped.map(([date, dayTxs]) => {
-          const dayIn  = dayTxs.filter(tx=>tx.type==="in").length;
-          const dayOut = dayTxs.filter(tx=>tx.type==="out").length;
           return (
             <div key={date} style={{marginBottom:20}}>
               {/* 날짜 헤더 */}
               <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8}}>
                 <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey700}}>{formatDateHeader(date)}</p>
-                <div style={{display:"flex", gap:8}}>
-                  {dayIn>0  && <span style={{fontSize: 16, fontWeight:600, color:T.blue500}}>입고 +{dayIn}</span>}
-                  {dayOut>0 && <span style={{fontSize: 16, fontWeight:600, color:T.red500}}>출고 -{dayOut}</span>}
-                </div>
               </div>
               <Card>
                 {dayTxs.map((tx,i)=>{
@@ -136,7 +130,7 @@ export function InOutScreen({items, txs, openModal}) {
         })}
       </div>
 
-      <div style={{position:"absolute",left:16,right:16,bottom:86,zIndex:20,background:T.white,border:`1px solid ${T.grey200}`,borderRadius:24,padding:8,display:"flex",gap:8,boxShadow:"0px 8px 24px rgba(0,0,0,0.16)"}}>
+      <div style={{position:"absolute",left:16,right:16,bottom:108,zIndex:20,background:T.white,border:`1px solid ${T.grey200}`,borderRadius:24,padding:8,display:"flex",gap:8,boxShadow:"0px 8px 24px rgba(0,0,0,0.16)"}}>
         <button onClick={()=>openModal("in")} style={{flex:1,minHeight:52,padding:"14px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap"}}>
           <ArrowDownToLine size={18} style={{flexShrink:0}}/> 입고 등록
         </button>

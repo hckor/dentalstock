@@ -36,7 +36,8 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
     <div style={{flex:1, display:"flex", flexDirection:"column"}}>
       {/* 서브탭 */}
       <div style={{background:T.white, borderBottom:`1px solid ${T.grey200}`, padding:"10px 16px"}}>
-        <div style={{display:"flex", gap:6, overflowX:"auto", scrollbarWidth:"none"}}>
+        <div style={{position:"relative"}}>
+        <div style={{display:"flex", gap:6, overflowX:"auto", scrollbarWidth:"none", paddingRight:28}}>
           {tabs.map(t => (
             <button key={t.id} onClick={()=>setAdminTab(t.id)}
               style={{flexShrink:0, padding:"10px 16px", border:"none", borderRadius:12, cursor:"pointer", fontFamily:font, fontSize: 14, fontWeight:600,
@@ -52,6 +53,8 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
               )}
             </button>
           ))}
+        </div>
+        <div aria-hidden="true" style={{position:"absolute",top:0,right:-1,bottom:0,width:42,pointerEvents:"none",background:"linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.94) 58%, #ffffff)",boxShadow:"-12px 0 18px rgba(0,0,0,0.08)"}}/>
         </div>
       </div>
 
