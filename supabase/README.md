@@ -10,6 +10,8 @@ This folder keeps the database setup versioned with the app.
 4. Paste `supabase/migrations/20260520_initial_dentalstock_schema.sql`.
 5. Run it.
 
+Then run all later migration files in filename order.
+
 The migration creates the first production-ready tables with RLS enabled:
 
 - `clinics`
@@ -57,3 +59,31 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-or-secret-key>
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` in the frontend or Vercel client variables.
+
+## 4. Auth hardening before sharing
+
+Before sharing the Vercel app outside the project team:
+
+1. Go to Authentication > Providers > Email.
+2. Disable public self-signup if the pilot should be invite-only.
+3. Enable email confirmation for production use.
+4. Create users manually or through an invite flow.
+5. Add each user to `public.profiles` with the correct `clinic_id` and role.
+
+Recommended roles:
+
+- `owner`: clinic owner, can manage staff and settings.
+- `manager`: can approve orders and manage inventory workflows.
+- `hygienist` or `staff`: day-to-day stock and surgery workflow user.
+
+## 5. Vercel variables
+
+For the frontend deployment, set only these variables:
+
+```bash
+VITE_DENTALSTOCK_API_MODE=supabase
+VITE_SUPABASE_URL=https://tausnjxzqmnhoeslgbmc.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
+```
+
+Do not add `SUPABASE_SERVICE_ROLE_KEY` to the frontend deployment. Use it only in a server-only environment after backend persistence or order workers are implemented.

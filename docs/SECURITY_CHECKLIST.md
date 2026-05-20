@@ -6,15 +6,20 @@
 
 - [ ] 도매몰 ID/PW는 클라이언트 저장 금지
 - [ ] 도매몰 비밀번호는 AES-256-GCM으로 암호화하고 KMS/Secret Manager 키와 분리
-- [ ] 모든 문서 경로는 `clinicId` 하위에 둔다
-- [ ] 요청자의 `auth.token.clinicId`와 문서의 `clinicId`가 항상 일치해야 한다
+- [x] Supabase 주요 테이블은 `clinic_id`를 기준으로 RLS를 적용한다
+- [x] 요청자의 Supabase profile과 row의 `clinic_id`가 항상 일치해야 한다
+- [ ] `profiles.role` 변경은 owner 전용 정책으로만 허용한다
+- [ ] `orders.requested_by`, `txs.actor_id`는 서버/DB 레벨에서 `auth.uid()`와 일치해야 한다
 - [ ] 자동 주문은 `owner` 또는 `manager` 승인 이후에만 실행한다
 - [ ] 1회 최대 주문금액 한도를 서버에서도 검증한다
 - [ ] 주문 실행/송장 수집 워커 로그에 비밀번호, 카드번호, 세션 쿠키를 남기지 않는다
+- [x] `SUPABASE_SERVICE_ROLE_KEY`는 프론트엔드/Vercel client 변수에 노출하지 않는다
 
 ## High
 
 - [ ] PIN은 원문 저장 금지, PBKDF2/Argon2 해시만 저장
+- [ ] Supabase Auth 공개 회원가입을 끄고 관리자 초대/생성 계정만 허용한다
+- [ ] Supabase Auth 이메일 인증을 운영 전에 켠다
 - [ ] 관리자 계정 2FA 준비
 - [ ] 환자명은 최소 보관하고 알림/로그에는 반복 저장하지 않는다
 - [x] 입출고/발주/수술 삭제는 audit log로 남긴다
@@ -40,3 +45,6 @@
 - 서버 전환용 `auditLogService`와 메모리 repository 골격은 append-only 계약을 테스트한다.
 - 자동주문 worker와 배송 provider는 `server/workers/README.md`에 queue/job 경계부터 정의했다.
 - 실제 운영 전에는 `vendorCredentials`를 클라이언트 저장소에서 제거하고 server-only 암호화 저장소로 옮겨야 한다.
+- Supabase Auth 로그인 모드는 붙었지만, 재고/발주/수술 데이터 동기화는 아직 로컬 저장소에 남아 있다.
+- Supabase `publishable` 키는 브라우저에 사용 가능하지만, 모든 보호는 RLS 정책에 의존한다.
+- Vercel에는 `VITE_DENTALSTOCK_API_MODE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`만 등록한다. `SUPABASE_SERVICE_ROLE_KEY`는 서버 기능을 붙일 때까지 등록하지 않는다.
