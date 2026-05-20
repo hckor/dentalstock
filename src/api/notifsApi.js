@@ -1,12 +1,10 @@
-import { storage } from "../services/storage";
-import { STORAGE_KEYS } from "./keys";
-import { INIT_NOTIFS } from "../data/initialData";
+import { appRepository } from "../repositories/appRepository";
 
 export const notifsApi = {
   list() {
-    return storage.load(STORAGE_KEYS.notifs, INIT_NOTIFS);
+    return appRepository.notifs.list();
   },
   save(notifs) {
-    storage.save(STORAGE_KEYS.notifs, notifs);
+    appRepository.notifs.save(notifs);
   },
 };

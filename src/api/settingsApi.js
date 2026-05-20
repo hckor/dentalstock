@@ -1,5 +1,4 @@
-import { storage } from "../services/storage";
-import { STORAGE_KEYS } from "./keys";
+import { appRepository } from "../repositories/appRepository";
 
 const DEFAULTS = {
   vendors: [
@@ -34,10 +33,10 @@ function normalizeSettings(saved) {
 
 export const settingsApi = {
   load() {
-    const saved = storage.load(STORAGE_KEYS.settings, null);
+    const saved = appRepository.settings.get();
     return normalizeSettings(saved);
   },
   save(settings) {
-    storage.save(STORAGE_KEYS.settings, settings);
+    appRepository.settings.set(settings);
   },
 };

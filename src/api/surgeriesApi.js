@@ -1,12 +1,10 @@
-import { storage } from "../services/storage";
-import { STORAGE_KEYS } from "./keys";
-import { INIT_SURGERIES } from "../data/initialData";
+import { appRepository } from "../repositories/appRepository";
 
 export const surgeriesApi = {
   list() {
-    return storage.load(STORAGE_KEYS.surgeries, INIT_SURGERIES);
+    return appRepository.surgeries.list();
   },
   save(surgeries) {
-    storage.save(STORAGE_KEYS.surgeries, surgeries);
+    appRepository.surgeries.save(surgeries);
   },
 };

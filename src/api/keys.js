@@ -8,4 +8,5 @@ export const STORAGE_KEYS = {
   notifs:    "notifs",
   session:   "session",
   settings:  "settings",
+  authAttempts: "auth_attempts",
 };

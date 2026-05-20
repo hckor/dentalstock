@@ -131,5 +131,16 @@
 
 - 입출고 하단 액션 그룹은 기존 넓은 버튼 방향을 유지하되, 하단 내비게이션과 붙어 보이지 않도록 위쪽 여백을 더 확보했습니다.
 - 입출고 날짜 헤더 오른쪽의 `입고 +n`, `출고 -n` 집계는 리스트 노이즈를 줄이기 위해 제거했습니다.
-- 관리 화면의 가로 서브탭은 기존 구조를 유지하되, 오른쪽 끝에 페이드 그림자를 추가해 더 넘길 수 있다는 힌트를 주었습니다.
+- 관리 화면의 가로 서브탭은 기존 구조를 유지하되, 오른쪽 끝에 얇은 페이드와 chevron 힌트를 추가해 더 넘길 수 있다는 느낌을 주었습니다.
 - `npm run lint`, `npm test`, `npm run build`, 최신 UX E2E 7개, 최종 회귀 E2E 21개를 다시 통과했습니다.
+
+## 데이터 레이어 분리
+
+실제 백엔드/Firebase 전환을 준비하기 위해 저장소 접근 경계를 분리했습니다.
+
+- `src/repositories/localRepository.js`를 추가해 현재 localStorage 어댑터를 repository 인터페이스 뒤로 감췄습니다.
+- `src/repositories/appRepository.js`를 추가해 `users`, `items`, `txs`, `orders`, `surgeries`, `notifs`, `settings`, `session`, `authAttempts`를 도메인 단위 repository로 묶었습니다.
+- `itemsApi`, `ordersApi`, `settingsApi`, `authApi`, `seed` 등 기존 API 모듈은 더 이상 storage를 직접 호출하지 않고 `appRepository`만 사용하게 정리했습니다.
+- 초기 데이터 시드와 리셋도 repository를 통해 실행되므로, 나중에 Firestore/REST 구현체로 바꿀 때 앱 화면과 훅을 덜 건드릴 수 있습니다.
+- repository 테스트를 추가해 collection/value repository의 `list/save/get/set/remove` 계약과 초기 데이터 복구 동작을 고정했습니다.
+- `npm run lint`, `npm test` 14개 파일 132개 테스트, `npm run build`, 최종 회귀 E2E 21개를 모두 통과했습니다.

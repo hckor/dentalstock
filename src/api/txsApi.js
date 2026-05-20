@@ -1,12 +1,10 @@
-import { storage } from "../services/storage";
-import { STORAGE_KEYS } from "./keys";
-import { INIT_TXS } from "../data/initialData";
+import { appRepository } from "../repositories/appRepository";
 
 export const txsApi = {
   list() {
-    return storage.load(STORAGE_KEYS.txs, INIT_TXS);
+    return appRepository.txs.list();
   },
   save(txs) {
-    storage.save(STORAGE_KEYS.txs, txs);
+    appRepository.txs.save(txs);
   },
 };

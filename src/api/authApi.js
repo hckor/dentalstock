@@ -1,5 +1,4 @@
-import { storage } from "../services/storage";
-import { STORAGE_KEYS } from "./keys";
+import { appRepository } from "../repositories/appRepository";
 import { usersApi } from "./usersApi";
 import { hashPin, verifyPinHash, isHashed } from "../utils/crypto";
 
@@ -8,10 +7,8 @@ const MAX_ATTEMPTS = 5;            // 잠금 전 허용 시도 횟수
 const LOCK_DURATION_MS = 60_000;   // 1분 잠금
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12시간
 
-const ATTEMPTS_KEY = "auth_attempts"; // { userId: { count, lockUntil } }
-
 // ─── PIN 해시 마이그레이션 ────────────────────────────
-// 동시 호출은 promise 캐시로 합치되, 실제 마이그레이션 필요 여부는 매번 storage 기준으로 확인
+// 동시 호출은 promise 캐시로 합치되, 실제 마이그레이션 필요 여부는 매번 repository 기준으로 확인
 let migrationPromise = null;
 function migratePinsIfNeeded() {
   if (migrationPromise) return migrationPromise;
@@ -33,10 +30,10 @@ function migratePinsIfNeeded() {
 
 // ─── 시도 횟수 / 잠금 관리 ────────────────────────────
 function readAttempts() {
-  return storage.load(ATTEMPTS_KEY, {});
+  return appRepository.authAttempts.get();
 }
 function writeAttempts(map) {
-  storage.save(ATTEMPTS_KEY, map);
+  appRepository.authAttempts.set(map);
 }
 
 export function getLockState(userId) {
@@ -68,7 +65,7 @@ function clearFailures(userId) {
 // ─── 세션 ─────────────────────────────────────────────
 // { userId, expiresAt }
 function readSession() {
-  return storage.load(STORAGE_KEYS.session, null);
+  return appRepository.session.get();
 }
 
 export const authApi = {
@@ -111,7 +108,7 @@ export const authApi = {
     const session = readSession();
     if (!session || !session.userId) return null;
     if (session.expiresAt && session.expiresAt < Date.now()) {
-      storage.remove(STORAGE_KEYS.session);
+      appRepository.session.remove();
       return null;
     }
     const users = usersApi.list();
@@ -119,14 +116,14 @@ export const authApi = {
   },
 
   setSession(user) {
-    storage.save(STORAGE_KEYS.session, {
+    appRepository.session.set({
       userId: user.id,
       expiresAt: Date.now() + SESSION_TTL_MS,
     });
   },
 
   clearSession() {
-    storage.remove(STORAGE_KEYS.session);
+    appRepository.session.remove();
   },
 
   // 테스트/관리자용

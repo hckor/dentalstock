@@ -1,12 +1,10 @@
-import { storage } from "../services/storage";
-import { STORAGE_KEYS } from "./keys";
-import { INITIAL_USERS } from "../data/initialData";
+import { appRepository } from "../repositories/appRepository";
 
 export const usersApi = {
   list() {
-    return storage.load(STORAGE_KEYS.users, INITIAL_USERS);
+    return appRepository.users.list();
   },
   save(users) {
-    storage.save(STORAGE_KEYS.users, users);
+    appRepository.users.save(users);
   },
 };
