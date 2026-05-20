@@ -116,11 +116,16 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       showToast("직원 초대 메일을 보냈습니다");
       return true;
     } catch (error) {
-      const message = error?.message === "user_already_exists"
-        ? "이미 가입된 이메일입니다"
-        : error?.message === "owner_required"
-          ? "원장 계정만 직원을 초대할 수 있습니다"
-          : "직원 초대를 보내지 못했습니다";
+      const inviteErrorMessages = {
+        authentication_required: "다시 로그인한 뒤 초대해주세요",
+        invalid_email: "초대할 이메일을 확인해주세요",
+        invite_failed: "초대 메일 발송에 실패했습니다",
+        owner_required: "원장 계정만 직원을 초대할 수 있습니다",
+        profile_create_failed: "직원 프로필 생성에 실패했습니다",
+        server_not_configured: "Supabase Function secret 설정이 필요합니다",
+        user_already_exists: "이미 가입되었거나 초대된 이메일입니다",
+      };
+      const message = inviteErrorMessages[error?.message] || "직원 초대를 보내지 못했습니다";
       showToast(message);
       return false;
     }

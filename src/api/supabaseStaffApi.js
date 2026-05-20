@@ -7,6 +7,22 @@ function isEnabled() {
   return config.isSupabaseMode && isSupabaseConfigured();
 }
 
+async function readFunctionError(error) {
+  const response = error?.context;
+  if (!response) return error?.message;
+
+  try {
+    const body = await response.clone().json();
+    return body?.error || body?.message || error?.message;
+  } catch {
+    try {
+      return await response.clone().text();
+    } catch {
+      return error?.message;
+    }
+  }
+}
+
 export const supabaseStaffApi = {
   isEnabled,
 
@@ -58,7 +74,7 @@ export const supabaseStaffApi = {
         },
       });
 
-    if (error) throw error;
+    if (error) throw new Error(await readFunctionError(error));
     if (data?.error) throw new Error(data.error);
     return mapSupabaseProfile(data?.profile || data);
   },
