@@ -1,5 +1,6 @@
 import { auditLogsApi } from "../api/auditLogsApi";
 import { settingsApi } from "../api/settingsApi";
+import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
 import { appRepository } from "../repositories/appRepository";
 import { remoteRepository } from "../repositories/remoteRepository";
 import { getActiveOrder } from "../utils/helpers";
@@ -73,6 +74,37 @@ export function useOrderActions({
       review_note: "",
       ...vendorSnapshot,
     };
+
+    if (supabaseOrdersApi.isEnabled()) {
+      void supabaseOrdersApi.createOrder(currentUser.clinicId, newOrder)
+        .then(savedOrder => {
+          setOrders(p => [savedOrder, ...p]);
+          auditLogsApi.record({
+            action: "order.requested",
+            entityType: "order",
+            entityId: savedOrder.id,
+            actor: currentUser,
+            metadata: { item_id: item.id, item_name: item.name, qty, note: note || "", vendor_id: vendorSnapshot.vendor_id, vendor_name: vendorSnapshot.vendor_name },
+            at: now,
+          });
+          setNotifs(p => [{
+            id: `n${Date.now()}`,
+            type: "order_req",
+            item_id: item.id,
+            message: `${item.name} 발주 요청이 도착했습니다`,
+            sub: `${currentUser.name} · ${qty}${item.unit}`,
+            is_read: false,
+            created_at: now,
+          }, ...p]);
+          showToast(`${item.name} 발주 요청 완료`);
+          setModal(null);
+        })
+        .catch(() => {
+          showToast("발주 요청 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setOrders(p => [newOrder, ...p]);
     auditLogsApi.record({
       action: "order.requested",
@@ -126,6 +158,41 @@ export function useOrderActions({
       ...buildVendorSnapshot(item),
     }));
 
+    if (supabaseOrdersApi.isEnabled()) {
+      void Promise.all(newOrders.map(order => supabaseOrdersApi.createOrder(currentUser.clinicId, order)))
+        .then(savedOrders => {
+          setOrders(p => [...savedOrders, ...p]);
+          auditLogsApi.record({
+            action: "order.bulk_requested",
+            entityType: "order",
+            entityId: savedOrders.map(order => order.id).join(","),
+            actor: currentUser,
+            metadata: {
+              count: savedOrders.length,
+              skipped_count: skippedCount,
+              items: availableRequests.map(({ item, qty }) => `${item.name}:${qty}${item.unit}`).join(", "),
+              note: note || "",
+            },
+            at: now,
+          });
+          setNotifs(p => [{
+            id: `n${Date.now()}`,
+            type: "order_req",
+            item_id: null,
+            message: `부족 품목 ${savedOrders.length}건 발주 요청이 도착했습니다`,
+            sub: `${currentUser.name}${skippedCount ? ` · ${skippedCount}건 제외` : ""}`,
+            is_read: false,
+            created_at: now,
+          }, ...p]);
+          showToast(`${savedOrders.length}건 발주 요청 완료${skippedCount ? ` · ${skippedCount}건 제외` : ""}`);
+          setModal(null);
+        })
+        .catch(() => {
+          showToast("일괄 발주 요청 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setOrders(p => [...newOrders, ...p]);
     auditLogsApi.record({
       action: "order.bulk_requested",
@@ -171,6 +238,29 @@ export function useOrderActions({
     }
     const reviewedAt = new Date().toISOString();
     const vendorSnapshot = buildVendorSnapshot(item);
+    const nextOrder = { ...order, status:"ordered", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote, ...vendorSnapshot };
+
+    if (supabaseOrdersApi.isEnabled()) {
+      void supabaseOrdersApi.updateOrder(order, nextOrder)
+        .then(savedOrder => {
+          setOrders(p=>p.map(o=>o.id===orderId?savedOrder:o));
+          auditLogsApi.record({
+            action: "order.approved",
+            entityType: "order",
+            entityId: savedOrder.id,
+            actor: currentUser,
+            metadata: { item_id: item.id, item_name: item.name, qty: order.qty, review_note: reviewNote || "", vendor_id: vendorSnapshot.vendor_id, vendor_name: vendorSnapshot.vendor_name },
+            at: reviewedAt,
+          });
+          setNotifs(p=>[{id:`n${Date.now()}`, type:"ordered", item_id:item.id, message:`${item.name} 발주가 완료되었습니다`, sub:`${vendorSnapshot.vendor_name} · ${order.qty}${item.unit} 배송 대기`, is_read:false, created_at:new Date().toISOString()},...p]);
+          showToast("발주가 승인되었습니다.");
+        })
+        .catch(() => {
+          showToast("발주 승인 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"ordered", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote, ...vendorSnapshot}:o));
     auditLogsApi.record({
       action: "order.approved",
@@ -221,6 +311,53 @@ export function useOrderActions({
       const shipmentGroupId = `sg${Date.now()}-${index}`;
       ids.forEach(id => shipmentGroupByOrderId.set(id, shipmentGroupId));
     });
+
+    if (supabaseOrdersApi.isEnabled()) {
+      const nextOrders = targetOrders.map(order => ({
+        ...order,
+        ...vendorSnapshots.get(order.id),
+        status: "ordered",
+        reviewed_by: currentUser.name,
+        reviewed_at: reviewedAt,
+        review_note: reviewNote,
+        shipment_group_id: shipmentGroupByOrderId.get(order.id) || order.shipment_group_id,
+      }));
+      void Promise.all(nextOrders.map(order => supabaseOrdersApi.updateOrder(order, order)))
+        .then(savedOrders => {
+          const savedById = new Map(savedOrders.map(order => [order.id, order]));
+          setOrders(prev => prev.map(order => savedById.get(order.id) || order));
+          auditLogsApi.record({
+            action: "order.bulk_approved",
+            entityType: "order",
+            entityId: savedOrders.map(order => order.id).join(","),
+            actor: currentUser,
+            metadata: {
+              count: savedOrders.length,
+              orders: targetOrders.map(order => {
+                const item = itemMap.get(order.item_id);
+                const vendor = vendorSnapshots.get(order.id);
+                return `${item?.name || order.item_id}:${order.qty}${item?.unit || ""}@${vendor.vendor_name}`;
+              }).join(", "),
+              review_note: reviewNote || "",
+            },
+            at: reviewedAt,
+          });
+          setNotifs(prev => [{
+            id: `n${Date.now()}`,
+            type: "ordered",
+            item_id: null,
+            message: `발주 ${savedOrders.length}건이 승인되었습니다`,
+            sub: `${vendorGroups.size}개 거래처로 나눠 배송`,
+            is_read: false,
+            created_at: reviewedAt,
+          }, ...prev]);
+          showToast(`${savedOrders.length}건 일괄 승인 완료`);
+        })
+        .catch(() => {
+          showToast("일괄 승인 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
 
     setOrders(prev => prev.map(order => selectedIds.has(order.id) && order.status === "pending"
       ? {
@@ -279,6 +416,29 @@ export function useOrderActions({
       return;
     }
     const reviewedAt = new Date().toISOString();
+    const nextOrder = { ...order, status:"rejected", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote };
+
+    if (supabaseOrdersApi.isEnabled()) {
+      void supabaseOrdersApi.updateOrder(order, nextOrder)
+        .then(savedOrder => {
+          setOrders(p=>p.map(o=>o.id===orderId?savedOrder:o));
+          auditLogsApi.record({
+            action: "order.rejected",
+            entityType: "order",
+            entityId: savedOrder.id,
+            actor: currentUser,
+            metadata: { item_id: item.id, item_name: item.name, qty: order.qty, review_note: reviewNote || "" },
+            at: reviewedAt,
+          });
+          setNotifs(p=>[{id:`n${Date.now()}`, type:"order_rejected", item_id:item.id, message:`${item.name} 발주가 거절되었습니다`, sub:`${currentUser.name} · ${reviewNote||"사유 없음"}`, is_read:false, created_at:new Date().toISOString()},...p]);
+          showToast("발주 요청이 거절되었습니다");
+        })
+        .catch(() => {
+          showToast("발주 반려 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setOrders(p=>p.map(o=>o.id===orderId?{...o, status:"rejected", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote}:o));
     auditLogsApi.record({
       action: "order.rejected",
