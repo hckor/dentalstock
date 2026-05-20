@@ -19,6 +19,7 @@ Current required order:
 3. `20260520_items_bridge_and_seed.sql`
 4. `20260520_stock_transaction_rpc.sql`
 5. `20260520_orders_bridge_and_seed.sql`
+6. `20260520_order_receipt_rpc.sql`
 
 The migration creates the first production-ready tables with RLS enabled:
 

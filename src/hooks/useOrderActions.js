@@ -39,6 +39,14 @@ const getShipmentPeerOrders = (order, orders) => {
 
 const buildVendorSnapshot = (item) => resolveOrderVendor(item, settingsApi.load());
 
+function mergeUpdatedOrder(prevOrders, updatedOrder) {
+  return prevOrders.map(order => order.id === updatedOrder.id ? updatedOrder : order);
+}
+
+function mergeUpdatedItem(prevItems, updatedItem) {
+  return prevItems.map(item => item.id === updatedItem.id ? { ...item, ...updatedItem } : item);
+}
+
 export function useOrderActions({
   orders,
   setOrders,
@@ -472,19 +480,62 @@ export function useOrderActions({
     const nextReceivedQty = alreadyReceived + actualQty;
     const isFullyReceived = nextReceivedQty >= order.qty;
     const after = item.current_qty + actualQty;
-    setItems(p=>p.map(i=>i.id===item.id?{...i, current_qty:after}:i));
-    setTxs(p=>[{id:`t${Date.now()}`, item_id:item.id, type:"in", qty:actualQty, note:`발주 입고 확인 (요청자: ${order.requested_by})${note?` · ${note}`:""}`, created_at:new Date().toISOString(), user:currentUser.name},...p]);
     const receivedAt = new Date().toISOString();
-    setOrders(p=>p.map(o=>o.id===orderId?{
-      ...o,
+    const nextOrder = {
+      ...order,
       status: isFullyReceived ? "received" : "ordered",
       received_qty: nextReceivedQty,
-      received_at: isFullyReceived ? receivedAt : o.received_at,
-      partial_received_at: isFullyReceived ? o.partial_received_at : receivedAt,
+      received_at: isFullyReceived ? receivedAt : order.received_at,
+      partial_received_at: isFullyReceived ? order.partial_received_at : receivedAt,
       shipping_events: isFullyReceived
-        ? addReceiptShippingEvent(o, receivedAt)
-        : addPartialReceiptShippingEvent(o, receivedAt, nextReceivedQty, o.qty),
-    }:o));
+        ? addReceiptShippingEvent(order, receivedAt)
+        : addPartialReceiptShippingEvent(order, receivedAt, nextReceivedQty, order.qty),
+    };
+
+    if (supabaseOrdersApi.isEnabled()) {
+      void supabaseOrdersApi.receiveOrder(nextOrder, { actualQty, note })
+        .then(({ order: savedOrder, item: savedItem }) => {
+          const mergedOrder = {
+            ...savedOrder,
+            shipping_events: nextOrder.shipping_events,
+            received_qty: nextReceivedQty,
+            received_at: nextOrder.received_at,
+            partial_received_at: nextOrder.partial_received_at,
+          };
+          setItems(p=>mergeUpdatedItem(p, savedItem));
+          setTxs(p=>[{id:`t${Date.now()}`, item_id:item.id, type:"in", qty:actualQty, note:`발주 입고 확인 (요청자: ${order.requested_by})${note?` · ${note}`:""}`, created_at:receivedAt, user:currentUser.name},...p]);
+          setOrders(p=>mergeUpdatedOrder(p, mergedOrder));
+          auditLogsApi.record({
+            action: "order.received",
+            entityType: "order",
+            entityId: orderId,
+            actor: currentUser,
+            metadata: {
+              item_id: item.id,
+              item_name: item.name,
+              ordered_qty: order.qty,
+              received_qty: actualQty,
+              total_received_qty: nextReceivedQty,
+              remaining_qty: Math.max(0, order.qty - nextReceivedQty),
+              before_qty: item.current_qty,
+              after_qty: savedItem.current_qty,
+              note: note || "",
+            },
+            at: receivedAt,
+          });
+          setNotifs(p=>[{id:`n${Date.now()}`, type:"received", item_id:item.id, message:isFullyReceived ? `${item.name} 입고 확인 완료` : `${item.name} 부분 입고 확인`, sub:`${currentUser.name} 확인 · ${actualQty}${item.unit} 입고`, is_read:false, created_at:receivedAt},...p]);
+          showToast(isFullyReceived ? `${actualQty}${item.unit} 입고 확인 완료` : `${actualQty}${item.unit} 부분 입고 확인`);
+          setModal(null);
+        })
+        .catch(() => {
+          showToast("입고 확인 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
+    setItems(p=>p.map(i=>i.id===item.id?{...i, current_qty:after}:i));
+    setTxs(p=>[{id:`t${Date.now()}`, item_id:item.id, type:"in", qty:actualQty, note:`발주 입고 확인 (요청자: ${order.requested_by})${note?` · ${note}`:""}`, created_at:new Date().toISOString(), user:currentUser.name},...p]);
+    setOrders(p=>p.map(o=>o.id===orderId?nextOrder:o));
     auditLogsApi.record({
       action: "order.received",
       entityType: "order",
@@ -542,6 +593,87 @@ export function useOrderActions({
       qtyByItemId.set(item.id, (qtyByItemId.get(item.id) || 0) + actualQty);
     });
 
+    const targetIds = new Set(validRows.map(row => row.order.id));
+    const receiptByOrderId = new Map(validRows.map(row => {
+      const alreadyReceived = Number(row.order.received_qty) || 0;
+      const totalReceived = alreadyReceived + row.actualQty;
+      const isFullyReceived = totalReceived >= row.order.qty;
+      return [row.order.id, { ...row, totalReceived, isFullyReceived }];
+    }));
+
+    if (supabaseOrdersApi.isEnabled()) {
+      void Promise.all(validRows.map(row => {
+        const receipt = receiptByOrderId.get(row.order.id);
+        const nextOrder = {
+          ...row.order,
+          status: receipt.isFullyReceived ? "received" : "ordered",
+          received_qty: receipt.totalReceived,
+          received_at: receipt.isFullyReceived ? receivedAt : row.order.received_at,
+          partial_received_at: receipt.isFullyReceived ? row.order.partial_received_at : receivedAt,
+          shipping_events: receipt.isFullyReceived
+            ? addReceiptShippingEvent(row.order, receivedAt)
+            : addPartialReceiptShippingEvent(row.order, receivedAt, receipt.totalReceived, row.order.qty),
+        };
+        return supabaseOrdersApi.receiveOrder(nextOrder, { actualQty: row.actualQty, note })
+          .then(result => ({ ...result, original: row, nextOrder }));
+      }))
+        .then(results => {
+          const updatedItems = new Map(results.map(result => [result.item.id, result.item]));
+          const updatedOrders = new Map(results.map(result => [result.order.id, {
+            ...result.order,
+            shipping_events: result.nextOrder.shipping_events,
+            received_qty: result.nextOrder.received_qty,
+            received_at: result.nextOrder.received_at,
+            partial_received_at: result.nextOrder.partial_received_at,
+          }]));
+          setItems(prev => prev.map(item => updatedItems.get(item.id) ? { ...item, ...updatedItems.get(item.id) } : item));
+          setTxs(prev => [
+            ...validRows.map(({ order, item, actualQty }, index) => ({
+              id: `t${Date.now()}-${index}`,
+              item_id: item.id,
+              type: "in",
+              qty: actualQty,
+              note: `묶음 배송 입고 확인 (요청자: ${order.requested_by})${note ? ` · ${note}` : ""}`,
+              created_at: receivedAt,
+              user: currentUser.name,
+            })),
+            ...prev,
+          ]);
+          setOrders(prev => prev.map(order => updatedOrders.get(order.id) || order));
+          const completedCount = Array.from(receiptByOrderId.values()).filter(row => row.isFullyReceived).length;
+          const partialCount = validRows.length - completedCount;
+          auditLogsApi.record({
+            action: "order.bulk_received",
+            entityType: "order",
+            entityId: validRows.map(row => row.order.id).join(","),
+            actor: currentUser,
+            metadata: {
+              count: validRows.length,
+              orders: validRows.map(({ order, item, actualQty }) => `${item.name}:${actualQty}${item.unit}/${order.qty}${item.unit}`).join(", "),
+              completed_count: completedCount,
+              partial_count: partialCount,
+              note: note || "",
+            },
+            at: receivedAt,
+          });
+          setNotifs(prev => [{
+            id: `n${Date.now()}`,
+            type: "received",
+            item_id: null,
+            message: partialCount ? `묶음 배송 ${validRows.length}건 수량 확인` : `묶음 배송 ${validRows.length}건 입고 확인 완료`,
+            sub: partialCount ? `완료 ${completedCount}건 · 부분입고 ${partialCount}건` : `${currentUser.name} 확인`,
+            is_read: false,
+            created_at: receivedAt,
+          }, ...prev]);
+          showToast(partialCount ? `완료 ${completedCount}건 · 부분입고 ${partialCount}건` : `${validRows.length}건 입고 수량 확인 완료`);
+          setModal(null);
+        })
+        .catch(() => {
+          showToast("묶음 입고 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setItems(prev => prev.map(item => qtyByItemId.has(item.id)
       ? { ...item, current_qty: item.current_qty + qtyByItemId.get(item.id) }
       : item
@@ -560,13 +692,6 @@ export function useOrderActions({
       ...prev,
     ]);
 
-    const targetIds = new Set(validRows.map(row => row.order.id));
-    const receiptByOrderId = new Map(validRows.map(row => {
-      const alreadyReceived = Number(row.order.received_qty) || 0;
-      const totalReceived = alreadyReceived + row.actualQty;
-      const isFullyReceived = totalReceived >= row.order.qty;
-      return [row.order.id, { ...row, totalReceived, isFullyReceived }];
-    }));
     setOrders(prev => prev.map(order => targetIds.has(order.id)
       ? {
           ...order,
@@ -627,6 +752,46 @@ export function useOrderActions({
     const trackingStartedAt = new Date().toISOString();
     const targetOrders = getShipmentPeerOrders(order, orders);
     const targetIds = new Set(targetOrders.map(o => o.id));
+    const nextOrders = targetOrders.map(o => ({
+      ...o,
+      carrier,
+      tracking_number: trackingNumber,
+      shipping_events: buildInitialShippingEvents({ order: o, carrier, timestamp: trackingStartedAt }),
+    }));
+
+    if (supabaseOrdersApi.isEnabled()) {
+      void supabaseOrdersApi.updateOrders(nextOrders)
+        .then(savedOrders => {
+          const savedById = new Map(savedOrders.map(savedOrder => {
+            const nextOrder = nextOrders.find(candidate => candidate.id === savedOrder.id);
+            return [savedOrder.id, { ...savedOrder, shipping_events: nextOrder?.shipping_events || savedOrder.shipping_events }];
+          }));
+          setOrders(p => p.map(o => savedById.get(o.id) || o));
+          auditLogsApi.record({
+            action: "order.tracking_registered",
+            entityType: "order",
+            entityId: targetOrders.map(o => o.id).join(","),
+            actor: currentUser,
+            metadata: {
+              item_id: order.item_id,
+              order_count: targetOrders.length,
+              shipment_group_id: order.shipment_group_id || "",
+              carrier,
+              tracking_number_last4: String(trackingNumber || "").slice(-4),
+            },
+            at: trackingStartedAt,
+          });
+          if (item) {
+            setNotifs(p => [{ id: `n${Date.now()}`, type: "ordered", item_id: item.id, message: targetOrders.length > 1 ? `묶음 배송 ${targetOrders.length}건 송장이 등록됐습니다` : `${item.name} 송장이 등록됐습니다`, sub: `${carrier} · ${trackingNumber}`, is_read: false, created_at: new Date().toISOString() }, ...p]);
+          }
+          showToast(targetOrders.length > 1 ? `${targetOrders.length}건 묶음 송장이 등록됐습니다` : "송장이 등록됐습니다");
+        })
+        .catch(() => {
+          showToast("송장 등록 저장에 실패했습니다. 다시 시도해주세요.");
+        });
+      return;
+    }
+
     setOrders(p => p.map(o => targetIds.has(o.id)
       ? { ...o, carrier, tracking_number: trackingNumber, shipping_events: buildInitialShippingEvents({ order: o, carrier, timestamp: trackingStartedAt }) }
       : o
@@ -685,6 +850,60 @@ export function useOrderActions({
 
     if (!nextEvent) {
       showToast("이미 최신 배송 상태입니다");
+      return;
+    }
+
+    const nextOrders = targetOrders.map(o => ({
+      ...o,
+      delivery_completed_at: nextEvent.status === "배달완료" ? refreshedAt : o.delivery_completed_at,
+      shipping_events: addShippingProgressEvent(o, nextEvent),
+    }));
+
+    if (supabaseOrdersApi.isEnabled()) {
+      void supabaseOrdersApi.updateOrders(nextOrders)
+        .then(savedOrders => {
+          const savedById = new Map(savedOrders.map(savedOrder => {
+            const nextOrder = nextOrders.find(candidate => candidate.id === savedOrder.id);
+            return [savedOrder.id, {
+              ...savedOrder,
+              delivery_completed_at: nextOrder?.delivery_completed_at,
+              shipping_events: nextOrder?.shipping_events || savedOrder.shipping_events,
+            }];
+          }));
+          setOrders(p => p.map(o => savedById.get(o.id) || o));
+          auditLogsApi.record({
+            action: nextEvent.status === "배달완료" ? "order.delivered" : "order.tracking_refreshed",
+            entityType: "order",
+            entityId: targetOrders.map(o => o.id).join(","),
+            actor: currentUser,
+            metadata: {
+              item_id: order.item_id,
+              order_count: targetOrders.length,
+              shipment_group_id: order.shipment_group_id || "",
+              carrier: order.carrier || "",
+              tracking_number_last4: String(order.tracking_number || "").slice(-4),
+              shipping_status: nextEvent.status,
+            },
+            at: refreshedAt,
+          });
+          if (item && nextEvent.status === "배달완료") {
+            setNotifs(p => [{
+              id: `n${Date.now()}`,
+              type: "delivered",
+              item_id: item.id,
+              message: targetOrders.length > 1 ? `묶음 배송 ${targetOrders.length}건 배달완료` : `${item.name} 배달완료`,
+              sub: "입고 확인이 필요합니다",
+              is_read: false,
+              created_at: refreshedAt,
+            }, ...p]);
+            showToast("배달완료 알림이 생성되었습니다");
+            return;
+          }
+          showToast("배송 상태가 갱신되었습니다");
+        })
+        .catch(() => {
+          showToast("배송 상태 저장에 실패했습니다. 다시 시도해주세요.");
+        });
       return;
     }
 

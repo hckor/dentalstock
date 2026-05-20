@@ -1,5 +1,6 @@
 import { getApiConfig } from "../config/apiMode";
 import { getSupabaseClient, isSupabaseConfigured } from "./supabaseAuthApi";
+import { mapSupabaseItem } from "./supabaseItemsApi";
 
 const ORDER_SELECT = "id, legacy_id, vendor, status, shipment_group_id, tracking_number, requested_at, approved_at, received_at, items, totals, notes, app_data, updated_at";
 
@@ -116,5 +117,26 @@ export const supabaseOrdersApi = {
 
     if (error) throw error;
     return mapSupabaseOrder(data);
+  },
+
+  async updateOrders(orders) {
+    return Promise.all(orders.map(order => this.updateOrder(order, order)));
+  },
+
+  async receiveOrder(order, { actualQty, note = "" }) {
+    if (!order.supabase_id) throw new Error("supabase_order_id_missing");
+
+    const { data, error } = await getSupabaseClient().rpc("receive_order_stock", {
+      p_order_id: order.supabase_id,
+      p_actual_qty: actualQty,
+      p_note: note,
+      p_shipping_events: Array.isArray(order.shipping_events) ? order.shipping_events : null,
+    });
+
+    if (error) throw error;
+    return {
+      order: mapSupabaseOrder(data?.order || {}),
+      item: mapSupabaseItem(data?.item || {}),
+    };
   },
 };
