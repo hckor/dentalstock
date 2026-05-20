@@ -13,7 +13,7 @@ import { ActivityLogTab } from "./ActivityLogTab";
 import { BottomSheet } from "../../shared/BottomSheet";
 import { InitialInventoryModal } from "../../modals/InitialInventoryModal";
 
-export function AdminScreen({users, currentUser, orders, items, setItems, txs, surgeries, addSurgery, deleteSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast, onInviteStaff, onStaffActiveChange, onStaffRoleChange}) {
+export function AdminScreen({users, currentUser, orders, items, setItems, txs, surgeries, addSurgery, deleteSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast, onInviteStaff, onRunPriceMonitor, onStaffActiveChange, onStaffRoleChange}) {
   const [adminTab, setAdminTab] = useState("surgery");
   const [showInitialInventory, setShowInitialInventory] = useState(false);
   const [inviteForm, setInviteForm] = useState({email:"", name:"", role:"hygienist"});
@@ -246,7 +246,7 @@ export function AdminScreen({users, currentUser, orders, items, setItems, txs, s
           </>
         )}
 
-        {adminTab === "vendor" && <VendorSettingsTab currentUser={currentUser} items={items} showToast={showToast}/>}
+        {adminTab === "vendor" && <VendorSettingsTab currentUser={currentUser} items={items} onRunPriceMonitor={onRunPriceMonitor} showToast={showToast}/>}
 
         {adminTab === "activity" && <ActivityLogTab/>}
       </div>

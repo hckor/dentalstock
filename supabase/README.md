@@ -117,6 +117,7 @@ The app's staff invite form calls `invite-staff`. Deploy it after running the st
 
 ```bash
 supabase functions deploy invite-staff --project-ref tausnjxzqmnhoeslgbmc
+supabase functions deploy price-monitor --project-ref tausnjxzqmnhoeslgbmc --use-api
 ```
 
 Set these function secrets in Supabase:
@@ -132,3 +133,13 @@ Security behavior:
 - The Edge Function checks that the caller is an active `owner`.
 - `SUPABASE_SERVICE_ROLE_KEY` is used only inside the Edge Function to send the Auth invite and create the matching `profiles` row.
 - Invite roles are limited to `manager`, `hygienist`, or `staff`.
+
+## 7. Price monitor Edge Function
+
+The app's "가격 지금 확인" button calls `price-monitor`. It reads active `vendor_products`, fetches their product pages, extracts a best-effort price, stores `price_snapshots`, and updates the item's `vendor_options`.
+
+Notes:
+
+- This is a best-effort monitor. Vendor pages without public price markup may fail.
+- Keep runs small at first. The function caps each run at 50 products.
+- For scheduled runs, set an optional `PRICE_MONITOR_SECRET` and call the function with `x-price-monitor-secret`.

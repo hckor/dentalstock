@@ -55,7 +55,7 @@ function TogglePill({ active, label, onClick, icon: Icon }) {
   );
 }
 
-export function VendorSettingsTab({ currentUser, items = [], showToast }) {
+export function VendorSettingsTab({ currentUser, items = [], onRunPriceMonitor, showToast }) {
   const [initial, setInitial] = useState(() => settingsApi.load());
   const [vendors, setVendors] = useState(initial.vendors);
   const [credentials, setCredentials] = useState({});
@@ -67,6 +67,7 @@ export function VendorSettingsTab({ currentUser, items = [], showToast }) {
   const [maxOrderAmount, setMaxOrderAmount] = useState(initial.maxOrderAmount);
   const [saveAttempted, setSaveAttempted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [monitorRunning, setMonitorRunning] = useState(false);
   const hasDraftCredentials = useMemo(() => (
     Object.values(credentials).some(credential => credential?.username || credential?.password)
   ), [credentials]);
@@ -181,6 +182,13 @@ export function VendorSettingsTab({ currentUser, items = [], showToast }) {
     }
   };
 
+  const handleRunPriceMonitor = async () => {
+    if (monitorRunning) return;
+    setMonitorRunning(true);
+    await onRunPriceMonitor?.();
+    setMonitorRunning(false);
+  };
+
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingBottom: 80 }}>
       {/* 도매 사이트 연결 섹션 */}
@@ -286,6 +294,15 @@ export function VendorSettingsTab({ currentUser, items = [], showToast }) {
             <p style={{margin:"4px 0 0", fontSize:22, fontWeight:700, color:T.grey900}}>{monitorSummary.candidateCount}개</p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={handleRunPriceMonitor}
+          disabled={monitorRunning || monitorSummary.candidateCount === 0}
+          style={{width:"100%", minHeight:46, marginBottom:14, border:"none", borderRadius:9999, background:monitorRunning || monitorSummary.candidateCount === 0 ? T.grey200 : T.blue500, color:monitorRunning || monitorSummary.candidateCount === 0 ? T.grey500 : T.white, fontSize:15, fontWeight:700, fontFamily:font, cursor:monitorRunning || monitorSummary.candidateCount === 0 ? "default" : "pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:7}}
+        >
+          <RefreshCcw size={16}/>
+          {monitorRunning ? "가격 확인 중..." : "가격 지금 확인"}
+        </button>
         {monitorSummary.lowStockRecommendations.length > 0 ? (
           <div style={{display:"flex", flexDirection:"column", gap:10}}>
             {monitorSummary.lowStockRecommendations.map(({item, qty, vendor}) => (

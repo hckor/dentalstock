@@ -3,6 +3,8 @@ import { Home, Package, ArrowDownToLine, ShoppingCart, Users } from "lucide-reac
 import { T } from "../constants/colors";
 import { useTheme } from "../contexts/ThemeContext";
 import { can } from "../constants/permissions";
+import { supabaseItemsApi } from "../api/supabaseItemsApi";
+import { supabasePriceMonitorApi } from "../api/supabasePriceMonitorApi";
 import { supabaseStaffApi } from "../api/supabaseStaffApi";
 import { useToast } from "../hooks/useToast";
 import { usePushNotifications } from "../hooks/usePushNotifications";
@@ -131,6 +133,30 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     }
   }, [currentUser, setUsers, showToast]);
 
+  const runPriceMonitor = useCallback(async () => {
+    try {
+      if (!supabasePriceMonitorApi.isEnabled() || !currentUser?.clinicId) {
+        showToast("Supabase 모드에서만 가격 감시를 실행할 수 있습니다");
+        return false;
+      }
+
+      const result = await supabasePriceMonitorApi.run({ limit: 30 });
+      const remoteItems = await supabaseItemsApi.listByClinic(currentUser.clinicId);
+      if (remoteItems.length > 0) setItems(remoteItems);
+      showToast(`가격 감시 완료 · 갱신 ${result.updated || 0}건`);
+      return true;
+    } catch (error) {
+      const messages = {
+        authentication_required: "다시 로그인한 뒤 실행해주세요",
+        manager_required: "원장 또는 매니저만 가격 감시를 실행할 수 있습니다",
+        products_load_failed: "구매 후보를 불러오지 못했습니다",
+        server_not_configured: "가격 감시 서버 설정이 필요합니다",
+      };
+      showToast(messages[error?.message] || "가격 감시 실행에 실패했습니다");
+      return false;
+    }
+  }, [currentUser, setItems, showToast]);
+
   const filteredItems = useMemo(
     () => items.filter(i => i.name.includes(search) && (cat===0 || i.category_id===cat)),
     [items, search, cat]
@@ -166,7 +192,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} approveOrders={approveOrders} rejectOrder={rejectOrder} startTracking={startTracking} refreshTracking={refreshTracking} confirmReceipt={confirmReceipt}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
-          {tab==="admin"     && canApprove && <AdminScreen users={users} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
+          {tab==="admin"     && canApprove && <AdminScreen users={users} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
         </Suspense>
       </div>
 
