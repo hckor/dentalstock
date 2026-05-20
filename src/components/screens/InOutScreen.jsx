@@ -136,11 +136,11 @@ export function InOutScreen({items, txs, openModal}) {
         })}
       </div>
 
-      <div style={{position:"absolute",right:20,bottom:96,zIndex:20,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:10}}>
-        <button onClick={()=>openModal("in")} style={{minWidth:134,minHeight:50,padding:"13px 18px",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap",boxShadow:"0px 8px 24px rgba(0,0,0,0.16)"}}>
+      <div style={{position:"absolute",left:16,right:16,bottom:86,zIndex:20,background:T.white,border:`1px solid ${T.grey200}`,borderRadius:24,padding:8,display:"flex",gap:8,boxShadow:"0px 8px 24px rgba(0,0,0,0.16)"}}>
+        <button onClick={()=>openModal("in")} style={{flex:1,minHeight:52,padding:"14px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap"}}>
           <ArrowDownToLine size={18} style={{flexShrink:0}}/> 입고 등록
         </button>
-        <button onClick={()=>openModal("out")} style={{minWidth:134,minHeight:50,padding:"13px 18px",borderRadius:9999,border:`1px solid ${T.grey200}`,background:T.white,color:T.red500,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap",boxShadow:"0px 8px 24px rgba(0,0,0,0.14)"}}>
+        <button onClick={()=>openModal("out")} style={{flex:1,minHeight:52,padding:"14px 0",borderRadius:9999,border:"none",background:T.grey100,color:T.red500,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font,display:"flex",alignItems:"center",justifyContent:"center",gap:6,whiteSpace:"nowrap"}}>
           <ArrowUpFromLine size={18} style={{flexShrink:0}}/> 출고 등록
         </button>
       </div>

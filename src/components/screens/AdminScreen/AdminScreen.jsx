@@ -36,14 +36,14 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
     <div style={{flex:1, display:"flex", flexDirection:"column"}}>
       {/* 서브탭 */}
       <div style={{background:T.white, borderBottom:`1px solid ${T.grey200}`, padding:"10px 16px"}}>
-        <div style={{display:"grid", gridTemplateColumns:"repeat(2, minmax(0, 1fr))", gap:6}}>
+        <div style={{display:"flex", gap:6, overflowX:"auto", scrollbarWidth:"none"}}>
           {tabs.map(t => (
             <button key={t.id} onClick={()=>setAdminTab(t.id)}
-              style={{minHeight:40, padding:"10px 12px", border:"none", borderRadius:12, cursor:"pointer", fontFamily:font, fontSize: 14, fontWeight:700,
-                background:adminTab===t.id ? T.blue50 : T.grey100,
-                color:adminTab===t.id ? T.blue500 : T.grey600,
+              style={{flexShrink:0, padding:"10px 16px", border:"none", borderRadius:12, cursor:"pointer", fontFamily:font, fontSize: 14, fontWeight:600,
+                background:adminTab===t.id ? T.white : T.grey100,
+                color:adminTab===t.id ? T.grey900 : T.grey500,
                 boxShadow:adminTab===t.id ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
-                display:"flex", alignItems:"center", justifyContent:"center", gap:5, transition:"all 150ms", whiteSpace:"nowrap"}}>
+                display:"flex", alignItems:"center", gap:5, transition:"all 150ms"}}>
               {t.label}
               {t.badge>0 && (
                 <span style={{background:adminTab===t.id?T.red500:T.red500, color:T.white, borderRadius:9999, fontSize: 12, fontWeight:700, padding:"1px 6px"}}>
