@@ -41,9 +41,10 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
     {id: "completed", label: "완료", count: groupedOrders.completed.length},
     {id: "rejected", label: "반려", count: groupedOrders.rejected.length},
   ];
+  const primaryTabDefs = tabDefs.filter(tab => tab.id !== "rejected");
+  const rejectedTab = tabDefs.find(tab => tab.id === "rejected");
 
   const currentOrders = groupedOrders[trackingTab];
-  const currentTabMeta = tabDefs.find(tab => tab.id === trackingTab) || tabDefs[0];
 
   const handleActionClick = (order, actionType) => {
     if (actionType === "approve") {
@@ -84,7 +85,9 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
     <div style={{ padding: "16px" }}>
       {/* ── 탭 네비게이션 ── */}
       <div style={{ background: T.grey100, borderRadius: 12, padding: 4, marginBottom: 8, display: "flex", gap: 2 }}>
-        {tabDefs.map(tab => (
+        {primaryTabDefs.map(tab => {
+          const active = trackingTab === tab.id;
+          return (
           <button
             key={tab.id}
             onClick={() => setTrackingTab(tab.id)}
@@ -99,26 +102,37 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
               fontSize: 14,
               fontWeight: 600,
               lineHeight: "20px",
-              background: trackingTab === tab.id ? T.white : "transparent",
-              boxShadow: trackingTab === tab.id ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
-              color: trackingTab === tab.id ? T.grey900 : T.grey500,
+              background: active ? T.white : "transparent",
+              boxShadow: active ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
+              color: active ? T.grey900 : T.grey500,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 4,
+              gap: 6,
               whiteSpace: "nowrap",
               wordBreak: "keep-all",
               transition: "all 150ms",
             }}
           >
             {tab.label}
+            <span style={{minWidth:20,padding:"1px 6px",borderRadius:9999,boxSizing:"border-box",background:active?T.blue50:T.white,color:tab.count>0?(active?T.blue500:T.grey700):T.grey400,fontSize:12,fontWeight:700,lineHeight:"18px"}}>
+              {tab.count}
+            </span>
           </button>
-        ))}
+          );
+        })}
       </div>
 
-      <p style={{margin:"0 2px 16px",fontSize:13,fontWeight:500,lineHeight:"20px",color:T.grey500}}>
-        <span style={{fontWeight:700,color:T.grey700}}>{currentTabMeta.label}</span> {currentTabMeta.count}건
-      </p>
+      {rejectedTab && (
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",marginBottom:16}}>
+          <button
+            onClick={() => setTrackingTab(rejectedTab.id)}
+            style={{gridColumn:"1",minWidth:0,padding:"7px 8px",borderRadius:9999,border:`1px solid ${trackingTab===rejectedTab.id?`${T.red500}33`:T.grey200}`,background:trackingTab===rejectedTab.id?T.red50:T.white,color:trackingTab===rejectedTab.id?T.red500:T.grey500,fontFamily:font,fontSize:13,fontWeight:700,lineHeight:"18px",cursor:"pointer",whiteSpace:"nowrap",wordBreak:"keep-all"}}
+          >
+            {rejectedTab.label} {rejectedTab.count}건
+          </button>
+        </div>
+      )}
 
       {/* ── 주문 목록 ── */}
       {currentOrders.length === 0 ? (
