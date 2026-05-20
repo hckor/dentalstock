@@ -12,6 +12,7 @@ import { surgeriesApi } from "./api/surgeriesApi";
 import { notifsApi } from "./api/notifsApi";
 import { authApi } from "./api/authApi";
 import { supabaseAuthApi } from "./api/supabaseAuthApi";
+import { supabaseItemsApi } from "./api/supabaseItemsApi";
 import { usePersistedState } from "./hooks/usePersistedState";
 import { LoginSelect } from "./components/auth/LoginSelect";
 import { LoginPin } from "./components/auth/LoginPin";
@@ -37,6 +38,7 @@ function DentalStockInner() {
   const [currentUser, setCurrentUser] = useState(() => isSupabaseMode ? null : authApi.getCurrentUser());
   const [pinTarget,   setPinTarget]   = useState(null);
   const [isOnline,    setIsOnline]    = useState(navigator.onLine);
+  const [syncStatus,  setSyncStatus]  = useState("");
 
   const [users,     setUsers]     = usePersistedState(() => usersApi.list(),     usersApi.save);
   const [items,     setItems]     = usePersistedState(() => itemsApi.list(),     itemsApi.save);
@@ -68,6 +70,23 @@ function DentalStockInner() {
       ignore = true;
     };
   }, [isSupabaseMode]);
+
+  useEffect(() => {
+    if (!isSupabaseMode || !currentUser?.clinicId) return;
+    let ignore = false;
+    supabaseItemsApi.listByClinic(currentUser.clinicId)
+      .then(remoteItems => {
+        if (ignore) return;
+        if (remoteItems.length > 0) setItems(remoteItems);
+        setSyncStatus(remoteItems.length > 0 ? "" : "Supabase 재고 데이터가 아직 없습니다");
+      })
+      .catch(() => {
+        if (!ignore) setSyncStatus("Supabase 재고를 불러오지 못했습니다");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [currentUser?.clinicId, isSupabaseMode, setItems]);
 
   // 개발/데모용: 콘솔에서 window.__dentalStockReset() 호출 시 초기화
   useEffect(() => {
@@ -108,6 +127,11 @@ function DentalStockInner() {
       {!isOnline && (
         <div style={{position:"absolute", top:0, left:0, right:0, zIndex:9999, background:"#1e293b", color:"#fff", padding:"10px 16px", display:"flex", alignItems:"center", gap:8, fontSize: 12, fontWeight:600, fontFamily:font}}>
           <WifiOff size={15}/> 오프라인 · 저장된 데이터로 동작 중
+        </div>
+      )}
+      {syncStatus && appState==="app" && (
+        <div style={{position:"absolute", top:0, left:0, right:0, zIndex:9998, background:dynamicT.grey900, color:"#fff", padding:"10px 16px", textAlign:"center", fontSize:12, fontWeight:700, fontFamily:font}}>
+          {syncStatus}
         </div>
       )}
       {appState==="supabase_loading" && (

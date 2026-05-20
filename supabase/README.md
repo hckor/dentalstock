@@ -12,6 +12,12 @@ This folder keeps the database setup versioned with the app.
 
 Then run all later migration files in filename order.
 
+Current required order:
+
+1. `20260520_initial_dentalstock_schema.sql`
+2. `20260520_rls_hardening.sql`
+3. `20260520_items_bridge_and_seed.sql`
+
 The migration creates the first production-ready tables with RLS enabled:
 
 - `clinics`
