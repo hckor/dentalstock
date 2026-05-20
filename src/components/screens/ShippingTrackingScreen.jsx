@@ -43,6 +43,7 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
   ];
 
   const currentOrders = groupedOrders[trackingTab];
+  const currentTabMeta = tabDefs.find(tab => tab.id === trackingTab) || tabDefs[0];
 
   const handleActionClick = (order, actionType) => {
     if (actionType === "approve") {
@@ -82,7 +83,7 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
   return (
     <div style={{ padding: "16px" }}>
       {/* ── 탭 네비게이션 ── */}
-      <div style={{ background: T.grey100, borderRadius: 12, padding: 4, marginBottom: 16, display: "flex", gap: 2 }}>
+      <div style={{ background: T.grey100, borderRadius: 12, padding: 4, marginBottom: 8, display: "flex", gap: 2 }}>
         {tabDefs.map(tab => (
           <button
             key={tab.id}
@@ -90,14 +91,14 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
             style={{
               flex: 1,
               minWidth: 0,
-              padding: "10px 4px",
+              padding: "12px 8px",
               border: "none",
               borderRadius: 9999,
               cursor: "pointer",
               fontFamily: font,
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 600,
-              lineHeight: "18px",
+              lineHeight: "20px",
               background: trackingTab === tab.id ? T.white : "transparent",
               boxShadow: trackingTab === tab.id ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
               color: trackingTab === tab.id ? T.grey900 : T.grey500,
@@ -111,25 +112,13 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
             }}
           >
             {tab.label}
-            {tab.count > 0 && (
-              <span
-                style={{
-                  background: T.red500,
-                  color: T.white,
-                  borderRadius: 9999,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "1px 5px",
-                  marginLeft: 2,
-                  flexShrink: 0,
-                }}
-              >
-                {tab.count}
-              </span>
-            )}
           </button>
         ))}
       </div>
+
+      <p style={{margin:"0 2px 16px",fontSize:13,fontWeight:500,lineHeight:"20px",color:T.grey500}}>
+        <span style={{fontWeight:700,color:T.grey700}}>{currentTabMeta.label}</span> {currentTabMeta.count}건
+      </p>
 
       {/* ── 주문 목록 ── */}
       {currentOrders.length === 0 ? (
