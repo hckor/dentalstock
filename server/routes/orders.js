@@ -1,6 +1,14 @@
 import { readJson, sendJson } from "../http.js";
+import { executeOrderAction } from "../services/orderActionService.js";
 
-export async function handleOrders(req, res, { context }) {
+const ORDER_ACTION_BY_PATH = {
+  approve: "approve",
+  reject: "reject",
+  tracking: "tracking",
+  receive: "receive",
+};
+
+export async function handleOrders(req, res, { context, auditLogService, orderJobStore }) {
   if (req.method === "GET" && req.url.pathname === "/api/orders") {
     sendJson(res, 200, {
       clinicId: context.clinicId,
@@ -10,17 +18,18 @@ export async function handleOrders(req, res, { context }) {
     return true;
   }
 
-  const approveMatch = req.url.pathname.match(/^\/api\/orders\/([^/]+)\/approve$/);
-  if (req.method === "POST" && approveMatch) {
+  const actionMatch = req.url.pathname.match(/^\/api\/orders\/([^/]+)\/(approve|reject|tracking|receive)$/);
+  if (req.method === "POST" && actionMatch) {
     const body = await readJson(req);
-    sendJson(res, 202, {
-      queued: true,
-      action: "approve",
-      orderId: approveMatch[1],
-      clinicId: context.clinicId,
-      requestedBy: context.userId,
-      reviewNote: body.reviewNote || "",
+    const actionResult = await executeOrderAction({
+      action: ORDER_ACTION_BY_PATH[actionMatch[2]],
+      orderId: decodeURIComponent(actionMatch[1]),
+      body,
+      context,
+      auditLogService,
+      orderJobStore,
     });
+    sendJson(res, 202, actionResult);
     return true;
   }
 

@@ -202,3 +202,24 @@
 - 프론트에는 `apiMode`, `repositoryAdapter`, `remoteRepository`를 추가했습니다. 현재 앱은 안정성을 위해 계속 local storage를 active storage로 쓰고, `server` 모드는 기능 플래그로 노출만 합니다.
 - 서버 테스트는 포트를 열지 않고 handler를 직접 호출해 sandbox/CI에서도 안정적으로 돌도록 구성했습니다.
 - `npm run server:check`, `npm run lint`, `npm test` 18개 파일 146개 테스트, `npm run build`, 최신 UX E2E 7개, 최종 회귀 E2E 21개를 모두 통과했습니다.
+
+## 최신 체크포인트
+
+현재까지 완료된 작업을 이어받기 위한 기준점을 정리했습니다.
+
+- 부족품목 일괄 발주 흐름을 추가해 재고 부족 항목을 한 번에 발주 요청으로 묶을 수 있게 했습니다.
+- pending 발주를 개별 카드마다 처리하지 않고 일괄 승인할 수 있는 운영 흐름을 마련했습니다.
+- 발주 요청은 최저가 기준과 거래처 기준으로 주문을 분리해, 실제 도매몰 주문 단위와 더 가깝게 나뉘도록 정리했습니다.
+- 배송 묶음 단위로 입고 확인을 진행하고, 입고 시 실제 수량을 다시 확인할 수 있도록 수량 확인 경계를 보강했습니다.
+- 완료 배송은 배송 날짜와 배송별 그룹핑 기준으로 확인할 수 있게 해, 입고 완료 내역을 날짜/배송 단위로 추적할 수 있게 했습니다.
+- 수술 준비 후 실제 사용량을 확인해 출고 처리하는 흐름을 추가해, 준비 수량과 실사용량 차이를 운영상 반영할 수 있게 했습니다.
+- 도매 계정은 서버 전용 정보로 분리하고, 보안 정책/감사로그/worker 처리 경계를 명확히 두는 방향으로 정리했습니다.
+- 핵심 운영 플로우는 `src/__tests__/orderSurgeryWorkflow.test.jsx` 회귀 테스트로 고정했습니다.
+- 서버 승인 API에서 권한 검증, audit log 생성, `orderJob` enqueue를 하나의 서버 경계로 묶었습니다.
+- 도매 계정 저장은 AES-256-GCM credential store와 내부 토큰 조건을 연결해, 서버 설정이 갖춰진 경우에만 `mode: encrypted` 상태로 저장되게 했습니다.
+- 배송 추적은 `demo/external` provider 경계로 분리하고, 외부 provider가 설정되지 않았을 때 안전하게 실패하도록 했습니다.
+- 운영 DB adapter가 맞춰야 할 repository 계약을 `auditLogs/orderJobs/items/orders` 기준으로 고정했습니다.
+- 서버 인증은 테스트 헤더 모드와 production bearer provider 모드로 분리해, 실제 Firebase/Auth0 연결 전까지 안전한 anonymous fallback을 유지합니다.
+- 외부 배송 API는 HTTPS endpoint/API key 기반 HTTP client 경계를 추가해 실제 provider 연결점을 마련했습니다.
+- 자동주문 worker runner는 approved queued job만 실행하고, credential service/provider interface와 audit log 마스킹 경계를 테스트로 고정했습니다.
+- 다음 단계는 실제 DB adapter, 실제 auth provider, 실제 배송 API 키, 실제 도매몰 Playwright provider를 운영 환경 값으로 연결하는 것입니다.

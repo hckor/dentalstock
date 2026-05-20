@@ -30,14 +30,20 @@ export function createRemoteRepositoryClient(config = getApiConfig()) {
     listOrders() {
       return request("/api/orders", { method: "GET" });
     },
-    refreshTracking({ carrier, trackingNumber }) {
+    refreshTracking({ carrier, trackingNumber, currentStatuses = [] }) {
       return request("/api/tracking/refresh", {
         method: "POST",
-        body: JSON.stringify({ carrier, trackingNumber }),
+        body: JSON.stringify({ carrier, trackingNumber, currentStatuses }),
       });
     },
     vendorCredentialStatus(vendorId) {
       return request(`/api/vendor-credentials/${vendorId}/status`, { method: "GET" });
+    },
+    saveVendorCredential(vendorId, credentials) {
+      return request(`/api/vendor-credentials/${vendorId}`, {
+        method: "POST",
+        body: JSON.stringify(credentials),
+      });
     },
   };
 }

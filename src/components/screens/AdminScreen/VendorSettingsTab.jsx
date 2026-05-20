@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Save, Check, Power, ShoppingCart } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Save, Check, RefreshCcw, ShoppingCart } from "lucide-react";
 import { T, font } from "../../../constants/colors";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
@@ -55,16 +55,22 @@ function TogglePill({ active, label, onClick, icon: Icon }) {
 
 export function VendorSettingsTab({ showToast }) {
   const [initial, setInitial] = useState(() => settingsApi.load());
-  const [initialCredentials, setInitialCredentials] = useState(() => vendorCredentialsApi.loadAll());
   const [vendors, setVendors] = useState(initial.vendors);
-  const [credentials, setCredentials] = useState(initialCredentials);
+  const [credentials, setCredentials] = useState({});
+  const [credentialStatuses, setCredentialStatuses] = useState(() => (
+    vendorCredentialsApi.statusMapFor(initial.vendors, "계정 상태를 확인하는 중입니다.")
+  ));
+  const [credentialStatusLoading, setCredentialStatusLoading] = useState(true);
   const [preferredVendor, setPreferredVendor] = useState(initial.preferredVendor);
   const [maxOrderAmount, setMaxOrderAmount] = useState(initial.maxOrderAmount);
   const [saveAttempted, setSaveAttempted] = useState(false);
+  const hasDraftCredentials = useMemo(() => (
+    Object.values(credentials).some(credential => credential?.username || credential?.password)
+  ), [credentials]);
 
   const isDirty =
     JSON.stringify(vendors) !== JSON.stringify(initial.vendors) ||
-    JSON.stringify(credentials) !== JSON.stringify(initialCredentials) ||
+    hasDraftCredentials ||
     preferredVendor !== initial.preferredVendor ||
     maxOrderAmount !== initial.maxOrderAmount;
 
@@ -75,10 +81,6 @@ export function VendorSettingsTab({ showToast }) {
       : maxOrderAmountNumber < MIN_ORDER_AMOUNT
         ? "최대 주문금액은 1,000원 이상으로 입력해 주세요"
         : "";
-
-  const toggleConnect = (id) => {
-    setVendors(p => p.map(v => v.id === id ? { ...v, connected: !v.connected } : v));
-  };
 
   const updateVendorField = (id, field, value) => {
     setVendors(p => p.map(v => v.id === id ? { ...v, [field]: value } : v));
@@ -97,7 +99,29 @@ export function VendorSettingsTab({ showToast }) {
     });
   };
 
-  const handleSave = () => {
+  const refreshCredentialStatuses = async () => {
+    setCredentialStatusLoading(true);
+    const statuses = await vendorCredentialsApi.loadAll(vendors);
+    setCredentialStatuses(statuses);
+    setCredentialStatusLoading(false);
+    return statuses;
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    vendorCredentialsApi.loadAll(vendors)
+      .then(statuses => {
+        if (mounted) setCredentialStatuses(statuses);
+      })
+      .finally(() => {
+        if (mounted) setCredentialStatusLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [vendors]);
+
+  const handleSave = async () => {
     setSaveAttempted(true);
     if (maxOrderAmountError) {
       showToast?.(maxOrderAmountError);
@@ -106,11 +130,19 @@ export function VendorSettingsTab({ showToast }) {
 
     const next = { vendors, preferredVendor, maxOrderAmount };
     const savedSettings = settingsApi.save(next);
-    const savedCredentials = vendorCredentialsApi.saveAll(credentials);
+    const savedCredentialStatuses = hasDraftCredentials
+      ? await vendorCredentialsApi.saveAll(credentials)
+      : {};
+    const nextCredentialStatuses = {
+      ...credentialStatuses,
+      ...savedCredentialStatuses,
+    };
     setInitial(savedSettings);
-    setInitialCredentials(savedCredentials);
+    setCredentials({});
+    setCredentialStatuses(nextCredentialStatuses);
     setSaveAttempted(false);
-    showToast?.("자동발주 설정이 저장되었습니다");
+    const failedCredential = Object.values(savedCredentialStatuses).find(status => !status.connected && !status.stored);
+    showToast?.(failedCredential?.message || "자동발주 설정이 저장되었습니다");
   };
 
   return (
@@ -120,6 +152,15 @@ export function VendorSettingsTab({ showToast }) {
       <Card style={{ marginBottom: 20, padding: "16px" }}>
         {vendors.map((vendor, idx) => (
           <div key={vendor.id}>
+            {(() => {
+              const status = credentialStatuses[String(vendor.id)] || vendorCredentialsApi.disabledStatus(vendor.id);
+              const connected = Boolean(status.connected);
+              const statusLabel = credentialStatusLoading ? "확인 중" : connected ? "연결됨" : "미연결";
+              const statusMessage = connected
+                ? "서버에 저장된 계정으로 자동발주를 사용할 수 있습니다"
+                : status.message || "도매몰 계정은 서버 저장소가 준비되면 연결할 수 있습니다";
+              return (
+                <>
             <div
               style={{
                 display: "flex",
@@ -139,15 +180,15 @@ export function VendorSettingsTab({ showToast }) {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                 <Chip
-                  label={vendor.connected ? "로그인됨" : "미연결"}
-                  color={vendor.connected ? T.blue500 : T.grey600}
-                  bg={vendor.connected ? T.blue50 : T.grey100}
+                  label={statusLabel}
+                  color={connected ? T.blue500 : T.grey600}
+                  bg={connected ? T.blue50 : T.grey100}
                 />
                 <TogglePill
-                  active={vendor.connected}
-                  label={vendor.connected ? "해제" : "연결"}
-                  icon={Power}
-                  onClick={() => toggleConnect(vendor.id)}
+                  active={credentialStatusLoading}
+                  label="상태확인"
+                  icon={RefreshCcw}
+                  onClick={refreshCredentialStatuses}
                 />
               </div>
             </div>
@@ -172,7 +213,7 @@ export function VendorSettingsTab({ showToast }) {
                   이 거래처 자동발주
                 </p>
                 <p style={{ margin: "4px 0 0", fontSize: 13, color: T.grey500 }}>
-                  연결된 거래처에서만 실제 주문 후보로 사용됩니다
+                  {statusMessage}
                 </p>
               </div>
               <TogglePill
@@ -182,13 +223,16 @@ export function VendorSettingsTab({ showToast }) {
                 onClick={() => updateVendorField(vendor.id, "automaticOrdering", !vendor.automaticOrdering)}
               />
             </div>
-            {!vendor.connected && vendor.automaticOrdering && (
+            {!connected && vendor.automaticOrdering && (
               <div style={{ margin: "0 0 16px", padding: "12px 14px", borderRadius: 12, background: T.grey50 }}>
                 <p style={{ margin: 0, fontSize: 14, color: T.grey600, lineHeight: 1.45 }}>
-                  자동발주를 켜 두어도 연결 전에는 주문 후보에 포함되지 않습니다.
+                  자동발주를 켜 두어도 서버 연결 전에는 주문 후보에 포함되지 않습니다.
                 </p>
               </div>
             )}
+                </>
+              );
+            })()}
             {idx < vendors.length - 1 && <Divider />}
           </div>
         ))}
@@ -225,6 +269,7 @@ export function VendorSettingsTab({ showToast }) {
               paddingRight: 44,
             }}
           >
+            <option value="lowest">최저가 자동 선택</option>
             {vendors.map(vendor => (
               <option key={vendor.id} value={String(vendor.id)}>
                 {vendor.name}
@@ -232,7 +277,7 @@ export function VendorSettingsTab({ showToast }) {
             ))}
           </select>
           <p style={helperTextStyle}>
-            여러 거래처가 가능할 때 먼저 확인할 거래처입니다.
+            여러 거래처가 가능할 때 최저가 또는 선호 거래처 기준으로 발주처를 나눕니다.
           </p>
         </div>
 
@@ -264,7 +309,7 @@ export function VendorSettingsTab({ showToast }) {
       {/* 안내 텍스트 */}
       <div style={{ marginTop: 24, padding: "16px", background: T.blue50, borderRadius: 12 }}>
         <p style={{ margin: 0, fontSize: 15, color: T.grey700, lineHeight: 1.5 }}>
-          지금 입력한 계정 정보는 데모용으로 이 기기와 브라우저에만 저장됩니다. 실제 서버 연동 전까지는 화면 확인과 테스트에 사용해 주세요.
+          도매몰 ID와 비밀번호는 브라우저에 저장하지 않습니다. 서버 저장소가 준비되면 저장 후 입력값은 비워지고 연결 상태만 표시됩니다.
         </p>
       </div>
 

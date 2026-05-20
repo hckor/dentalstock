@@ -100,14 +100,14 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, deleteSurgery, op
           <div key={s.id}>
             <div style={{display:"flex",alignItems:"center",gap:12,padding:"18px 20px"}}>
               <div style={{width:36,height:36,borderRadius:10,background:s.prep_confirmed?T.green50:T.blue50,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                {s.prep_confirmed?<ClipboardCheck size={20} color={T.green500}/>:<CalendarDays size={20} color={T.blue500}/>}
+                {s.prep_confirmed?<ClipboardCheck size={20} color={s.usage_confirmed?T.green500:T.orange500}/>:<CalendarDays size={20} color={T.blue500}/>}
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <p style={{margin:0,fontSize: 16,fontWeight:600,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.title}</p>
                 <p style={{margin:"2px 0 0",fontSize: 16,color:T.grey500}}>{s.scheduled_date} {s.scheduled_time} · {s.patient} · 품목 {s.required_items.length}개</p>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                <Chip label={s.prep_confirmed?"준비완료":"준비전"} color={s.prep_confirmed?T.green500:T.orange500} bg={s.prep_confirmed?T.green50:T.orange50} border={T.grey200}/>
+                <Chip label={s.usage_confirmed?"사용확인":s.prep_confirmed?"사용량 대기":"준비전"} color={s.usage_confirmed?T.green500:s.prep_confirmed?T.orange500:T.orange500} bg={s.usage_confirmed?T.green50:T.orange50} border={T.grey200}/>
                 {!s.prep_confirmed&&(
                   <button
                     aria-label={`${s.title} 품목 편집`}

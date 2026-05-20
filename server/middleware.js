@@ -3,6 +3,7 @@ import { sendJson } from "./http.js";
 export function applySecurityHeaders(res) {
   res.setHeader("x-content-type-options", "nosniff");
   res.setHeader("x-frame-options", "DENY");
+  res.setHeader("content-security-policy", "default-src 'none'; frame-ancestors 'none'");
   res.setHeader("referrer-policy", "no-referrer");
   res.setHeader("permissions-policy", "camera=(), microphone=(), geolocation=()");
   res.setHeader("cache-control", "no-store");
@@ -10,12 +11,18 @@ export function applySecurityHeaders(res) {
 
 export function applyCors(req, res, allowedOrigins) {
   const origin = req.headers.origin;
+  if (origin && !allowedOrigins.includes(origin)) {
+    sendJson(res, 403, { error: "origin_not_allowed" });
+    return false;
+  }
+
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader("access-control-allow-origin", origin);
     res.setHeader("vary", "origin");
   }
   res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
-  res.setHeader("access-control-allow-headers", "content-type,x-clinic-id,x-user-id,x-user-role,x-internal-admin-token");
+  res.setHeader("access-control-allow-headers", "authorization,content-type,x-clinic-id,x-user-id,x-user-role,x-internal-admin-token");
+  return true;
 }
 
 export function createRateLimiter({ windowMs, max }) {
@@ -37,13 +44,5 @@ export function createRateLimiter({ windowMs, max }) {
       return false;
     }
     return true;
-  };
-}
-
-export function readRequestContext(req) {
-  return {
-    clinicId: req.headers["x-clinic-id"] || "demo-clinic",
-    userId: req.headers["x-user-id"] || "anonymous",
-    role: req.headers["x-user-role"] || "unknown",
   };
 }

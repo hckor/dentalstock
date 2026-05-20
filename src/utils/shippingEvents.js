@@ -54,6 +54,17 @@ export const addReceiptShippingEvent = (order, timestamp) => [
   ...getStoredShippingEvents(order),
 ];
 
+export const addPartialReceiptShippingEvent = (order, timestamp, receivedQty, totalQty) => [
+  {
+    status: "부분입고",
+    timestamp,
+    label: `${receivedQty}/${totalQty} 입고 확인됨`,
+    location: "치과 재고실",
+    completed: true,
+  },
+  ...getStoredShippingEvents(order),
+];
+
 export const hasShippingEventStatus = (order, status) =>
   getStoredShippingEvents(order).some(event => event.status === status);
 
@@ -93,6 +104,14 @@ const buildFallbackShippingEvents = (order) => {
   if (order?.status === "received") {
     return [
       { status: "입고완료", label: "입고 확인됨", location: "치과 재고실", completed: true },
+      ...(hasTracking ? [{ status: "배송중", label: "배송 진행", location: carrier, completed: true }] : []),
+      { status: "주문접수", timestamp: approvedAt, label: approvedAt ? undefined : "도매 주문 접수", location: "도매 사이트", completed: true },
+    ];
+  }
+
+  if (order?.status === "ordered" && Number(order?.received_qty) > 0) {
+    return [
+      { status: "부분입고", label: `${order.received_qty}/${order.qty} 입고 확인됨`, location: "치과 재고실", completed: true },
       ...(hasTracking ? [{ status: "배송중", label: "배송 진행", location: carrier, completed: true }] : []),
       { status: "주문접수", timestamp: approvedAt, label: approvedAt ? undefined : "도매 주문 접수", location: "도매 사이트", completed: true },
     ];

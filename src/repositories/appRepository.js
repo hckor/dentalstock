@@ -32,7 +32,6 @@ export const appRepository = {
   surgeries: createCollectionRepository(STORAGE_KEYS.surgeries, INIT_SURGERIES),
   notifs: createCollectionRepository(STORAGE_KEYS.notifs, INIT_NOTIFS),
   settings: createValueRepository(STORAGE_KEYS.settings, null),
-  vendorCredentials: createValueRepository(STORAGE_KEYS.vendorCredentials, {}),
   auditLogs: createCollectionRepository(STORAGE_KEYS.auditLogs, []),
   session: createValueRepository(STORAGE_KEYS.session, null),
   authAttempts: createValueRepository(STORAGE_KEYS.authAttempts, {}),

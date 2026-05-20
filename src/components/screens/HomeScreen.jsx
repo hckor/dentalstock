@@ -6,7 +6,7 @@ import { TodaySurgeryCard } from "./home/TodaySurgeryCard";
 import { StatsBar } from "./home/StatsBar";
 import { RecentTxList } from "./home/RecentTxList";
 
-export function HomeScreen({items, txs, orders, surgeries, setTab, canApprove, confirmSurgeryPrep, openItemsEditor, updateSurgeryItems}) {
+export function HomeScreen({items, txs, orders, surgeries, setTab, canApprove, confirmSurgeryPrep, confirmSurgeryUsage, openItemsEditor, updateSurgeryItems}) {
   const approvalOrders = useMemo(() => orders.filter(o => o.status === "pending"),  [orders]);
   const shippingOrders = useMemo(() => orders.filter(o => o.status === "ordered"),  [orders]);
   const todaySurgeries = useMemo(
@@ -22,6 +22,7 @@ export function HomeScreen({items, txs, orders, surgeries, setTab, canApprove, c
         canApprove={canApprove}
         approvalOrders={approvalOrders}
         shippingOrders={shippingOrders}
+        surgeries={surgeries}
         items={items}
         setTab={setTab}
       />
@@ -37,6 +38,7 @@ export function HomeScreen({items, txs, orders, surgeries, setTab, canApprove, c
               surgery={surgery}
               items={items}
               confirmSurgeryPrep={confirmSurgeryPrep}
+              confirmSurgeryUsage={confirmSurgeryUsage}
               openItemsEditor={openItemsEditor}
               updateSurgeryItems={updateSurgeryItems}
             />

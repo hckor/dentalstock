@@ -27,6 +27,7 @@ const actionMeta = {
   "order.received": { label: "입고 확인", color: T.green500, bg: T.green50 },
   "surgery.created": { label: "수술 등록", color: T.blue500, bg: T.blue50 },
   "surgery.prep_confirmed": { label: "수술 준비확인", color: T.green500, bg: T.green50 },
+  "surgery.usage_confirmed": { label: "수술 사용확인", color: T.green500, bg: T.green50 },
   "surgery.items_updated": { label: "수술 품목수정", color: T.purple500, bg: T.purple50 },
   "surgery.deleted": { label: "수술 삭제", color: T.red500, bg: T.red50 },
 };
@@ -57,6 +58,8 @@ function metadataLine(metadata = {}) {
   if (metadata.carrier) pieces.push(metadata.carrier);
   if (metadata.tracking_number_last4) pieces.push(`송장 끝 ${metadata.tracking_number_last4}`);
   if (metadata.required_count !== undefined) pieces.push(`준비품목 ${metadata.required_count}개`);
+  if (metadata.used_count !== undefined) pieces.push(`사용품목 ${metadata.used_count}개`);
+  if (metadata.used_items) pieces.push(metadata.used_items);
   if (metadata.before_count !== undefined && metadata.after_count !== undefined) {
     pieces.push(`품목 ${metadata.before_count} → ${metadata.after_count}`);
   }

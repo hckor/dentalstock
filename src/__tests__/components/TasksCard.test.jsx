@@ -28,6 +28,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(container.firstChild).toBeNull();
@@ -43,6 +44,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText(/발주 승인 대기/)).toBeInTheDocument();
@@ -57,6 +59,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.queryByText(/발주 승인 대기/)).not.toBeInTheDocument();
@@ -71,6 +74,7 @@ describe('TasksCard', () => {
           shippingOrders={singleShipping}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText(/입고 대기/)).toBeInTheDocument();
@@ -87,6 +91,7 @@ describe('TasksCard', () => {
           shippingOrders={singleShipping}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText(/발주 승인 대기/)).toBeInTheDocument();
@@ -98,6 +103,27 @@ describe('TasksCard', () => {
   });
 
   describe('콘텐츠 렌더링', () => {
+    it('기본 상태에서는 요약만 표시하고 상세는 헤더 클릭 후 펼침', async () => {
+      const user = userEvent.setup();
+      render(
+        <TasksCard
+          canApprove={true}
+          approvalOrders={[mockApprovalOrders[0]]}
+          shippingOrders={[mockShippingOrders[0]]}
+          items={mockItems}
+          setTab={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText(/승인 대기 1건/)).toBeInTheDocument();
+      expect(screen.getByText(/입고 대기 1건/)).toBeInTheDocument();
+      expect(screen.queryByText(/발주 승인 대기 · 5,000/)).not.toBeInTheDocument();
+
+      await user.click(screen.getByText('오늘 해야 할 일'));
+      expect(screen.getByText(/발주 승인 대기 · 5,000/)).toBeInTheDocument();
+      expect(screen.getByText(/CJ대한통운/)).toBeInTheDocument();
+    });
+
     it('approvalOrders: 아이콘, 제목, 서브텍스트(상품명·가격) 정확히 렌더링', () => {
       render(
         <TasksCard
@@ -106,6 +132,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText('라텍스 장갑 (M)')).toBeInTheDocument();
@@ -121,6 +148,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText('-')).toBeInTheDocument();
@@ -135,6 +163,7 @@ describe('TasksCard', () => {
           shippingOrders={[mockShippingOrders[0]]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText(/입고 대기/)).toBeInTheDocument();
@@ -151,6 +180,7 @@ describe('TasksCard', () => {
           shippingOrders={[mockShippingOrders[1]]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText(/롯데택배/)).toBeInTheDocument();
@@ -168,6 +198,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       const buttons = screen.getAllByRole('button');
@@ -183,6 +214,7 @@ describe('TasksCard', () => {
           shippingOrders={[mockShippingOrders[0]]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       const buttons = screen.getAllByRole('button');
@@ -199,6 +231,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       const buttons = screen.getAllByRole('button');
@@ -216,6 +249,7 @@ describe('TasksCard', () => {
           shippingOrders={[mockShippingOrders[0]]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       const buttons = screen.getAllByRole('button');
@@ -236,6 +270,7 @@ describe('TasksCard', () => {
           shippingOrders={singleShipping}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText('오늘 해야 할 일')).toBeInTheDocument();
@@ -253,6 +288,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       // 헤더의 "1건"을 span에서 찾음
@@ -271,6 +307,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={[]}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(screen.getByText('-')).toBeInTheDocument();
@@ -290,6 +327,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       // 승인 대기 상태가 각 order마다 한 번, 3번 렌더링
@@ -305,6 +343,7 @@ describe('TasksCard', () => {
           shippingOrders={[]}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(container.firstChild).toBeNull();
@@ -318,6 +357,7 @@ describe('TasksCard', () => {
           shippingOrders={undefined}
           items={mockItems}
           setTab={vi.fn()}
+          defaultExpanded
         />
       );
       expect(container.firstChild).toBeNull();

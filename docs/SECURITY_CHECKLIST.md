@@ -18,6 +18,7 @@
 - [ ] 관리자 계정 2FA 준비
 - [ ] 환자명은 최소 보관하고 알림/로그에는 반복 저장하지 않는다
 - [x] 입출고/발주/수술 삭제는 audit log로 남긴다
+- [x] 서버 audit log service는 create/list만 노출하고 update/delete 경로를 만들지 않는다
 - [ ] API rate limit과 계정 잠금 정책을 서버에서도 적용한다
 - [ ] 백엔드 함수는 역할 기반 권한을 재검증한다
 
@@ -36,4 +37,6 @@
 - 로컬 repository 키는 `clinics/{clinicId}` 네임스페이스로 감싸 병원 단위 데이터 분리 구조를 미리 맞췄다.
 - 입출고, 발주 요청/승인/반려/송장 등록/입고 확인, 수술 등록/준비확인/품목수정/삭제는 `auditLogs`에 기록한다.
 - audit log metadata의 `username/password/token/session/pin/card` 계열 키는 저장 전에 마스킹한다.
+- 서버 전환용 `auditLogService`와 메모리 repository 골격은 append-only 계약을 테스트한다.
+- 자동주문 worker와 배송 provider는 `server/workers/README.md`에 queue/job 경계부터 정의했다.
 - 실제 운영 전에는 `vendorCredentials`를 클라이언트 저장소에서 제거하고 server-only 암호화 저장소로 옮겨야 한다.

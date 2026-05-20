@@ -17,9 +17,14 @@ coverage
 .vscode/*
 !.vscode/extensions.json
 .idea
+.claude/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Local commit scratch files
+COMMIT_MESSAGE.txt
+COMMIT_MSG*.txt

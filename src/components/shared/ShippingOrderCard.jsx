@@ -3,6 +3,7 @@ import { CheckCircle2, ChevronRight, FileText, Navigation, RefreshCw, XCircle } 
 import { T, font } from "../../constants/colors";
 import { ORDER_ST } from "../../constants/orderStates";
 import { getShippingEvents } from "../../utils/shippingEvents";
+import { getVendorLabel } from "../../utils/vendorSelection";
 import { Card } from "./Card";
 import { Chip } from "./Chip";
 
@@ -56,8 +57,9 @@ function StatusHeader({ item, statusMeta, children, compact = false }) {
   );
 }
 
-export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, stage, canApprove, onActionClick }) {
+export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, stage, canApprove, onActionClick, selectable = false, selected = false, onSelectChange }) {
   const os = ORDER_ST[order.status];
+  const vendorLabel = getVendorLabel(order);
 
   if (!item) return null;
 
@@ -66,13 +68,42 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
       case "auto_wait": {
         return (
           <div style={bodyStyle}>
-            <StatusHeader item={item} statusMeta={os}>
-              <p style={metaStyle}>
-                <span style={{ fontWeight: 600, color: T.grey700 }}>수량:</span> {order.qty}{item.unit}
-                {order.requested_by && ` · 요청자: ${order.requested_by}`}
-              </p>
-              {order.note && <p style={metaStyle}>메모: {order.note}</p>}
-            </StatusHeader>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: selectable ? 10 : 0 }}>
+              {selectable && (
+                <button
+                  type="button"
+                  aria-label={`${item.name} 일괄 승인 선택`}
+                  aria-pressed={selected}
+                  onClick={onSelectChange}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    marginTop: 1,
+                    borderRadius: 9999,
+                    border: `1px solid ${selected ? T.blue500 : T.grey300}`,
+                    background: selected ? T.blue500 : T.white,
+                    color: T.white,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                  }}
+                >
+                  {selected && <CheckCircle2 size={17} color={T.white} strokeWidth={3} />}
+                </button>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <StatusHeader item={item} statusMeta={os}>
+                  <p style={metaStyle}>
+                    <span style={{ fontWeight: 600, color: T.grey700 }}>수량:</span> {order.qty}{item.unit}
+                    {order.requested_by && ` · 요청자: ${order.requested_by}`}
+                  </p>
+                  <p style={metaStyle}>예상 거래처: {vendorLabel}</p>
+                  {order.note && <p style={metaStyle}>메모: {order.note}</p>}
+                </StatusHeader>
+              </div>
+            </div>
 
             {canApprove ? (
               <div style={actionRowStyle}>
@@ -105,6 +136,12 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                 </span>
                 {order.carrier && ` · ${order.carrier}`}
               </p>
+              <p style={metaStyle}>거래처: {vendorLabel}</p>
+              {Number(order.received_qty) > 0 && (
+                <p style={metaStyle}>
+                  부분입고 <span style={{ fontWeight: 700, color: T.orange500 }}>{order.received_qty}/{order.qty}{item.unit}</span>
+                </p>
+              )}
               {order.tracking_number && (
                 <p style={{ margin: "6px 0 0", fontSize: 16, color: T.grey600, fontFamily: "monospace", fontWeight: 500 }}>
                   송장: {order.tracking_number}
@@ -166,6 +203,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                 수량 <span style={{ fontWeight: 600, color: T.grey700 }}>{order.qty}{item.unit}</span>
                 {order.requested_by && ` · 요청자: ${order.requested_by}`}
               </p>
+              <p style={metaStyle}>거래처: {vendorLabel}</p>
               {order.reviewed_by && (
                 <p style={metaStyle}>
                   <span style={{ fontWeight: 600, color: T.green500 }}>✓ 입고 완료</span>

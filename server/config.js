@@ -15,5 +15,12 @@ export function getServerConfig(env = process.env) {
     rateLimitWindowMs: Number(env.DENTALSTOCK_RATE_LIMIT_WINDOW_MS || 60_000),
     rateLimitMax: Number(env.DENTALSTOCK_RATE_LIMIT_MAX || 120),
     internalAdminToken: env.DENTALSTOCK_INTERNAL_ADMIN_TOKEN || "",
+    credentialEncryptionKey: env.DENTALSTOCK_CREDENTIAL_ENCRYPTION_KEY || "",
+    trackingProvider: env.DENTALSTOCK_TRACKING_PROVIDER || "demo",
+    trackingEndpoint: env.DENTALSTOCK_TRACKING_ENDPOINT || "",
+    trackingApiKey: env.DENTALSTOCK_TRACKING_API_KEY || "",
+    authMode: env.DENTALSTOCK_TRUST_CLIENT_CONTEXT === "true"
+      ? "test-header"
+      : env.DENTALSTOCK_AUTH_MODE || "production",
   };
 }

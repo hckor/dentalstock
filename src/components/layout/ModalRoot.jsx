@@ -2,7 +2,9 @@ import { BottomSheet } from "../shared/BottomSheet";
 import { ItemPickerSheet } from "../modals/ItemPickerSheet";
 import { InOutSheet } from "../modals/InOutSheet";
 import { OrderRequestSheet } from "../modals/OrderRequestSheet";
+import { BulkOrderRequestSheet } from "../modals/BulkOrderRequestSheet";
 import { ReceiptConfirmSheet } from "../modals/ReceiptConfirmSheet";
+import { BulkReceiptConfirmSheet } from "../modals/BulkReceiptConfirmSheet";
 import { AddItemModal } from "../modals/AddItemModal";
 import { EditItemModal } from "../modals/EditItemModal";
 import { EditSurgeryItemsSheet } from "../modals/EditSurgeryItemsSheet";
@@ -11,7 +13,7 @@ import { ShippingDetailModal } from "../modals/ShippingDetailModal";
 export function ModalRoot({
   modal, setModal, selItem, setSelItem, form, setForm,
   items, setItems, orders, currentUser,
-  commit, submitOrder, confirmReceipt, showToast,
+  commit, submitOrder, submitBulkOrders, confirmReceipt, confirmReceipts, showToast,
   canApprove,
   editItemsState, setEditItemsState, openModal,
 }) {
@@ -28,8 +30,14 @@ export function ModalRoot({
           {modal==="order_req" && selItem && (
             <OrderRequestSheet item={selItem} currentUser={currentUser} onSubmit={submitOrder} onClose={()=>setModal(null)}/>
           )}
+          {modal==="bulk_order" && (
+            <BulkOrderRequestSheet items={items} orders={orders} onSubmit={submitBulkOrders} onClose={()=>setModal(null)}/>
+          )}
           {modal==="confirm_receipt" && selItem && canApprove && (
             <ReceiptConfirmSheet item={selItem} orders={orders} onConfirm={confirmReceipt} onClose={()=>setModal(null)}/>
+          )}
+          {modal==="confirm_bulk_receipt" && selItem?.orders && canApprove && (
+            <BulkReceiptConfirmSheet orders={selItem.orders} items={items} onConfirm={confirmReceipts} onClose={()=>setModal(null)}/>
           )}
           {modal==="add_item" && (
             <AddItemModal setItems={setItems} onClose={()=>setModal(null)} showToast={showToast}/>

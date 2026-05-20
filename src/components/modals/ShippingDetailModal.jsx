@@ -1,11 +1,13 @@
 import { X, Check, Circle } from "lucide-react";
 import { T, font } from "../../constants/colors";
 import { getShippingEvents, getShippingEventTimeLabel } from "../../utils/shippingEvents";
+import { getVendorLabel } from "../../utils/vendorSelection";
 
 export function ShippingDetailModal({ order, item, onClose, openModal, canApprove }) {
   if (!order || !item) return null;
 
-  const hasPrice = Number.isFinite(order.price) && order.price > 0;
+  const orderPrice = Number(order.vendor_price || order.price);
+  const hasPrice = Number.isFinite(orderPrice) && orderPrice > 0;
   const shippingTimeline = getShippingEvents(order);
   const isDelivered = shippingTimeline[0]?.status === "배달완료" && order.status === "ordered";
 
@@ -99,10 +101,10 @@ export function ShippingDetailModal({ order, item, onClose, openModal, canApprov
 
       <div style={{ background: T.teal50, borderRadius: 12, padding: "16px 18px", marginBottom: 20, border: `1px solid ${T.teal500}33` }}>
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 16, color: T.grey600 }}>덴올</span>
+          <span style={{ fontSize: 16, color: T.grey600 }}>{getVendorLabel(order)}</span>
           <span style={{ fontSize: 16, fontWeight: 700, color: T.teal500 }}>{order.qty}{item.unit}</span>
           {hasPrice && <span style={{ fontSize: 16, color: T.grey600 }}>·</span>}
-          {hasPrice && <span style={{ fontSize: 16, fontWeight: 700, color: T.grey900 }}>{order.price.toLocaleString()}원</span>}
+          {hasPrice && <span style={{ fontSize: 16, fontWeight: 700, color: T.grey900 }}>{orderPrice.toLocaleString()}원</span>}
         </div>
         <p style={{ margin: "8px 0", fontSize: 16, color: T.grey600 }}>주문번호 {order.id}</p>
         <p style={{ margin: "4px 0", fontSize: 16, color: T.grey600 }}>요청자 {order.requested_by}</p>

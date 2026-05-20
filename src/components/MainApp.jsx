@@ -55,8 +55,8 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
 
   const { firePush, requestPushPermission, firedRemindersRef } = usePushNotifications();
   const { commit } = useStockActions({ items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
-  const { submitOrder, approveOrder, rejectOrder, confirmReceipt, startTracking, refreshTracking } = useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
-  const { addSurgery, confirmSurgeryPrep, updateSurgeryItems, deleteSurgery } = useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentUser, showToast, firePush, firedRemindersRef });
+  const { submitOrder, submitBulkOrders, approveOrder, approveOrders, rejectOrder, confirmReceipt, confirmReceipts, startTracking, refreshTracking } = useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
+  const { addSurgery, confirmSurgeryPrep, confirmSurgeryUsage, updateSurgeryItems, deleteSurgery } = useSurgeryActions({ surgeries, setSurgeries, items, setItems, setTxs, setNotifs, currentUser, showToast, firePush, firedRemindersRef });
 
   useEffect(() => { requestPushPermission(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -93,10 +93,10 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
 
       <div style={{flex:1, overflowY:"auto", background:dynamicT.grey50}}>
         <Suspense fallback={<div style={{padding:40, textAlign:"center", color:T.grey500, fontSize: 16}}>로딩 중...</div>}>
-          {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
-          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} orders={orders} onItemClick={openDetail} onExpiryClick={openExpiry}/>}
+          {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} confirmSurgeryUsage={confirmSurgeryUsage} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
+          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} orders={orders} onItemClick={openDetail} onExpiryClick={openExpiry} onBulkOrderClick={()=>setModal("bulk_order")}/>}
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
-          {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} rejectOrder={rejectOrder} startTracking={startTracking} refreshTracking={refreshTracking} confirmReceipt={confirmReceipt}/>}
+          {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} approveOrders={approveOrders} rejectOrder={rejectOrder} startTracking={startTracking} refreshTracking={refreshTracking} confirmReceipt={confirmReceipt}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
           {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast}/>}
         </Suspense>
@@ -126,7 +126,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         form={form} setForm={setForm}
         items={items} setItems={setItems}
         orders={orders} currentUser={currentUser}
-        commit={commit} submitOrder={submitOrder} confirmReceipt={confirmReceipt}
+        commit={commit} submitOrder={submitOrder} submitBulkOrders={submitBulkOrders} confirmReceipt={confirmReceipt} confirmReceipts={confirmReceipts}
         showToast={showToast}
         canApprove={canApprove}
         editItemsState={editItemsState} setEditItemsState={setEditItemsState}

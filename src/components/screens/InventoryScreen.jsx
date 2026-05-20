@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Search, CalendarClock } from "lucide-react";
+import { Search, CalendarClock, ShoppingCart } from "lucide-react";
 import { T, font } from "../../constants/colors";
 import { CATEGORIES } from "../../constants/categories";
 import { getStatus, getActiveOrder } from "../../utils/helpers";
@@ -7,9 +7,13 @@ import { ItemCard } from "../shared/ItemCard";
 
 const ALL_CATS = [{ id: 0, name: "전체", color: T.grey700 }, ...CATEGORIES];
 
-export function InventoryScreen({ items, search, setSearch, cat, setCat, orders, onItemClick, onExpiryClick }) {
+export function InventoryScreen({ items, search, setSearch, cat, setCat, orders, onItemClick, onExpiryClick, onBulkOrderClick }) {
   const alertItems = useMemo(() => items.filter(i => getStatus(i) !== "ok"), [items]);
   const okItems    = useMemo(() => items.filter(i => getStatus(i) === "ok"),  [items]);
+  const bulkableCount = useMemo(
+    () => alertItems.filter(item => !getActiveOrder(orders, item.id)).length,
+    [alertItems, orders]
+  );
 
   const renderItem = (item) => {
     const ao = getActiveOrder(orders, item.id);
@@ -81,9 +85,33 @@ export function InventoryScreen({ items, search, setSearch, cat, setCat, orders,
         {/* 확인 필요 섹션 */}
         {alertItems.length > 0 && (
           <>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-              <div style={{ width: 7, height: 7, borderRadius: 9999, background: T.red500 }} />
-              <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey700 }}>확인 필요 {alertItems.length}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <div style={{ width: 7, height: 7, borderRadius: 9999, background: T.red500, flexShrink: 0 }} />
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey700, flex: 1 }}>확인 필요 {alertItems.length}</p>
+              <button
+                type="button"
+                onClick={onBulkOrderClick}
+                disabled={!bulkableCount}
+                style={{
+                  minHeight: 38,
+                  padding: "9px 13px",
+                  borderRadius: 9999,
+                  border: "none",
+                  background: bulkableCount ? T.blue500 : T.grey200,
+                  color: bulkableCount ? T.white : T.grey500,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: bulkableCount ? "pointer" : "default",
+                  fontFamily: font,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <ShoppingCart size={16} />
+                부족 품목 발주
+              </button>
             </div>
             {alertItems.map(renderItem)}
             {okItems.length > 0 && (

@@ -3,7 +3,7 @@ import { auditLogsApi } from "../api/auditLogsApi";
 import { SURGERY_PRESETS } from "../constants/surgeryPresets";
 import { todayKey } from "../utils/helpers";
 
-export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentUser, showToast, firePush, firedRemindersRef }) {
+export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItems, setTxs, setNotifs, currentUser, showToast, firePush, firedRemindersRef }) {
   const addSurgery = (data) => {
     const preset = SURGERY_PRESETS[data.type] || SURGERY_PRESETS.implant;
     const requiredItems = (data.required_items && data.required_items.length) ? data.required_items : preset.items;
@@ -20,6 +20,10 @@ export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentU
       prep_confirmed:false,
       prepared_by:null,
       prepared_at:null,
+      usage_confirmed:false,
+      usage_confirmed_by:null,
+      usage_confirmed_at:null,
+      actual_items:null,
     };
     setSurgeries(p=>[surgery,...p]);
     auditLogsApi.record({
@@ -73,6 +77,94 @@ export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentU
       },
     });
     showToast("준비 품목이 수정되었습니다.");
+  };
+
+  const confirmSurgeryUsage = (surgeryId, usageItems, note = "") => {
+    const surgery = surgeries.find(s=>s.id===surgeryId);
+    if (!surgery) return;
+    if (surgery.usage_confirmed) {
+      showToast("이미 사용량 확인이 완료되었습니다.");
+      return;
+    }
+
+    const itemMap = new Map(items.map(item => [item.id, item]));
+    const usageRows = (Array.isArray(usageItems) ? usageItems : [])
+      .map(row => ({
+        item_id: row.item_id,
+        qty: Math.max(0, Number(row.qty) || 0),
+      }))
+      .filter(row => row.item_id);
+
+    const invalidRow = usageRows.find(row => {
+      const item = itemMap.get(row.item_id);
+      return !item || row.qty > item.current_qty;
+    });
+
+    if (invalidRow) {
+      const item = itemMap.get(invalidRow.item_id);
+      showToast(item ? `${item.name} 현재 재고는 ${item.current_qty}${item.unit}입니다.` : "사용 품목을 찾을 수 없습니다.");
+      return;
+    }
+
+    const usedRows = usageRows.filter(row => row.qty > 0);
+    const usageConfirmedAt = new Date().toISOString();
+    const qtyByItemId = new Map(usedRows.map(row => [row.item_id, row.qty]));
+
+    if (usedRows.length > 0 && setItems) {
+      setItems(prev => prev.map(item => qtyByItemId.has(item.id)
+        ? { ...item, current_qty: item.current_qty - qtyByItemId.get(item.id) }
+        : item
+      ));
+    }
+
+    if (usedRows.length > 0 && setTxs) {
+      setTxs(prev => [
+        ...usedRows.map((row, index) => {
+          const item = itemMap.get(row.item_id);
+          return {
+            id: `t${Date.now()}-s${index}`,
+            item_id: row.item_id,
+            type: "out",
+            qty: row.qty,
+            note: `수술 실사용 확정 (${surgery.title})${note ? ` · ${note}` : ""}`,
+            created_at: usageConfirmedAt,
+            user: currentUser.name,
+            surgery_id: surgeryId,
+            item_name: item?.name,
+          };
+        }),
+        ...prev,
+      ]);
+    }
+
+    setSurgeries(p=>p.map(s=>s.id===surgeryId?{
+      ...s,
+      usage_confirmed:true,
+      usage_confirmed_by:currentUser.name,
+      usage_confirmed_at:usageConfirmedAt,
+      actual_items:usageRows,
+      usage_note:note,
+    }:s));
+
+    auditLogsApi.record({
+      action: "surgery.usage_confirmed",
+      entityType: "surgery",
+      entityId: surgeryId,
+      actor: currentUser,
+      metadata: {
+        scheduled_date: surgery.scheduled_date,
+        scheduled_time: surgery.scheduled_time,
+        used_count: usedRows.length,
+        used_items: usedRows.map(row => {
+          const item = itemMap.get(row.item_id);
+          return `${item?.name || row.item_id}:${row.qty}${item?.unit || ""}`;
+        }).join(", "),
+        note: note || "",
+      },
+      at: usageConfirmedAt,
+    });
+    setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_usage", surgery_id:surgeryId, item_id:null, message:"수술 실사용량 확인이 완료되었습니다", sub:`${surgery.title} · ${usedRows.length}개 품목 출고`, is_read:false, created_at:usageConfirmedAt},...p]);
+    showToast(usedRows.length ? `실사용 ${usedRows.length}개 품목 출고 완료` : "사용 품목 없이 수술을 완료했습니다");
   };
 
   const deleteSurgery = (surgeryId) => {
@@ -145,5 +237,5 @@ export function useSurgeryActions({ surgeries, setSurgeries, setNotifs, currentU
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surgeries]);
 
-  return { addSurgery, confirmSurgeryPrep, updateSurgeryItems, deleteSurgery };
+  return { addSurgery, confirmSurgeryPrep, confirmSurgeryUsage, updateSurgeryItems, deleteSurgery };
 }

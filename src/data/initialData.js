@@ -11,21 +11,21 @@ export const INITIAL_USERS = [
 export const INIT_ITEMS = [
   // ===== 소모품 =====
   { id:"1",  name:"라텍스 장갑 (S)",        category_id:1, unit:"박스", current_qty:8,  min_qty:5,  location:"창고 A-1",      expiry:null          },
-  { id:"2",  name:"라텍스 장갑 (M)",        category_id:1, unit:"박스", current_qty:4,  min_qty:5,  location:"창고 A-1",      expiry:null          },
+  { id:"2",  name:"라텍스 장갑 (M)",        category_id:1, unit:"박스", current_qty:4,  min_qty:5,  location:"창고 A-1",      expiry:null,         vendor_options:[{vendor_id:1,vendor_name:"덴올",price:5200},{vendor_id:2,vendor_name:"오스템몰",price:5000}] },
   { id:"3",  name:"니트릴 장갑 (L)",        category_id:1, unit:"박스", current_qty:12, min_qty:5,  location:"창고 A-2",      expiry:null          },
   { id:"4",  name:"마스크 KF94",            category_id:1, unit:"박스", current_qty:15, min_qty:10, location:"창고 A-3",      expiry:"2028-01-01"  },
-  { id:"5",  name:"덴탈 마스크",            category_id:1, unit:"박스", current_qty:9,  min_qty:10, location:"창고 A-3",      expiry:"2027-10-15"  },
-  { id:"6",  name:"거즈 4x4",              category_id:1, unit:"팩",   current_qty:7,  min_qty:10, location:"창고 B-1",      expiry:"2026-11-20"  },
+  { id:"5",  name:"덴탈 마스크",            category_id:1, unit:"박스", current_qty:9,  min_qty:10, location:"창고 A-3",      expiry:"2027-10-15", vendor_options:[{vendor_id:1,vendor_name:"덴올",price:11000},{vendor_id:2,vendor_name:"오스템몰",price:10400}] },
+  { id:"6",  name:"거즈 4x4",              category_id:1, unit:"팩",   current_qty:7,  min_qty:10, location:"창고 B-1",      expiry:"2026-11-20", vendor_options:[{vendor_id:1,vendor_name:"덴올",price:7800},{vendor_id:2,vendor_name:"오스템몰",price:8200}] },
   { id:"7",  name:"코튼롤",                category_id:1, unit:"봉",   current_qty:18, min_qty:8,  location:"창고 B-2",      expiry:null          },
   { id:"8",  name:"알코올 스왑",            category_id:1, unit:"박스", current_qty:14, min_qty:10, location:"창고 B-3",      expiry:"2027-04-01"  },
-  { id:"9",  name:"석션 팁",               category_id:1, unit:"봉",   current_qty:5,  min_qty:6,  location:"창고 C-1",      expiry:null          },
+  { id:"9",  name:"석션 팁",               category_id:1, unit:"봉",   current_qty:5,  min_qty:6,  location:"창고 C-1",      expiry:null,         vendor_options:[{vendor_id:1,vendor_name:"덴올",price:4500},{vendor_id:2,vendor_name:"오스템몰",price:4300}] },
   { id:"10", name:"3-way syringe tip",    category_id:1, unit:"봉",   current_qty:11, min_qty:5,  location:"창고 C-1",      expiry:null          },
   { id:"39", name:"멸균 파우치",            category_id:1, unit:"박스", current_qty:11, min_qty:5,  location:"멸균실 K-1",    expiry:"2028-03-01"  },
-  { id:"40", name:"멸균 인디케이터",        category_id:1, unit:"팩",   current_qty:3,  min_qty:4,  location:"멸균실 K-1",    expiry:"2026-07-07"  },
+  { id:"40", name:"멸균 인디케이터",        category_id:1, unit:"팩",   current_qty:3,  min_qty:4,  location:"멸균실 K-1",    expiry:"2026-07-07", vendor_options:[{vendor_id:1,vendor_name:"덴올",price:9800},{vendor_id:2,vendor_name:"오스템몰",price:9400}] },
 
   // ===== 의약품 =====
   { id:"11", name:"리도카인 2%",            category_id:2, unit:"앰플", current_qty:22, min_qty:10, location:"약품실 D-1",    expiry:"2026-08-12"  },
-  { id:"12", name:"에피네프린",             category_id:2, unit:"앰플", current_qty:3,  min_qty:5,  location:"응급키트",       expiry:"2026-05-30"  },
+  { id:"12", name:"에피네프린",             category_id:2, unit:"앰플", current_qty:3,  min_qty:5,  location:"응급키트",       expiry:"2026-05-30", vendor_options:[{vendor_id:1,vendor_name:"덴올",price:36000},{vendor_id:2,vendor_name:"오스템몰",price:34200}] },
   { id:"13", name:"아목시실린",             category_id:2, unit:"통",   current_qty:7,  min_qty:3,  location:"약품실 D-2",    expiry:"2027-03-01"  },
   { id:"14", name:"이부프로펜",             category_id:2, unit:"통",   current_qty:10, min_qty:5,  location:"약품실 D-2",    expiry:"2027-09-15"  },
   { id:"15", name:"클로르헥시딘 가글",      category_id:2, unit:"병",   current_qty:6,  min_qty:4,  location:"약품실 D-3",    expiry:"2026-12-20"  },
@@ -33,7 +33,7 @@ export const INIT_ITEMS = [
   // ===== 보철 / 충전 재료 =====
   { id:"16", name:"레진 A1",               category_id:3, unit:"개",   current_qty:5,  min_qty:5,  location:"재료실 E-1",    expiry:"2026-10-01"  },
   { id:"17", name:"레진 A2",               category_id:3, unit:"개",   current_qty:7,  min_qty:5,  location:"재료실 E-1",    expiry:"2026-09-10"  },
-  { id:"18", name:"레진 A3",               category_id:3, unit:"개",   current_qty:2,  min_qty:5,  location:"재료실 E-1",    expiry:"2026-09-10"  },
+  { id:"18", name:"레진 A3",               category_id:3, unit:"개",   current_qty:2,  min_qty:5,  location:"재료실 E-1",    expiry:"2026-09-10", vendor_options:[{vendor_id:1,vendor_name:"덴올",price:17000},{vendor_id:2,vendor_name:"오스템몰",price:15800}] },
   { id:"19", name:"본딩제",                category_id:3, unit:"병",   current_qty:4,  min_qty:3,  location:"재료실 E-2",    expiry:"2026-07-15"  },
   { id:"20", name:"에칭젤",                category_id:3, unit:"개",   current_qty:8,  min_qty:4,  location:"재료실 E-2",    expiry:"2027-01-11"  },
   { id:"21", name:"GI Cement",            category_id:3, unit:"세트", current_qty:3,  min_qty:2,  location:"재료실 E-3",    expiry:"2026-06-22"  },
@@ -42,15 +42,15 @@ export const INIT_ITEMS = [
   // ===== 인상재 =====
   { id:"23", name:"알지네이트",             category_id:3, unit:"봉",   current_qty:6,  min_qty:4,  location:"인상재실 F-1",  expiry:"2026-08-01"  },
   { id:"24", name:"실리콘 인상재 Heavy",    category_id:3, unit:"통",   current_qty:4,  min_qty:3,  location:"인상재실 F-1",  expiry:"2026-11-10"  },
-  { id:"25", name:"실리콘 인상재 Light",    category_id:3, unit:"통",   current_qty:2,  min_qty:3,  location:"인상재실 F-2",  expiry:"2026-10-18"  },
+  { id:"25", name:"실리콘 인상재 Light",    category_id:3, unit:"통",   current_qty:2,  min_qty:3,  location:"인상재실 F-2",  expiry:"2026-10-18", vendor_options:[{vendor_id:1,vendor_name:"덴올",price:23500},{vendor_id:2,vendor_name:"오스템몰",price:22900}] },
   { id:"26", name:"Bite Registration",    category_id:3, unit:"개",   current_qty:7,  min_qty:3,  location:"인상재실 F-2",  expiry:"2027-02-01"  },
 
   // ===== 임플란트 =====
   { id:"27", name:"임플란트 픽스처 4.0mm", category_id:3, unit:"개",   current_qty:12, min_qty:10, location:"임플란트실 G-1", expiry:null          },
-  { id:"28", name:"임플란트 픽스처 4.5mm", category_id:3, unit:"개",   current_qty:9,  min_qty:10, location:"임플란트실 G-1", expiry:null          },
+  { id:"28", name:"임플란트 픽스처 4.5mm", category_id:3, unit:"개",   current_qty:9,  min_qty:10, location:"임플란트실 G-1", expiry:null,         vendor_options:[{vendor_id:1,vendor_name:"덴올",price:82000},{vendor_id:2,vendor_name:"오스템몰",price:79500}] },
   { id:"29", name:"Healing Abutment",     category_id:3, unit:"개",   current_qty:15, min_qty:8,  location:"임플란트실 G-2", expiry:null          },
   { id:"30", name:"Cover Screw",          category_id:3, unit:"개",   current_qty:20, min_qty:10, location:"임플란트실 G-2", expiry:null          },
-  { id:"31", name:"Bone Graft",           category_id:3, unit:"병",   current_qty:4,  min_qty:5,  location:"냉장 H-1",      expiry:"2026-09-25"  },
+  { id:"31", name:"Bone Graft",           category_id:3, unit:"병",   current_qty:4,  min_qty:5,  location:"냉장 H-1",      expiry:"2026-09-25", vendor_options:[{vendor_id:1,vendor_name:"덴올",price:69000},{vendor_id:2,vendor_name:"오스템몰",price:71000}] },
   { id:"32", name:"Collagen Membrane",    category_id:3, unit:"개",   current_qty:6,  min_qty:4,  location:"냉장 H-1",      expiry:"2026-12-12"  },
 
   // ===== 교정 =====
@@ -111,9 +111,9 @@ export const INIT_TXS = [
 ];
 
 export const INIT_ORDERS = [
-  { id:"o1", item_id:"12", requested_by:"박위생사", requested_at:"2026-05-19T08:10:00", qty:10, note:"에피네프린 재고 부족",  status:"pending",  reviewed_by:null,      reviewed_at:null,                   review_note:"" },
+  { id:"o1", item_id:"12", requested_by:"박위생사", requested_at:"2026-05-19T08:10:00", qty:10, note:"에피네프린 재고 부족",  status:"pending",  reviewed_by:null,      reviewed_at:null,                   review_note:"", vendor_id:"2", vendor_name:"오스템몰", vendor_price:34200, vendor_selection:"lowest" },
   {
-    id:"o2", item_id:"18", requested_by:"최위생사", requested_at:"2026-05-18T16:30:00", qty:5,  note:"레진 A3 시급", status:"ordered",
+    id:"o2", item_id:"18", requested_by:"최위생사", requested_at:"2026-05-18T16:30:00", qty:5,  note:"레진 A3 시급", status:"ordered", vendor_id:"2", vendor_name:"오스템몰", vendor_price:15800, vendor_selection:"lowest",
     reviewed_by:"이매니저", reviewed_at:"2026-05-18T17:00:00", review_note:"승인합니다", carrier:"CJ대한통운", tracking_number:"9876543210",
     shipping_events:[
       { status:"배송중", timestamp:"2026-05-19T09:20:00", location:"서울 집배센터", completed:true },
@@ -121,7 +121,7 @@ export const INIT_ORDERS = [
     ],
   },
   {
-    id:"o3", item_id:"6", requested_by:"정위생사", requested_at:"2026-05-12T10:00:00", qty:10, note:"거즈 부족", status:"received",
+    id:"o3", item_id:"6", requested_by:"정위생사", requested_at:"2026-05-12T10:00:00", qty:10, note:"거즈 부족", status:"received", vendor_id:"1", vendor_name:"덴올", vendor_price:7800, vendor_selection:"lowest",
     reviewed_by:"이매니저", reviewed_at:"2026-05-12T11:00:00", review_note:"", carrier:"롯데택배", tracking_number:"5522331144",
     shipping_events:[
       { status:"입고완료", timestamp:"2026-05-14T10:30:00", location:"치과 재고실", completed:true },
@@ -129,7 +129,7 @@ export const INIT_ORDERS = [
       { status:"주문접수", timestamp:"2026-05-12T11:00:00", location:"도매 사이트", completed:true },
     ],
   },
-  { id:"o4", item_id:"5",  requested_by:"박위생사", requested_at:"2026-05-10T09:00:00", qty:5,  note:"덴탈 마스크 부족",    status:"rejected", reviewed_by:"이매니저", reviewed_at:"2026-05-10T14:00:00", review_note:"이번달 예산 초과" },
+  { id:"o4", item_id:"5",  requested_by:"박위생사", requested_at:"2026-05-10T09:00:00", qty:5,  note:"덴탈 마스크 부족",    status:"rejected", reviewed_by:"이매니저", reviewed_at:"2026-05-10T14:00:00", review_note:"이번달 예산 초과", vendor_id:"2", vendor_name:"오스템몰", vendor_price:10400, vendor_selection:"lowest" },
 ];
 
 export const INIT_SURGERIES = [

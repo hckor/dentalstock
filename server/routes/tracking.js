@@ -7,6 +7,7 @@ export async function handleTracking(req, res, { trackingService }) {
   const tracking = await trackingService.refresh({
     carrier: body.carrier,
     trackingNumber: body.trackingNumber,
+    currentStatuses: body.currentStatuses,
   });
 
   sendJson(res, 200, tracking);

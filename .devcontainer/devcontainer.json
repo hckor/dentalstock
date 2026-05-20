@@ -1,0 +1,14 @@
+{
+  "name": "Node Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "TZ": "Asia/Seoul"
+    }
+  },
+  "remoteUser": "node",
+  "runArgs": ["--cap-add=NET_ADMIN"],
+  "forwardPorts": [5174, 8787],
+  "postCreateCommand": "npm install",
+  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh"
+}

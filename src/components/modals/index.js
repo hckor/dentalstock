@@ -1,5 +1,6 @@
 export { InOutSheet } from "./InOutSheet";
 export { ReceiptConfirmSheet } from "./ReceiptConfirmSheet";
+export { BulkReceiptConfirmSheet } from "./BulkReceiptConfirmSheet";
 export { EditItemModal } from "./EditItemModal";
 export { AddItemModal } from "./AddItemModal";
 export { EditSurgeryItemsSheet } from "./EditSurgeryItemsSheet";

@@ -5,7 +5,8 @@ import { Inp } from "../shared/Inp";
 
 export function ReceiptConfirmSheet({item, orders, onConfirm, onClose}) {
   const order = orders.find(o=>o.item_id===item.id&&o.status==="ordered");
-  const [qty,  setQty]  = useState(order?.qty || 1);
+  const remainingQty = Math.max(1, (order?.qty || 1) - (Number(order?.received_qty) || 0));
+  const [qty,  setQty]  = useState(remainingQty);
   const [note, setNote] = useState("");
   if (!order) return null;
   return (
@@ -20,7 +21,7 @@ export function ReceiptConfirmSheet({item, orders, onConfirm, onClose}) {
         <p style={{margin:0, fontSize: 16, color:T.grey600, marginBottom:4}}>발주 정보</p>
         <p style={{margin:0, fontSize: 20, fontWeight:700, color:T.grey900}}>{item.name}</p>
         <div style={{display:"flex", gap:12, marginTop:6}}>
-          <span style={{fontSize: 16, color:T.grey600}}>발주 수량 <span style={{fontWeight:700, color:T.teal500}}>{order.qty}{item.unit}</span></span>
+          <span style={{fontSize: 16, color:T.grey600}}>남은 수량 <span style={{fontWeight:700, color:T.teal500}}>{remainingQty}{item.unit}</span></span>
           <span style={{fontSize: 16, color:T.grey600}}>요청자 <span style={{fontWeight:600, color:T.grey800}}>{order.requested_by}</span></span>
         </div>
       </div>
@@ -34,7 +35,7 @@ export function ReceiptConfirmSheet({item, orders, onConfirm, onClose}) {
         </button>
         <div style={{flex:1, textAlign:"center"}}>
           <p style={{margin:0, fontSize: 30, fontWeight:700, color:T.grey900, fontFamily:monoFont, fontVariantNumeric:"tabular-nums"}}>{qty}</p>
-          {qty !== order.qty && <p style={{margin:"2px 0 0", fontSize: 16, color:T.orange500, fontWeight:600}}>발주량({order.qty})과 다릅니다</p>}
+          {qty !== remainingQty && <p style={{margin:"2px 0 0", fontSize: 16, color:T.orange500, fontWeight:600}}>남은 수량({remainingQty})과 다릅니다</p>}
         </div>
         <button onClick={()=>setQty(q=>q+1)} style={{width:52, height:52, borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>
           <Plus size={22} color={T.white}/>

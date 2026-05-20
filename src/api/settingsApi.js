@@ -2,11 +2,11 @@ import { appRepository } from "../repositories/appRepository";
 
 const DEFAULTS = {
   vendors: [
-    { id: 1, name: "덴올", connected: true, automaticOrdering: true },
-    { id: 2, name: "오스템몰", connected: true, automaticOrdering: true },
+    { id: 1, name: "덴올", connected: false, automaticOrdering: true },
+    { id: 2, name: "오스템몰", connected: false, automaticOrdering: true },
     { id: 3, name: "이덴트", connected: false, automaticOrdering: false },
   ],
-  preferredVendor: "1",
+  preferredVendor: "lowest",
   maxOrderAmount: "50000",
 };
 
@@ -14,6 +14,7 @@ function stripCredentialFields(vendor = {}) {
   const safeVendor = { ...vendor };
   delete safeVendor.username;
   delete safeVendor.password;
+  delete safeVendor.connected;
   return safeVendor;
 }
 
@@ -29,23 +30,11 @@ function sanitizeSettings(settings = {}) {
   };
 }
 
-function migrateLegacyCredentials(saved) {
+function hasServerOwnedVendorFields(saved) {
   const savedVendors = Array.isArray(saved?.vendors) ? saved.vendors : [];
-  const legacyCredentials = savedVendors.reduce((acc, vendor) => {
-    const username = String(vendor.username || "");
-    const password = String(vendor.password || "");
-    if (!username && !password) return acc;
-    acc[String(vendor.id)] = { username, password };
-    return acc;
-  }, {});
-
-  if (!Object.keys(legacyCredentials).length) return false;
-
-  appRepository.vendorCredentials.set({
-    ...(appRepository.vendorCredentials.get() || {}),
-    ...legacyCredentials,
-  });
-  return true;
+  return savedVendors.some(vendor => (
+    vendor.username || vendor.password || Object.hasOwn(vendor, "connected")
+  ));
 }
 
 function normalizeSettings(saved) {
@@ -56,7 +45,7 @@ function normalizeSettings(saved) {
   });
 
   const vendorIds = vendors.map(vendor => String(vendor.id));
-  const preferredVendor = vendorIds.includes(String(saved?.preferredVendor))
+  const preferredVendor = String(saved?.preferredVendor) === "lowest" || vendorIds.includes(String(saved?.preferredVendor))
     ? String(saved.preferredVendor)
     : DEFAULTS.preferredVendor;
 
@@ -72,9 +61,9 @@ function normalizeSettings(saved) {
 export const settingsApi = {
   load() {
     const saved = appRepository.settings.get();
-    const migrated = migrateLegacyCredentials(saved);
+    const hadServerOwnedVendorFields = hasServerOwnedVendorFields(saved);
     const safeSettings = sanitizeSettings(saved);
-    if (migrated) appRepository.settings.set(safeSettings);
+    if (hadServerOwnedVendorFields) appRepository.settings.set(safeSettings);
     return normalizeSettings(safeSettings);
   },
   save(settings) {

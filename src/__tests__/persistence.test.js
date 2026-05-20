@@ -41,7 +41,7 @@ describe('영속화 (persistence)', () => {
     expect(itemsApi.list().length).toBe(INIT_ITEMS.length);
   });
 
-  it('settingsApi.load는 기존 도매 설정에 자동발주 기본값을 보강하고 계정 정보를 분리', () => {
+  it('settingsApi.load는 기존 도매 설정에 자동발주 기본값을 보강하고 계정 원문을 삭제한다', () => {
     storage.save(STORAGE_KEYS.settings, {
       vendors: [{ id: 1, name: '덴올', connected: true, username: 'demo', password: 'pw' }],
       preferredVendor: 'lowest',
@@ -50,7 +50,7 @@ describe('영속화 (persistence)', () => {
 
     const settings = settingsApi.load();
 
-    expect(settings.preferredVendor).toBe('1');
+    expect(settings.preferredVendor).toBe('lowest');
     expect(settings.maxOrderAmount).toBe('75000');
     expect(settings.vendors).toHaveLength(3);
     expect(settings.vendors[0]).toMatchObject({
@@ -59,9 +59,11 @@ describe('영속화 (persistence)', () => {
     });
     expect(settings.vendors[0].username).toBeUndefined();
     expect(settings.vendors[0].password).toBeUndefined();
+    expect(settings.vendors[0].connected).toBe(false);
     expect(settings.vendors[2].automaticOrdering).toBe(false);
-    expect(vendorCredentialsApi.get(1)).toEqual({ username: 'demo', password: 'pw' });
     expect(localRepository.read(STORAGE_KEYS.settings).vendors[0].password).toBeUndefined();
+    expect(localRepository.read(STORAGE_KEYS.settings).vendors[0].connected).toBeUndefined();
+    expect(localRepository.read(STORAGE_KEYS.vendorCredentials, null)).toBeNull();
   });
 
   it('settingsApi.save는 도매 계정 정보를 settings 문서에 저장하지 않는다', () => {
@@ -75,5 +77,20 @@ describe('영속화 (persistence)', () => {
 
     expect(settings.vendors[0].username).toBeUndefined();
     expect(settings.vendors[0].password).toBeUndefined();
+    expect(localRepository.read(STORAGE_KEYS.vendorCredentials, null)).toBeNull();
+  });
+
+  it('vendorCredentialsApi는 로컬 저장소에 도매 계정 원문을 저장하지 않는다', async () => {
+    const result = await vendorCredentialsApi.saveAll({
+      1: { username: 'demo', password: 'pw' },
+    });
+
+    expect(result['1']).toMatchObject({
+      vendorId: '1',
+      connected: false,
+      stored: false,
+      mode: 'disabled',
+    });
+    expect(localRepository.read(STORAGE_KEYS.vendorCredentials, null)).toBeNull();
   });
 });
