@@ -44,4 +44,8 @@ export const appRepository = {
     localRepository.clearAll();
     writeInitialData();
   },
+
+  clearLocalData() {
+    localRepository.clearAll();
+  },
 };

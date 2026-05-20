@@ -84,7 +84,7 @@ export function useOrderActions({
     };
 
     if (supabaseOrdersApi.isEnabled()) {
-      void supabaseOrdersApi.createOrder(currentUser.clinicId, newOrder)
+      void supabaseOrdersApi.createOrder(currentUser.clinicId, newOrder, currentUser)
         .then(savedOrder => {
           setOrders(p => [savedOrder, ...p]);
           auditLogsApi.record({
@@ -167,7 +167,7 @@ export function useOrderActions({
     }));
 
     if (supabaseOrdersApi.isEnabled()) {
-      void Promise.all(newOrders.map(order => supabaseOrdersApi.createOrder(currentUser.clinicId, order)))
+      void Promise.all(newOrders.map(order => supabaseOrdersApi.createOrder(currentUser.clinicId, order, currentUser)))
         .then(savedOrders => {
           setOrders(p => [...savedOrders, ...p]);
           auditLogsApi.record({
@@ -249,7 +249,7 @@ export function useOrderActions({
     const nextOrder = { ...order, status:"ordered", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote, ...vendorSnapshot };
 
     if (supabaseOrdersApi.isEnabled()) {
-      void supabaseOrdersApi.updateOrder(order, nextOrder)
+      void supabaseOrdersApi.updateOrder(order, nextOrder, currentUser)
         .then(savedOrder => {
           setOrders(p=>p.map(o=>o.id===orderId?savedOrder:o));
           auditLogsApi.record({
@@ -330,7 +330,7 @@ export function useOrderActions({
         review_note: reviewNote,
         shipment_group_id: shipmentGroupByOrderId.get(order.id) || order.shipment_group_id,
       }));
-      void Promise.all(nextOrders.map(order => supabaseOrdersApi.updateOrder(order, order)))
+      void Promise.all(nextOrders.map(order => supabaseOrdersApi.updateOrder(order, order, currentUser)))
         .then(savedOrders => {
           const savedById = new Map(savedOrders.map(order => [order.id, order]));
           setOrders(prev => prev.map(order => savedById.get(order.id) || order));
@@ -427,7 +427,7 @@ export function useOrderActions({
     const nextOrder = { ...order, status:"rejected", reviewed_by:currentUser.name, reviewed_at:reviewedAt, review_note:reviewNote };
 
     if (supabaseOrdersApi.isEnabled()) {
-      void supabaseOrdersApi.updateOrder(order, nextOrder)
+      void supabaseOrdersApi.updateOrder(order, nextOrder, currentUser)
         .then(savedOrder => {
           setOrders(p=>p.map(o=>o.id===orderId?savedOrder:o));
           auditLogsApi.record({
@@ -760,7 +760,7 @@ export function useOrderActions({
     }));
 
     if (supabaseOrdersApi.isEnabled()) {
-      void supabaseOrdersApi.updateOrders(nextOrders)
+      void supabaseOrdersApi.updateOrders(nextOrders, currentUser)
         .then(savedOrders => {
           const savedById = new Map(savedOrders.map(savedOrder => {
             const nextOrder = nextOrders.find(candidate => candidate.id === savedOrder.id);
@@ -860,7 +860,7 @@ export function useOrderActions({
     }));
 
     if (supabaseOrdersApi.isEnabled()) {
-      void supabaseOrdersApi.updateOrders(nextOrders)
+      void supabaseOrdersApi.updateOrders(nextOrders, currentUser)
         .then(savedOrders => {
           const savedById = new Map(savedOrders.map(savedOrder => {
             const nextOrder = nextOrders.find(candidate => candidate.id === savedOrder.id);

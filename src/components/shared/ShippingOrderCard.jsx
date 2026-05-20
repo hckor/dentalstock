@@ -11,8 +11,13 @@ const bodyStyle = { padding: "18px 20px" };
 const headerStyle = { display: "flex", alignItems: "flex-start", gap: 12 };
 const titleStyle = { margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900 };
 const metaStyle = { margin: "4px 0 0", fontSize: 16, color: T.grey500 };
+const emphasisStyle = { fontWeight: 600, color: T.grey700 };
+const contentStyle = { flex: 1, minWidth: 0 };
+const iconStyle = { flexShrink: 0 };
 const actionRowStyle = { display: "flex", alignItems: "stretch", gap: 8 };
 const noticeStyle = { padding: "12px 14px", borderRadius: 12, background: T.grey50, color: T.grey600, fontSize: 16, fontWeight: 600 };
+const stackedActionStyle = { display: "flex", flexDirection: "column", gap: 8 };
+const trackingNumberStyle = { margin: "6px 0 0", fontSize: 16, color: T.grey600, fontFamily: "monospace", fontWeight: 500 };
 const actionButtonBase = {
   flex: 1,
   minWidth: 0,
@@ -37,6 +42,51 @@ const actionButtonVariants = {
   neutralOutline: { border: `1.5px solid ${T.grey300}`, background: T.white, color: T.grey700 },
 };
 
+const pricePanelStyle = { margin: "2px 0 14px", borderRadius: 14, background: T.grey50, padding: "12px 14px" };
+const pricePanelHeaderStyle = { display: "flex", alignItems: "center", gap: 10 };
+const pricePanelTitleStyle = { margin: 0, fontSize: 14, fontWeight: 700, color: T.grey900 };
+const pricePanelSubtitleStyle = { margin: "3px 0 0", fontSize: 13, color: T.grey500 };
+const priceCandidateListStyle = { display: "flex", flexDirection: "column", gap: 7 };
+const priceCandidateRowBaseStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 9,
+  padding: "9px 10px",
+  borderRadius: 12,
+};
+const candidateDotBaseStyle = { width: 8, height: 8, borderRadius: 9999, flexShrink: 0 };
+const candidateNameRowStyle = { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" };
+const candidateNameStyle = {
+  margin: 0,
+  fontSize: 14,
+  fontWeight: 700,
+  color: T.grey800,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  maxWidth: "100%",
+};
+const candidateMetaStyle = { margin: "2px 0 0", fontSize: 12, color: T.grey500 };
+const candidatePriceStyle = { margin: 0, flexShrink: 0, fontFamily: monoFont, fontSize: 14, fontWeight: 700 };
+const candidateBadgeBaseStyle = { borderRadius: 9999, padding: "2px 7px", fontSize: 11, fontWeight: 700 };
+const candidateBadgeVariants = {
+  best: { background: T.blue50, color: T.blue500 },
+  soldOut: { background: T.red50, color: T.red500 },
+};
+const emptyCandidateStyle = { margin: "10px 0 0", fontSize: 13, color: T.grey500, lineHeight: 1.45 };
+const selectToggleBaseStyle = {
+  width: 26,
+  height: 26,
+  marginTop: 1,
+  borderRadius: 9999,
+  color: T.white,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  flexShrink: 0,
+};
+
 function ActionButton({ variant = "primary", style, children, ...props }) {
   return (
     <button {...props} style={{ ...actionButtonBase, ...actionButtonVariants[variant], ...style }}>
@@ -48,7 +98,7 @@ function ActionButton({ variant = "primary", style, children, ...props }) {
 function StatusHeader({ item, statusMeta, children, compact = false }) {
   return (
     <div style={{ ...headerStyle, marginBottom: compact ? 0 : 14 }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={contentStyle}>
         <p style={titleStyle}>{item.name}</p>
         {children}
       </div>
@@ -69,6 +119,68 @@ function formatLastChecked(value) {
   return `${parsed.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })} ${parsed.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
+function CandidateBadge({ variant, children }) {
+  return <span style={{ ...candidateBadgeBaseStyle, ...candidateBadgeVariants[variant] }}>{children}</span>;
+}
+
+function PriceCheckButton({ checking, disabled, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        minHeight: 34,
+        padding: "7px 11px",
+        borderRadius: 9999,
+        border: "none",
+        background: disabled ? T.grey200 : T.blue50,
+        color: disabled ? T.grey500 : T.blue500,
+        fontFamily: font,
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: disabled ? "default" : "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <RefreshCw size={15} style={iconStyle} />
+      {checking ? "확인 중" : "가격 확인"}
+    </button>
+  );
+}
+
+function PriceCandidateRow({ candidate, isBest }) {
+  const stockColor = candidate.vendor_in_stock ? (isBest ? T.blue500 : T.grey400) : T.red500;
+
+  return (
+    <div
+      style={{
+        ...priceCandidateRowBaseStyle,
+        background: isBest ? T.white : "transparent",
+        border: isBest ? `1px solid ${T.blue500}22` : `1px solid ${T.grey100}`,
+      }}
+    >
+      <span style={{ ...candidateDotBaseStyle, background: stockColor }} />
+      <div style={contentStyle}>
+        <div style={candidateNameRowStyle}>
+          <p style={candidateNameStyle}>{candidate.vendor_name || "거래처 미정"}</p>
+          {isBest && <CandidateBadge variant="best">최저</CandidateBadge>}
+          {!candidate.vendor_in_stock && <CandidateBadge variant="soldOut">품절</CandidateBadge>}
+        </div>
+        <p style={candidateMetaStyle}>
+          기본 {formatCurrency(candidate.vendor_base_price)} · 배송 {formatCurrency(candidate.vendor_shipping_fee)} · {formatLastChecked(candidate.vendor_last_checked_at)}
+        </p>
+      </div>
+      <p style={{ ...candidatePriceStyle, color: isBest ? T.blue500 : T.grey800 }}>
+        {formatCurrency(candidate.vendor_price)}
+      </p>
+    </div>
+  );
+}
+
 function PriceCandidatePanel({ item, order, canApprove, checking = false, onPriceCheck }) {
   const candidates = getVendorPriceCandidates(item, order.qty);
   const visibleCandidates = candidates.slice(0, 3);
@@ -76,93 +188,54 @@ function PriceCandidatePanel({ item, order, canApprove, checking = false, onPric
   const canRunCheck = Boolean(onPriceCheck) && hasCheckableUrl && !checking;
 
   return (
-    <div style={{ margin: "2px 0 14px", borderRadius: 14, background: T.grey50, padding: "12px 14px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: visibleCandidates.length ? 10 : 0 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.grey900 }}>품목별 가격 확인</p>
-          <p style={{ margin: "3px 0 0", fontSize: 13, color: T.grey500 }}>
-            승인 전에 최저가 후보를 확인합니다
-          </p>
+    <div style={pricePanelStyle}>
+      <div style={{ ...pricePanelHeaderStyle, marginBottom: visibleCandidates.length ? 10 : 0 }}>
+        <div style={contentStyle}>
+          <p style={pricePanelTitleStyle}>품목별 가격 확인</p>
+          <p style={pricePanelSubtitleStyle}>승인 전에 최저가 후보를 확인합니다</p>
         </div>
         {canApprove && (
-          <button
-            type="button"
-            onClick={onPriceCheck}
-            disabled={!canRunCheck}
-            style={{
-              minHeight: 34,
-              padding: "7px 11px",
-              borderRadius: 9999,
-              border: "none",
-              background: !canRunCheck ? T.grey200 : T.blue50,
-              color: !canRunCheck ? T.grey500 : T.blue500,
-              fontFamily: font,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: canRunCheck ? "pointer" : "default",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              whiteSpace: "nowrap",
-            }}
-          >
-            <RefreshCw size={15} style={{ flexShrink: 0 }} />
-            {checking ? "확인 중" : "가격 확인"}
-          </button>
+          <PriceCheckButton checking={checking} disabled={!canRunCheck} onClick={onPriceCheck} />
         )}
       </div>
 
       {visibleCandidates.length > 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+        <div style={priceCandidateListStyle}>
           {visibleCandidates.map((candidate, index) => {
             const isBest = index === 0 && candidate.vendor_in_stock && Number.isFinite(Number(candidate.vendor_price));
             return (
-              <div
+              <PriceCandidateRow
                 key={`${candidate.vendor_id}-${candidate.vendor_url || index}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 9,
-                  padding: "9px 10px",
-                  borderRadius: 12,
-                  background: isBest ? T.white : "transparent",
-                  border: isBest ? `1px solid ${T.blue500}22` : `1px solid ${T.grey100}`,
-                }}
-              >
-                <span style={{ width: 8, height: 8, borderRadius: 9999, background: candidate.vendor_in_stock ? (isBest ? T.blue500 : T.grey400) : T.red500, flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.grey800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
-                      {candidate.vendor_name || "거래처 미정"}
-                    </p>
-                    {isBest && (
-                      <span style={{ borderRadius: 9999, background: T.blue50, color: T.blue500, padding: "2px 7px", fontSize: 11, fontWeight: 700 }}>
-                        최저
-                      </span>
-                    )}
-                    {!candidate.vendor_in_stock && (
-                      <span style={{ borderRadius: 9999, background: T.red50, color: T.red500, padding: "2px 7px", fontSize: 11, fontWeight: 700 }}>
-                        품절
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: T.grey500 }}>
-                    기본 {formatCurrency(candidate.vendor_base_price)} · 배송 {formatCurrency(candidate.vendor_shipping_fee)} · {formatLastChecked(candidate.vendor_last_checked_at)}
-                  </p>
-                </div>
-                <p style={{ margin: 0, flexShrink: 0, fontFamily: monoFont, fontSize: 14, fontWeight: 700, color: isBest ? T.blue500 : T.grey800 }}>
-                  {formatCurrency(candidate.vendor_price)}
-                </p>
-              </div>
+                candidate={candidate}
+                isBest={isBest}
+              />
             );
           })}
         </div>
       ) : (
-        <p style={{ margin: "10px 0 0", fontSize: 13, color: T.grey500, lineHeight: 1.45 }}>
+        <p style={emptyCandidateStyle}>
           구매 후보가 아직 없습니다. 품목 편집에서 후보 거래처와 상품 URL을 등록하면 승인 전에 가격을 확인할 수 있어요.
         </p>
       )}
     </div>
+  );
+}
+
+function SelectToggle({ itemName, selected, onChange }) {
+  return (
+    <button
+      type="button"
+      aria-label={`${itemName} 일괄 승인 선택`}
+      aria-pressed={selected}
+      onClick={onChange}
+      style={{
+        ...selectToggleBaseStyle,
+        border: `1px solid ${selected ? T.blue500 : T.grey300}`,
+        background: selected ? T.blue500 : T.white,
+      }}
+    >
+      {selected && <CheckCircle2 size={17} color={T.white} strokeWidth={3} />}
+    </button>
   );
 }
 
@@ -179,33 +252,12 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
           <div style={bodyStyle}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: selectable ? 10 : 0 }}>
               {selectable && (
-                <button
-                  type="button"
-                  aria-label={`${item.name} 일괄 승인 선택`}
-                  aria-pressed={selected}
-                  onClick={onSelectChange}
-                  style={{
-                    width: 26,
-                    height: 26,
-                    marginTop: 1,
-                    borderRadius: 9999,
-                    border: `1px solid ${selected ? T.blue500 : T.grey300}`,
-                    background: selected ? T.blue500 : T.white,
-                    color: T.white,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    flexShrink: 0,
-                  }}
-                >
-                  {selected && <CheckCircle2 size={17} color={T.white} strokeWidth={3} />}
-                </button>
+                <SelectToggle itemName={item.name} selected={selected} onChange={onSelectChange} />
               )}
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={contentStyle}>
                 <StatusHeader item={item} statusMeta={os}>
                   <p style={metaStyle}>
-                    <span style={{ fontWeight: 600, color: T.grey700 }}>수량:</span> {order.qty}{item.unit}
+                    <span style={emphasisStyle}>수량:</span> {order.qty}{item.unit}
                     {order.requested_by && ` · 요청자: ${order.requested_by}`}
                   </p>
                   <p style={metaStyle}>예상 거래처: {vendorLabel}</p>
@@ -225,11 +277,11 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
             {canApprove ? (
               <div style={actionRowStyle}>
                 <ActionButton variant="dangerOutline" onClick={() => onActionClick("reject")}>
-                  <XCircle size={18} style={{ flexShrink: 0 }} />
+                  <XCircle size={18} style={iconStyle} />
                   반려
                 </ActionButton>
                 <ActionButton onClick={() => onActionClick("approve")}>
-                  <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
+                  <CheckCircle2 size={18} style={iconStyle} />
                   승인
                 </ActionButton>
               </div>
@@ -260,34 +312,34 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                 </p>
               )}
               {order.tracking_number && (
-                <p style={{ margin: "6px 0 0", fontSize: 16, color: T.grey600, fontFamily: "monospace", fontWeight: 500 }}>
+                <p style={trackingNumberStyle}>
                   송장: {order.tracking_number}
                 </p>
               )}
             </StatusHeader>
 
             {(hasTracking || canApprove) && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={stackedActionStyle}>
                 <div style={actionRowStyle}>
                   <ActionButton
                     variant="neutralOutline"
                     onClick={() => onActionClick(hasTracking ? "tracking_detail" : "tracking_start")}
                   >
-                    {hasTracking ? <FileText size={18} style={{ flexShrink: 0 }} /> : <Navigation size={18} style={{ flexShrink: 0 }} />}
+                    {hasTracking ? <FileText size={18} style={iconStyle} /> : <Navigation size={18} style={iconStyle} />}
                     {hasTracking ? "송장 상세" : "송장 등록"}
-                    {hasTracking && <ChevronRight size={18} style={{ flexShrink: 0 }} />}
+                    {hasTracking && <ChevronRight size={18} style={iconStyle} />}
                   </ActionButton>
                   {hasTracking && canApprove && (
                     <ActionButton variant="neutralOutline" onClick={() => onActionClick("tracking_refresh")}>
-                      <RefreshCw size={18} style={{ flexShrink: 0 }} />
+                      <RefreshCw size={18} style={iconStyle} />
                       배송 갱신
                     </ActionButton>
                   )}
                 </div>
                 {canApprove && (
                   <ActionButton onClick={() => onActionClick("confirm_receipt")} style={{ width: "100%" }}>
-                    <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
-                    {isDelivered ? "입고 확인" : "입고 확인"}
+                    <CheckCircle2 size={18} style={iconStyle} />
+                    입고 확인
                   </ActionButton>
                 )}
               </div>
@@ -304,7 +356,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
           <div style={bodyStyle}>
             <StatusHeader item={item} statusMeta={os} compact>
               <p style={metaStyle}>
-                수량 <span style={{ fontWeight: 600, color: T.grey700 }}>{order.qty}{item.unit}</span>
+                수량 <span style={emphasisStyle}>{order.qty}{item.unit}</span>
                 {order.review_note && ` · ${order.review_note}`}
               </p>
             </StatusHeader>
@@ -317,7 +369,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
           <div style={bodyStyle}>
             <StatusHeader item={item} statusMeta={os} compact>
               <p style={metaStyle}>
-                수량 <span style={{ fontWeight: 600, color: T.grey700 }}>{order.qty}{item.unit}</span>
+                수량 <span style={emphasisStyle}>{order.qty}{item.unit}</span>
                 {order.requested_by && ` · 요청자: ${order.requested_by}`}
               </p>
               <p style={metaStyle}>거래처: {vendorLabel}</p>

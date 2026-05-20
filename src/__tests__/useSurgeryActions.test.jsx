@@ -10,7 +10,7 @@ function renderSurgeryHook(overrides = {}) {
       title: '오전 임플란트 수술',
       patient: '홍길동',
       type: 'implant',
-      scheduled_date: '2026-05-21',
+      scheduled_date: '2026-05-22',
       scheduled_time: '10:30',
       required_items: [
         { item_id: '1', qty: 2 },

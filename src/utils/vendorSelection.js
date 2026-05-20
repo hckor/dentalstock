@@ -11,6 +11,26 @@ const getActiveVendors = (settings) => {
   return vendors.filter(vendor => vendor.automaticOrdering !== false);
 };
 
+const buildVendorCandidate = (option, orderQty, vendorNameFallback) => ({
+  vendor_id: normalizeVendorId(option.vendor_id),
+  vendor_name: option.vendor_name || vendorNameFallback,
+  vendor_price: getEffectiveVendorPrice(option, orderQty),
+  vendor_base_price: toPositiveNumber(option.price),
+  vendor_shipping_fee: toPositiveNumber(option.shipping_fee) || 0,
+  vendor_min_order_qty: Math.max(1, Number(option.min_order_qty) || 1),
+  vendor_sku: option.sku || "",
+  vendor_url: option.url || "",
+  vendor_in_stock: option.in_stock !== false,
+  vendor_last_checked_at: option.last_checked_at || null,
+});
+
+const sortVendorCandidates = (a, b) => {
+  if (a.vendor_in_stock !== b.vendor_in_stock) return a.vendor_in_stock ? -1 : 1;
+  const aPrice = Number.isFinite(a.vendor_price) ? a.vendor_price : Number.POSITIVE_INFINITY;
+  const bPrice = Number.isFinite(b.vendor_price) ? b.vendor_price : Number.POSITIVE_INFINITY;
+  return aPrice - bPrice;
+};
+
 export function getVendorLabel(vendorSnapshot) {
   if (!vendorSnapshot) return "거래처 미정";
   if (vendorSnapshot.vendor_name || vendorSnapshot.name) return vendorSnapshot.vendor_name || vendorSnapshot.name;
@@ -34,24 +54,8 @@ export function getEffectiveVendorPrice(option, orderQty = 1) {
 export function getVendorPriceCandidates(item, orderQty = 1) {
   const vendorOptions = Array.isArray(item?.vendor_options) ? item.vendor_options : [];
   return vendorOptions
-    .map(option => ({
-      vendor_id: normalizeVendorId(option.vendor_id),
-      vendor_name: option.vendor_name || `거래처 ${option.vendor_id || ""}`.trim(),
-      vendor_price: getEffectiveVendorPrice(option, orderQty),
-      vendor_base_price: toPositiveNumber(option.price),
-      vendor_shipping_fee: toPositiveNumber(option.shipping_fee) || 0,
-      vendor_min_order_qty: Math.max(1, Number(option.min_order_qty) || 1),
-      vendor_sku: option.sku || "",
-      vendor_url: option.url || "",
-      vendor_in_stock: option.in_stock !== false,
-      vendor_last_checked_at: option.last_checked_at || null,
-    }))
-    .sort((a, b) => {
-      if (a.vendor_in_stock !== b.vendor_in_stock) return a.vendor_in_stock ? -1 : 1;
-      const aPrice = Number.isFinite(a.vendor_price) ? a.vendor_price : Number.POSITIVE_INFINITY;
-      const bPrice = Number.isFinite(b.vendor_price) ? b.vendor_price : Number.POSITIVE_INFINITY;
-      return aPrice - bPrice;
-    });
+    .map(option => buildVendorCandidate(option, orderQty, `거래처 ${option.vendor_id || ""}`.trim()))
+    .sort(sortVendorCandidates);
 }
 
 export function resolveOrderVendorForQty(item, settings, orderQty = 1) {
@@ -64,18 +68,7 @@ export function resolveOrderVendorForQty(item, settings, orderQty = 1) {
     .filter(option => activeVendorIds.size === 0 || activeVendorIds.has(normalizeVendorId(option.vendor_id)))
     .map(option => {
       const vendor = settings?.vendors?.find(target => normalizeVendorId(target.id) === normalizeVendorId(option.vendor_id));
-      return {
-        vendor_id: normalizeVendorId(option.vendor_id),
-        vendor_name: option.vendor_name || vendor?.name || `거래처 ${option.vendor_id}`,
-        vendor_price: getEffectiveVendorPrice(option, orderQty),
-        vendor_base_price: toPositiveNumber(option.price),
-        vendor_shipping_fee: toPositiveNumber(option.shipping_fee) || 0,
-        vendor_min_order_qty: Math.max(1, Number(option.min_order_qty) || 1),
-        vendor_sku: option.sku || "",
-        vendor_url: option.url || "",
-        vendor_in_stock: option.in_stock !== false,
-        vendor_last_checked_at: option.last_checked_at || null,
-      };
+      return buildVendorCandidate(option, orderQty, vendor?.name || `거래처 ${option.vendor_id}`);
     });
 
   const selectedOption = preferredVendor && preferredVendor !== LOWEST_VENDOR_VALUE

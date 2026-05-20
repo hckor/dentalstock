@@ -25,9 +25,10 @@ import { LoginSelect } from "./components/auth/LoginSelect";
 import { LoginPin } from "./components/auth/LoginPin";
 import { LoginSupabase } from "./components/auth/LoginSupabase";
 import { MainApp } from "./components/MainApp";
+import { appRepository } from "./repositories/appRepository";
 
-// 모듈 로드 시점에 1회 시드 (테스트에서도 안전하게 호출됨)
-seedIfEmpty();
+// 로컬 데모 모드에서만 초기 데이터를 저장한다. Supabase 모드는 브라우저 저장을 최소화한다.
+if (!getApiConfig().isSupabaseMode) seedIfEmpty();
 
 // PWA standalone 모드 감지 (홈 화면에서 실행 중인지)
 const isStandalone =
@@ -47,12 +48,13 @@ function DentalStockInner() {
   const [isOnline,    setIsOnline]    = useState(navigator.onLine);
   const [syncStatus,  setSyncStatus]  = useState("");
 
-  const [users,     setUsers]     = usePersistedState(() => usersApi.list(),     usersApi.save);
-  const [items,     setItems]     = usePersistedState(() => itemsApi.list(),     itemsApi.save);
-  const [txs,       setTxs]       = usePersistedState(() => txsApi.list(),       txsApi.save);
-  const [orders,    setOrders]    = usePersistedState(() => ordersApi.list(),    ordersApi.save);
-  const [surgeries, setSurgeries] = usePersistedState(() => surgeriesApi.list(), surgeriesApi.save);
-  const [notifs,    setNotifs]    = usePersistedState(() => notifsApi.list(),    notifsApi.save);
+  const persistedOptions = { enabled: !isSupabaseMode };
+  const [users,     setUsers]     = usePersistedState(() => isSupabaseMode ? [] : usersApi.list(),     usersApi.save,     persistedOptions);
+  const [items,     setItems]     = usePersistedState(() => isSupabaseMode ? [] : itemsApi.list(),     itemsApi.save,     persistedOptions);
+  const [txs,       setTxs]       = usePersistedState(() => isSupabaseMode ? [] : txsApi.list(),       txsApi.save,       persistedOptions);
+  const [orders,    setOrders]    = usePersistedState(() => isSupabaseMode ? [] : ordersApi.list(),    ordersApi.save,    persistedOptions);
+  const [surgeries, setSurgeries] = usePersistedState(() => isSupabaseMode ? [] : surgeriesApi.list(), surgeriesApi.save, persistedOptions);
+  const [notifs,    setNotifs]    = usePersistedState(() => isSupabaseMode ? [] : notifsApi.list(),    notifsApi.save,    persistedOptions);
 
   const setSyncedNotifs = useCallback((updater) => {
     setNotifs(prev => {
@@ -69,6 +71,7 @@ function DentalStockInner() {
 
   useEffect(() => {
     if (!isSupabaseMode) return;
+    appRepository.clearLocalData();
     let ignore = false;
     supabaseAuthApi.getCurrentUser()
       .then(user => {
@@ -242,6 +245,7 @@ function DentalStockInner() {
   const handleLogout = async () => {
     if (isSupabaseMode) {
       await supabaseAuthApi.signOut();
+      appRepository.clearLocalData();
     } else {
       authApi.clearSession();
     }

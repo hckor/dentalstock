@@ -46,11 +46,12 @@ export const supabaseSettingsApi = {
 
   async saveForClinic(clinicId, settings) {
     if (!clinicId) throw new Error("clinic_id_required");
-    const { data, error } = await getSupabaseClient()
-      .from("settings")
-      .upsert(toSettingsPayload(clinicId, settings), { onConflict: "clinic_id" })
-      .select("clinic_id, vendors, reorder_rules, app_config, updated_at")
-      .single();
+    const payload = toSettingsPayload(clinicId, settings);
+    const { data, error } = await getSupabaseClient().rpc("save_clinic_settings", {
+      p_vendors: payload.vendors,
+      p_reorder_rules: payload.reorder_rules,
+      p_app_config: payload.app_config,
+    });
 
     if (error) throw error;
     return mapSupabaseSettings(data);

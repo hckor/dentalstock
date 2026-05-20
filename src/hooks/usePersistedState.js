@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 // persister:     (value) => storage에 저장
 // 첫 마운트 시점에는 setter 호출이 없으므로 저장하지 않음 (불필요한 쓰기 방지).
 // JSON.stringify 기반 deep equality로 변경 없을 때 write 스킵.
-export function usePersistedState(initialLoader, persister) {
+export function usePersistedState(initialLoader, persister, { enabled = true } = {}) {
   const [state, setState] = useState(initialLoader);
   const isFirst = useRef(true);
   const lastSavedRef = useRef(null);
@@ -16,6 +16,7 @@ export function usePersistedState(initialLoader, persister) {
       lastSavedRef.current = JSON.stringify(state);
       return;
     }
+    if (!enabled) return;
     const serialized = JSON.stringify(state);
     if (serialized === lastSavedRef.current) return; // 동일 값이면 저장 스킵
     lastSavedRef.current = serialized;

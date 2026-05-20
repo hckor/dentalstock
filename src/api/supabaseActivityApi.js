@@ -41,24 +41,6 @@ export function mapSupabaseNotif(row = {}) {
   };
 }
 
-function toNotifPayload(clinicId, notif) {
-  return {
-    clinic_id: clinicId,
-    legacy_id: notif.id,
-    type: notif.type || "info",
-    title: notif.message || "알림",
-    body: notif.sub || null,
-    payload: {
-      item_id: notif.item_id ?? null,
-      surgery_id: notif.surgery_id ?? null,
-      order_id: notif.order_id ?? null,
-    },
-    read_at: notif.is_read ? new Date().toISOString() : null,
-    created_at: notif.created_at || new Date().toISOString(),
-    app_data: notif,
-  };
-}
-
 export function mapSupabaseAuditLog(row = {}) {
   return {
     id: row.id,
@@ -111,18 +93,19 @@ export const supabaseActivityApi = {
 
   async saveNotifsForClinic(clinicId, notifs) {
     if (!clinicId || !Array.isArray(notifs) || notifs.length === 0) return [];
-    const payload = notifs
-      .filter(notif => notif?.id)
-      .map(notif => toNotifPayload(clinicId, notif));
-    if (!payload.length) return [];
+    const persisted = notifs.filter(notif => notif?.supabase_id);
+    if (!persisted.length) return [];
 
-    const { data, error } = await getSupabaseClient()
-      .from("notifs")
-      .upsert(payload, { onConflict: "clinic_id,legacy_id" })
-      .select(NOTIF_SELECT);
+    const results = await Promise.all(persisted.map(async (notif) => {
+      const { data, error } = await getSupabaseClient().rpc("set_notification_read_state", {
+        p_notification_id: notif.supabase_id,
+        p_is_read: Boolean(notif.is_read),
+      });
+      if (error) throw error;
+      return data;
+    }));
 
-    if (error) throw error;
-    return (data || []).map(mapSupabaseNotif);
+    return results.filter(Boolean).map(mapSupabaseNotif);
   },
 
   async listAuditLogsByClinic(clinicId) {
@@ -140,19 +123,12 @@ export const supabaseActivityApi = {
 
   async recordAuditLog(log, actor) {
     if (!isEnabled() || !actor?.clinicId || !log?.action) return null;
-    const { data, error } = await getSupabaseClient()
-      .from("audit_logs")
-      .insert({
-        clinic_id: actor.clinicId,
-        actor_id: actor.supabaseUserId || actor.id || null,
-        action: log.action,
-        target_type: log.entity_type || "unknown",
-        target_id: log.entity_id ? String(log.entity_id) : null,
-        metadata: log.metadata || {},
-        created_at: log.created_at || new Date().toISOString(),
-      })
-      .select(AUDIT_SELECT)
-      .single();
+    const { data, error } = await getSupabaseClient().rpc("record_audit_log", {
+      p_action: log.action,
+      p_target_type: log.entity_type || "unknown",
+      p_target_id: log.entity_id ? String(log.entity_id) : null,
+      p_metadata: log.metadata || {},
+    });
 
     if (error) throw error;
     return mapSupabaseAuditLog(data);

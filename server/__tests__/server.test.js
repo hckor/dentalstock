@@ -317,9 +317,9 @@ describe("DentalStock API skeleton", () => {
     const response = await request({
       path: "/api/tracking/refresh",
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-clinic-id": "clinic-test", "x-user-id": "u2", "x-user-role": "manager" },
       body: { carrier: "CJ대한통운", trackingNumber: "1234567890" },
-    });
+    }, { DENTALSTOCK_TRUST_CLIENT_CONTEXT: "true" });
     const body = response.json();
 
     expect(response.statusCode).toBe(200);
@@ -332,13 +332,13 @@ describe("DentalStock API skeleton", () => {
     const response = await request({
       path: "/api/tracking/refresh",
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-clinic-id": "clinic-test", "x-user-id": "u2", "x-user-role": "manager" },
       body: {
         carrier: "CJ대한통운",
         trackingNumber: "1234567890",
         currentStatuses: ["배송중", "배송출발"],
       },
-    });
+    }, { DENTALSTOCK_TRUST_CLIENT_CONTEXT: "true" });
     const body = response.json();
 
     expect(response.statusCode).toBe(200);
@@ -439,10 +439,10 @@ describe("DentalStock API skeleton", () => {
       {
         path: "/api/tracking/refresh",
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-clinic-id": "clinic-test", "x-user-id": "u2", "x-user-role": "manager" },
         body: { carrier: "CJ대한통운", trackingNumber: "1234567890" },
       },
-      { DENTALSTOCK_TRACKING_PROVIDER: "external" },
+      { DENTALSTOCK_TRACKING_PROVIDER: "external", DENTALSTOCK_TRUST_CLIENT_CONTEXT: "true" },
     );
     const body = response.json();
 

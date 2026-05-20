@@ -8,6 +8,8 @@ const corsHeaders = {
 
 const ITEM_SELECT = "id, clinic_id, legacy_id, name, category, unit, stock, min_stock, memo, app_data, updated_at";
 const MAX_PRODUCTS_PER_RUN = 50;
+const MAX_HTML_BYTES = 512 * 1024;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type VendorOption = {
   vendor_id?: string;
@@ -35,6 +37,101 @@ function env(name: string) {
 function toPositiveNumber(value: unknown) {
   const number = Number(String(value ?? "").replace(/[^0-9.]/g, ""));
   return Number.isFinite(number) && number > 0 ? number : null;
+}
+
+function normalizeLimit(value: unknown) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 1) return MAX_PRODUCTS_PER_RUN;
+  return Math.min(Math.floor(number), MAX_PRODUCTS_PER_RUN);
+}
+
+function isUuid(value: unknown) {
+  return UUID_PATTERN.test(String(value || ""));
+}
+
+function isPrivateIPv4(hostname: string) {
+  const parts = hostname.split(".").map(part => Number(part));
+  if (parts.length !== 4 || parts.some(part => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [a, b] = parts;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168)
+  );
+}
+
+function isBlockedHostname(hostname: string) {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  const isIPv6 = host.includes(":");
+  return (
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    (isIPv6 && (host === "::1" || host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80"))) ||
+    isPrivateIPv4(host)
+  );
+}
+
+function allowedVendorHosts() {
+  return env("PRICE_MONITOR_ALLOWED_HOSTS")
+    .split(",")
+    .map(host => host.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isAllowedVendorHost(hostname: string) {
+  const allowedHosts = allowedVendorHosts();
+  if (!allowedHosts.length) return true;
+
+  const host = hostname.toLowerCase();
+  return allowedHosts.some(allowed => host === allowed || host.endsWith(`.${allowed}`));
+}
+
+function parseProductUrl(value: unknown) {
+  try {
+    const url = new URL(String(value || "").trim());
+    const hasUnsafePort = url.port && url.port !== "443";
+    if (
+      url.protocol !== "https:" ||
+      hasUnsafePort ||
+      isBlockedHostname(url.hostname) ||
+      !isAllowedVendorHost(url.hostname)
+    ) return null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+async function readLimitedText(response: Response) {
+  if (!response.body) return response.text();
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+
+    received += value.byteLength;
+    if (received > MAX_HTML_BYTES) {
+      await reader.cancel();
+      throw new Error("response_too_large");
+    }
+    chunks.push(value);
+  }
+
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
 }
 
 function decodeEntities(value: string) {
@@ -102,18 +199,24 @@ function extractStockState(html: string) {
 }
 
 async function fetchPrice(productUrl: string) {
+  const url = parseProductUrl(productUrl);
+  if (!url) {
+    return { ok: false, status: 0, price: null, inStock: false, error: "invalid_product_url" };
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
 
   try {
-    const response = await fetch(productUrl, {
+    const response = await fetch(url.toString(), {
       signal: controller.signal,
+      redirect: "manual",
       headers: {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "User-Agent": "DentalStockPriceMonitor/0.1 (+https://dentalstock-nine.vercel.app)",
       },
     });
-    const html = await response.text();
+    const html = await readLimitedText(response);
     const jsonLd = extractJsonLdPrice(html);
     const price = jsonLd?.price || extractMetaPrice(html);
 
@@ -159,17 +262,10 @@ function getAppData(row: Record<string, unknown>) {
 }
 
 function buildVendorProductPayload(itemRow: Record<string, unknown>, option: VendorOption) {
-  const productUrl = String(option.url || "").trim();
+  const productUrl = parseProductUrl(option.url);
   if (!productUrl) return null;
 
-  let hostname = "";
-  try {
-    hostname = new URL(productUrl).hostname;
-  } catch {
-    hostname = "vendor";
-  }
-
-  const vendorId = String(option.vendor_id || option.vendor_name || hostname).trim();
+  const vendorId = String(option.vendor_id || option.vendor_name || productUrl.hostname).trim();
   if (!vendorId) return null;
 
   return {
@@ -177,7 +273,7 @@ function buildVendorProductPayload(itemRow: Record<string, unknown>, option: Ven
     item_id: itemRow.id,
     vendor_id: vendorId,
     vendor_name: option.vendor_name || vendorId,
-    product_url: productUrl,
+    product_url: productUrl.toString(),
     sku: option.sku || null,
     min_order_qty: Math.max(1, Number(option.min_order_qty) || 1),
     is_active: true,
@@ -277,8 +373,8 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => ({}));
   if (hasCronSecret && body.clinic_id) clinicId = String(body.clinic_id);
-  const itemId = body.item_id ? String(body.item_id) : "";
-  const limit = Math.min(Number(body.limit) || MAX_PRODUCTS_PER_RUN, MAX_PRODUCTS_PER_RUN);
+  const itemId = isUuid(body.item_id) ? String(body.item_id) : "";
+  const limit = normalizeLimit(body.limit);
 
   const syncResult = await syncVendorProductsFromItems(adminClient, clinicId, itemId, limit);
   if (syncResult.error) return json({ error: "products_sync_failed" }, 500);
