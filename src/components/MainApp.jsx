@@ -3,6 +3,7 @@ import { Home, Package, ArrowDownToLine, ShoppingCart, Users } from "lucide-reac
 import { T } from "../constants/colors";
 import { useTheme } from "../contexts/ThemeContext";
 import { can } from "../constants/permissions";
+import { supabaseStaffApi } from "../api/supabaseStaffApi";
 import { useToast } from "../hooks/useToast";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { useStockActions } from "../hooks/useStockActions";
@@ -63,6 +64,41 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   const openModal = useCallback((type, item=null) => { setSelItem(item); setForm({qty:1, note:""}); setModal(type); }, []);
   const openItemsEditor = useCallback((initialItems, onSave, title) => setEditItemsState({initialItems, onSave, title}), []);
 
+  const updateStaffActive = useCallback(async (staff, nextActive) => {
+    if (staff.id === currentUser.id && nextActive === false) {
+      showToast("본인 계정은 비활성화할 수 없습니다");
+      return;
+    }
+
+    try {
+      if (supabaseStaffApi.isEnabled() && currentUser?.clinicId) {
+        const updated = await supabaseStaffApi.setActive(staff.supabaseUserId || staff.id, nextActive);
+        setUsers(prev => prev.map(user => user.id === staff.id ? {...user, ...updated} : user));
+      } else {
+        setUsers(prev => prev.map(user => user.id === staff.id ? {...user, active:nextActive} : user));
+      }
+      showToast(nextActive ? "직원을 활성화했습니다" : "직원을 비활성화했습니다");
+    } catch (error) {
+      showToast(error?.message?.includes("last active owner") ? "마지막 원장은 비활성화할 수 없습니다" : "직원 상태를 변경하지 못했습니다");
+    }
+  }, [currentUser, setUsers, showToast]);
+
+  const updateStaffRole = useCallback(async (staff, nextRole) => {
+    if (staff.role === nextRole) return;
+
+    try {
+      if (supabaseStaffApi.isEnabled() && currentUser?.clinicId) {
+        const updated = await supabaseStaffApi.setRole(staff.supabaseUserId || staff.id, nextRole);
+        setUsers(prev => prev.map(user => user.id === staff.id ? {...user, ...updated} : user));
+      } else {
+        setUsers(prev => prev.map(user => user.id === staff.id ? {...user, role:nextRole} : user));
+      }
+      showToast("직원 권한을 변경했습니다");
+    } catch (error) {
+      showToast(error?.message?.includes("last active owner") ? "마지막 원장 권한은 낮출 수 없습니다" : "직원 권한을 변경하지 못했습니다");
+    }
+  }, [currentUser, setUsers, showToast]);
+
   const filteredItems = useMemo(
     () => items.filter(i => i.name.includes(search) && (cat===0 || i.category_id===cat)),
     [items, search, cat]
@@ -98,7 +134,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} approveOrders={approveOrders} rejectOrder={rejectOrder} startTracking={startTracking} refreshTracking={refreshTracking} confirmReceipt={confirmReceipt}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
-          {tab==="admin"     && canApprove && <AdminScreen users={users} setUsers={setUsers} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast}/>}
+          {tab==="admin"     && canApprove && <AdminScreen users={users} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
         </Suspense>
       </div>
 

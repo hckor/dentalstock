@@ -10,6 +10,9 @@ function formatAuthError(error) {
   if (error?.message === "supabase_not_configured") {
     return "Supabase 환경변수가 아직 설정되지 않았습니다";
   }
+  if (error?.message === "inactive_profile") {
+    return "비활성화된 계정입니다. 원장 계정에서 활성화해주세요";
+  }
   return "로그인에 실패했습니다. 잠시 후 다시 시도해주세요";
 }
 
@@ -93,7 +96,7 @@ export function LoginSupabase({ onSuccess }) {
       </form>
 
       <p style={{margin:"auto 28px 28px", textAlign:"center", fontSize:13, lineHeight:1.5, color:T.grey500}}>
-        이 화면은 Supabase Auth와 연결됩니다. 재고 데이터 동기화는 다음 단계에서 켭니다.
+        권한과 재고 데이터는 Supabase 보안 정책으로 병원별 분리됩니다.
       </p>
     </div>
   );

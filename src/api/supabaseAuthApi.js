@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getApiConfig } from "../config/apiMode";
+import { PROFILE_SELECT, mapSupabaseProfile } from "./supabaseProfileMapper";
 
 let cachedClient = null;
 
@@ -34,28 +35,20 @@ export function getSupabaseClient() {
   return cachedClient;
 }
 
-function mapSupabaseRole(role) {
-  if (role === "owner" || role === "manager") return role;
-  return "hygienist";
-}
-
 function toAppUser(profile) {
   if (!profile) return null;
-  return {
-    id: profile.id,
-    supabaseUserId: profile.id,
-    clinicId: profile.clinic_id,
-    name: profile.name || "사용자",
-    role: mapSupabaseRole(profile.role),
-    active: true,
-  };
+  const user = mapSupabaseProfile(profile);
+  if (!user.active) {
+    throw new Error("inactive_profile");
+  }
+  return user;
 }
 
 async function fetchProfile(userId) {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, clinic_id, name, role")
+    .select(PROFILE_SELECT)
     .eq("id", userId)
     .single();
 

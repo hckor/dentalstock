@@ -2,7 +2,7 @@ import { useState } from "react";
 import { LogOut, RotateCcw, ClipboardList, PackagePlus, ChevronRight } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
 import { T, font, monoFont } from "../../../constants/colors";
-import { ROLE_META } from "../../../constants/permissions";
+import { can, ROLE_META } from "../../../constants/permissions";
 import { Card } from "../../shared/Card";
 import { Divider } from "../../shared/Divider";
 import { Avatar } from "../../shared/Avatar";
@@ -13,9 +13,10 @@ import { ActivityLogTab } from "./ActivityLogTab";
 import { BottomSheet } from "../../shared/BottomSheet";
 import { InitialInventoryModal } from "../../modals/InitialInventoryModal";
 
-export function AdminScreen({users, setUsers, currentUser, orders, items, setItems, txs, surgeries, addSurgery, deleteSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast}) {
+export function AdminScreen({users, currentUser, orders, items, setItems, txs, surgeries, addSurgery, deleteSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast, onStaffActiveChange, onStaffRoleChange}) {
   const [adminTab, setAdminTab] = useState("surgery");
   const [showInitialInventory, setShowInitialInventory] = useState(false);
+  const canManageStaff = can(currentUser.role, "staff");
 
   const handleInitialInventorySave = (quantities) => {
     setItems(prev => prev.map(item =>
@@ -86,11 +87,17 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
               ))}
             </div>
 
-            <p style={{margin:"0 0 10px", fontSize: 16, fontWeight:600, color:T.grey600}}>직원 목록</p>
+            <div style={{display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:12, marginBottom:10}}>
+              <div>
+                <p style={{margin:"0 0 2px", fontSize: 16, fontWeight:600, color:T.grey600}}>직원 목록</p>
+                {!canManageStaff && <p style={{margin:0, fontSize: 13, color:T.grey500}}>원장 계정만 직원 상태와 권한을 바꿀 수 있습니다.</p>}
+              </div>
+            </div>
             <Card style={{marginBottom:16}}>
               {users.map((u, i) => {
-                const m    = ROLE_META[u.role];
+                const m    = ROLE_META[u.role] || ROLE_META.hygienist;
                 const isMe = u.id === currentUser.id;
+                const controlsDisabled = isMe || !canManageStaff;
                 return (
                   <div key={u.id}>
                     <div style={{display:"flex", alignItems:"center", gap:12, padding:"18px 20px", opacity:u.active?1:0.45}}>
@@ -99,15 +106,30 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
                         <div style={{display:"flex", alignItems:"center", gap:6}}>
                           <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900}}>{u.name}</p>
                           {isMe && <span style={{fontSize: 12, fontWeight:700, color:T.blue500, background:T.blue50, padding:"1px 6px", borderRadius:9999}}>나</span>}
+                          {!u.active && <span style={{fontSize: 12, fontWeight:700, color:T.red500, background:T.red50, padding:"1px 6px", borderRadius:9999}}>비활성</span>}
                         </div>
-                        <span style={{fontSize: 16, fontWeight:600, color:m.color}}>{m.label}</span>
+                        <div style={{display:"flex", flexDirection:"column", gap:2, marginTop:2}}>
+                          <span style={{fontSize: 16, fontWeight:600, color:m.color}}>{m.label}</span>
+                          {u.email && <span style={{fontSize: 13, color:T.grey500, wordBreak:"break-all"}}>{u.email}</span>}
+                        </div>
                       </div>
-                      {!isMe && (
-                        <button onClick={()=>setUsers(p=>p.map(x=>x.id===u.id?{...x,active:!x.active}:x))}
-                          style={{padding:"12px 18px", borderRadius:9999, border:"none", cursor:"pointer", fontFamily:font, fontSize: 16, fontWeight:600, background:u.active?T.red50:T.green50, color:u.active?T.red500:T.green500}}>
+                      <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:8}}>
+                        <select
+                          value={u.role}
+                          onChange={(event)=>onStaffRoleChange?.(u, event.target.value)}
+                          disabled={controlsDisabled}
+                          style={{height:36, borderRadius:12, border:`1px solid ${T.grey200}`, background:controlsDisabled?T.grey100:T.white, color:controlsDisabled?T.grey500:T.grey900, fontFamily:font, fontSize: 13, fontWeight:700, padding:"0 10px", outline:"none"}}>
+                          <option value="owner">원장</option>
+                          <option value="manager">매니저</option>
+                          <option value="hygienist">치과위생사</option>
+                        </select>
+                        <button
+                          disabled={controlsDisabled}
+                          onClick={()=>onStaffActiveChange?.(u, !u.active)}
+                          style={{padding:"10px 14px", borderRadius:9999, border:"none", cursor:controlsDisabled?"not-allowed":"pointer", fontFamily:font, fontSize: 14, fontWeight:700, background:u.active?T.red50:T.green50, color:u.active?T.red500:T.green500, opacity:controlsDisabled?0.45:1}}>
                           {u.active?"비활성":"활성화"}
                         </button>
-                      )}
+                      </div>
                     </div>
                     {i < users.length-1 && <Divider/>}
                   </div>

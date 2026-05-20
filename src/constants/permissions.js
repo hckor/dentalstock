@@ -3,7 +3,7 @@ import { T } from "./colors";
 // ─── 권한 ─────────────────────────────────────────────
 const PERMS = {
   owner:     { items:true, staff:true, orders_approve:true,  stats:true  },
-  manager:   { items:true, staff:true, orders_approve:true,  stats:true  },
+  manager:   { items:true, staff:false,orders_approve:true,  stats:true  },
   hygienist: { items:true, staff:false,orders_approve:false, stats:false },
 };
 

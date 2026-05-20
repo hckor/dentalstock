@@ -22,6 +22,7 @@ Current required order:
 6. `20260520_order_receipt_rpc.sql`
 7. `20260520_surgeries_bridge_and_usage_rpc.sql`
 8. `20260520_activity_bridge.sql`
+9. `20260520_staff_management.sql`
 
 The migration creates the first production-ready tables with RLS enabled:
 
@@ -86,6 +87,14 @@ Recommended roles:
 - `owner`: clinic owner, can manage staff and settings.
 - `manager`: can approve orders and manage inventory workflows.
 - `hygienist` or `staff`: day-to-day stock and surgery workflow user.
+
+After running `20260520_staff_management.sql`, staff active state and role changes must go through the app's staff management screen or these RPCs:
+
+- `set_profile_active(profile_id, is_active)`
+- `set_profile_role(profile_id, role)`
+- `update_my_profile(name)`
+
+Only an active `owner` can change another staff member's active state or role. The database also prevents removing the last active owner.
 
 ## 5. Vercel variables
 
