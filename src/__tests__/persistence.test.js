@@ -3,9 +3,11 @@ import { storage } from '../services/storage';
 import { itemsApi } from '../api/itemsApi';
 import { ordersApi } from '../api/ordersApi';
 import { settingsApi } from '../api/settingsApi';
+import { vendorCredentialsApi } from '../api/vendorCredentialsApi';
 import { STORAGE_KEYS } from '../api/keys';
 import { seedIfEmpty, resetToInitial } from '../api/seed';
 import { INIT_ITEMS, INIT_ORDERS } from '../data/initialData';
+import { localRepository } from '../repositories/localRepository';
 
 beforeEach(() => {
   storage.clearAll();
@@ -39,7 +41,7 @@ describe('영속화 (persistence)', () => {
     expect(itemsApi.list().length).toBe(INIT_ITEMS.length);
   });
 
-  it('settingsApi.load는 기존 도매 설정에 자동발주 기본값을 보강', () => {
+  it('settingsApi.load는 기존 도매 설정에 자동발주 기본값을 보강하고 계정 정보를 분리', () => {
     storage.save(STORAGE_KEYS.settings, {
       vendors: [{ id: 1, name: '덴올', connected: true, username: 'demo', password: 'pw' }],
       preferredVendor: 'lowest',
@@ -53,10 +55,25 @@ describe('영속화 (persistence)', () => {
     expect(settings.vendors).toHaveLength(3);
     expect(settings.vendors[0]).toMatchObject({
       id: 1,
-      username: 'demo',
-      password: 'pw',
       automaticOrdering: true,
     });
+    expect(settings.vendors[0].username).toBeUndefined();
+    expect(settings.vendors[0].password).toBeUndefined();
     expect(settings.vendors[2].automaticOrdering).toBe(false);
+    expect(vendorCredentialsApi.get(1)).toEqual({ username: 'demo', password: 'pw' });
+    expect(localRepository.read(STORAGE_KEYS.settings).vendors[0].password).toBeUndefined();
+  });
+
+  it('settingsApi.save는 도매 계정 정보를 settings 문서에 저장하지 않는다', () => {
+    settingsApi.save({
+      vendors: [{ id: 1, name: '덴올', connected: true, username: 'demo', password: 'pw' }],
+      preferredVendor: '1',
+      maxOrderAmount: '50000',
+    });
+
+    const settings = settingsApi.load();
+
+    expect(settings.vendors[0].username).toBeUndefined();
+    expect(settings.vendors[0].password).toBeUndefined();
   });
 });

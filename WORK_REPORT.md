@@ -155,3 +155,14 @@
 - `docs/SECURITY_CHECKLIST.md`에 Critical/High/Medium 보안 체크리스트를 추가했습니다.
 - `src/security/dataClassification.js`에 데이터 분류와 server-only 필드 목록을 코드로 추가했고, `securityPolicy.test.js`로 도매몰 비밀번호/세션성 데이터가 클라이언트 저장 가능 필드로 통과하지 않도록 기준을 고정했습니다.
 - `npm run lint`, `npm test` 15개 파일 134개 테스트, `npm run build`, 최종 회귀 E2E 21개를 모두 통과했습니다.
+
+## 클리닉 네임스페이스/도매 계정 분리
+
+보안 기준 문서에 맞춰 현재 로컬 앱에서도 백엔드 전환 구조를 한 단계 더 반영했습니다.
+
+- local repository 저장 키를 `clinics/demo-clinic/...` 형태로 감싸, 재고/입출고/발주/수술/설정/도매 계정이 병원 단위 네임스페이스 아래에 저장되도록 했습니다.
+- 세션과 로그인 실패 횟수는 앱 전역성 데이터로 남기고, 업무 데이터는 활성 `clinicId`를 바꾸면 분리되어 읽히는 테스트를 추가했습니다.
+- 도매 설정의 `vendors[]`에서는 `username/password`를 제거했습니다. 화면 입력은 유지하되 `vendorCredentials` repository/API로 분리해 저장합니다.
+- 기존 설정에 섞여 있던 도매몰 ID/PW는 로드 시 `vendorCredentials`로 이관하고, 이후 `settings` 저장 시에는 계정 필드를 다시 쓰지 않도록 막았습니다.
+- server-only 필드 정책에 `vendors.username`과 `vendorCredentials.username*` 암호화 필드를 추가해 ID도 비밀번호와 같은 민감 정보로 다루게 했습니다.
+- `npm run lint`, `npm test` 15개 파일 136개 테스트, `npm run build`, 최신 UX E2E 7개, 최종 회귀 E2E 21개를 모두 통과했습니다.

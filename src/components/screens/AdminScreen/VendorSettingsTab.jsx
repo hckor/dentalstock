@@ -6,6 +6,7 @@ import { Divider } from "../../shared/Divider";
 import { Chip } from "../../shared/Chip";
 import { Inp } from "../../shared/Inp";
 import { settingsApi } from "../../../api/settingsApi";
+import { vendorCredentialsApi } from "../../../api/vendorCredentialsApi";
 
 const MIN_ORDER_AMOUNT = 1000;
 
@@ -54,13 +55,16 @@ function TogglePill({ active, label, onClick, icon: Icon }) {
 
 export function VendorSettingsTab({ showToast }) {
   const [initial, setInitial] = useState(() => settingsApi.load());
+  const [initialCredentials, setInitialCredentials] = useState(() => vendorCredentialsApi.loadAll());
   const [vendors, setVendors] = useState(initial.vendors);
+  const [credentials, setCredentials] = useState(initialCredentials);
   const [preferredVendor, setPreferredVendor] = useState(initial.preferredVendor);
   const [maxOrderAmount, setMaxOrderAmount] = useState(initial.maxOrderAmount);
   const [saveAttempted, setSaveAttempted] = useState(false);
 
   const isDirty =
     JSON.stringify(vendors) !== JSON.stringify(initial.vendors) ||
+    JSON.stringify(credentials) !== JSON.stringify(initialCredentials) ||
     preferredVendor !== initial.preferredVendor ||
     maxOrderAmount !== initial.maxOrderAmount;
 
@@ -80,6 +84,19 @@ export function VendorSettingsTab({ showToast }) {
     setVendors(p => p.map(v => v.id === id ? { ...v, [field]: value } : v));
   };
 
+  const updateCredentialField = (id, field, value) => {
+    setCredentials(p => {
+      const key = String(id);
+      return {
+        ...p,
+        [key]: {
+          ...(p[key] || {}),
+          [field]: value,
+        },
+      };
+    });
+  };
+
   const handleSave = () => {
     setSaveAttempted(true);
     if (maxOrderAmountError) {
@@ -88,8 +105,10 @@ export function VendorSettingsTab({ showToast }) {
     }
 
     const next = { vendors, preferredVendor, maxOrderAmount };
-    settingsApi.save(next);
-    setInitial(next);
+    const savedSettings = settingsApi.save(next);
+    const savedCredentials = vendorCredentialsApi.saveAll(credentials);
+    setInitial(savedSettings);
+    setInitialCredentials(savedCredentials);
     setSaveAttempted(false);
     showToast?.("자동발주 설정이 저장되었습니다");
   };
@@ -134,15 +153,15 @@ export function VendorSettingsTab({ showToast }) {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "0 0 12px" }}>
               <Inp
-                value={vendor.username || ""}
-                onChange={e => updateVendorField(vendor.id, "username", e.target.value)}
+                value={credentials[String(vendor.id)]?.username || ""}
+                onChange={e => updateCredentialField(vendor.id, "username", e.target.value)}
                 placeholder={`${vendor.name} ID`}
                 style={{ fontSize: 16 }}
               />
               <Inp
                 type="password"
-                value={vendor.password || ""}
-                onChange={e => updateVendorField(vendor.id, "password", e.target.value)}
+                value={credentials[String(vendor.id)]?.password || ""}
+                onChange={e => updateCredentialField(vendor.id, "password", e.target.value)}
                 placeholder="비밀번호"
                 style={{ fontSize: 16 }}
               />

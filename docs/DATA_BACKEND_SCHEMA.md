@@ -261,6 +261,6 @@ service cloud.firestore {
 ## 다음 구현 단위
 
 1. `clinicId`를 local repository key namespace에 추가한다.
-2. `settings/app`과 `vendorCredentials`를 UI/저장소 레벨에서 분리한다.
+2. `settings/app`과 `vendorCredentials`를 UI/저장소 레벨에서 분리했다. 다음 단계는 `vendorCredentials`를 서버 전용 API로 이동하는 것이다.
 3. 도매 계정 저장 액션은 클라이언트 저장 대신 `saveVendorCredential()` 서버 함수로 대체한다.
 4. `orders` 상태 변경을 audit log 이벤트로 남긴다.

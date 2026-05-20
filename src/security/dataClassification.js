@@ -41,7 +41,11 @@ export const DATA_SECURITY_POLICY = {
 };
 
 export const SERVER_ONLY_FIELDS = [
+  "vendors.username",
   "vendors.password",
+  "vendorCredentials.usernameCiphertext",
+  "vendorCredentials.usernameNonce",
+  "vendorCredentials.usernameTag",
   "vendorCredentials.passwordCiphertext",
   "vendorCredentials.passwordNonce",
   "vendorCredentials.passwordTag",

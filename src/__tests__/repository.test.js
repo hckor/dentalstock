@@ -2,9 +2,16 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { STORAGE_KEYS } from '../api/keys';
 import { INIT_ITEMS, INIT_ORDERS, INITIAL_USERS } from '../data/initialData';
 import { appRepository } from '../repositories/appRepository';
-import { createCollectionRepository, createValueRepository, localRepository } from '../repositories/localRepository';
+import {
+  createCollectionRepository,
+  createValueRepository,
+  DEFAULT_CLINIC_ID,
+  localRepository,
+  setActiveClinicId,
+} from '../repositories/localRepository';
 
 beforeEach(() => {
+  setActiveClinicId(DEFAULT_CLINIC_ID);
   localRepository.clearAll();
 });
 
@@ -47,13 +54,28 @@ describe('data repositories', () => {
     expect(appRepository.orders.list()).toHaveLength(INIT_ORDERS.length);
   });
 
-  it('session/settings/authAttempts는 도메인 키를 통해 접근한다', () => {
+  it('session/settings/authAttempts/vendorCredentials는 도메인 키를 통해 접근한다', () => {
     appRepository.session.set({ userId: 'u1' });
     appRepository.settings.set({ maxOrderAmount: '10000' });
     appRepository.authAttempts.set({ u1: { count: 1 } });
+    appRepository.vendorCredentials.set({ 1: { username: 'demo', password: 'pw' } });
 
     expect(localRepository.read(STORAGE_KEYS.session, null)).toEqual({ userId: 'u1' });
     expect(localRepository.read(STORAGE_KEYS.settings, null)).toEqual({ maxOrderAmount: '10000' });
     expect(localRepository.read(STORAGE_KEYS.authAttempts, null)).toEqual({ u1: { count: 1 } });
+    expect(localRepository.read(STORAGE_KEYS.vendorCredentials, null)).toEqual({ 1: { username: 'demo', password: 'pw' } });
+  });
+
+  it('업무 데이터는 활성 clinicId별로 분리된다', () => {
+    appRepository.items.save([{ id: 'clinic-a-item' }]);
+
+    setActiveClinicId('clinic-b');
+
+    expect(appRepository.items.list()).toEqual(INIT_ITEMS);
+    appRepository.items.save([{ id: 'clinic-b-item' }]);
+
+    setActiveClinicId(DEFAULT_CLINIC_ID);
+
+    expect(appRepository.items.list()).toEqual([{ id: 'clinic-a-item' }]);
   });
 });

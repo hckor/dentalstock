@@ -9,4 +9,5 @@ export const STORAGE_KEYS = {
   session:   "session",
   settings:  "settings",
   authAttempts: "auth_attempts",
+  vendorCredentials: "vendor_credentials",
 };

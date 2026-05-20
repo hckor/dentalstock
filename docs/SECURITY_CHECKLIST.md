@@ -31,6 +31,7 @@
 
 ## 현재 코드 상태
 
-- 로컬 앱은 데모 단계라 도매 계정 입력값이 localStorage에 저장될 수 있다.
-- 실제 운영 전에는 `settings.vendors[].username/password`를 제거하고 server-only `vendorCredentials`로 옮겨야 한다.
-- repository 계층은 분리되었으므로 다음 작업은 clinic namespace와 credential 분리다.
+- 로컬 앱은 데모 단계라 도매 계정 입력값이 localStorage에 저장될 수 있다. 실제 계정 입력은 금지한다.
+- 현재 UI 입력값은 `settings.vendors[]`에서 분리해 `vendorCredentials` 저장소로 격리했다.
+- 로컬 repository 키는 `clinics/{clinicId}` 네임스페이스로 감싸 병원 단위 데이터 분리 구조를 미리 맞췄다.
+- 실제 운영 전에는 `vendorCredentials`를 클라이언트 저장소에서 제거하고 server-only 암호화 저장소로 옮겨야 한다.
