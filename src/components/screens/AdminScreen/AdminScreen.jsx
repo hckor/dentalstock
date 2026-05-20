@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, RotateCcw, ClipboardList, PackagePlus } from "lucide-react";
+import { LogOut, RotateCcw, ClipboardList, PackagePlus, ChevronRight } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
 import { T, font, monoFont } from "../../../constants/colors";
 import { ROLE_META } from "../../../constants/permissions";
@@ -37,24 +37,26 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
       {/* 서브탭 */}
       <div style={{background:T.white, borderBottom:`1px solid ${T.grey200}`, padding:"10px 16px"}}>
         <div style={{position:"relative"}}>
-        <div style={{display:"flex", gap:6, overflowX:"auto", scrollbarWidth:"none", paddingRight:28}}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={()=>setAdminTab(t.id)}
-              style={{flexShrink:0, padding:"10px 16px", border:"none", borderRadius:12, cursor:"pointer", fontFamily:font, fontSize: 14, fontWeight:600,
-                background:adminTab===t.id ? T.white : T.grey100,
-                color:adminTab===t.id ? T.grey900 : T.grey500,
-                boxShadow:adminTab===t.id ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
-                display:"flex", alignItems:"center", gap:5, transition:"all 150ms"}}>
-              {t.label}
-              {t.badge>0 && (
-                <span style={{background:adminTab===t.id?T.red500:T.red500, color:T.white, borderRadius:9999, fontSize: 12, fontWeight:700, padding:"1px 6px"}}>
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-        <div aria-hidden="true" style={{position:"absolute",top:0,right:-1,bottom:0,width:42,pointerEvents:"none",background:"linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.94) 58%, #ffffff)",boxShadow:"-12px 0 18px rgba(0,0,0,0.08)"}}/>
+          <div style={{display:"flex", gap:6, overflowX:"auto", scrollbarWidth:"none", paddingRight:32}}>
+            {tabs.map(t => (
+              <button key={t.id} onClick={()=>setAdminTab(t.id)}
+                style={{flexShrink:0, padding:"10px 16px", border:"none", borderRadius:12, cursor:"pointer", fontFamily:font, fontSize: 14, fontWeight:600,
+                  background:adminTab===t.id ? T.white : T.grey100,
+                  color:adminTab===t.id ? T.grey900 : T.grey500,
+                  boxShadow:adminTab===t.id ? "0px 2px 4px rgba(0,0,0,0.06)" : "none",
+                  display:"flex", alignItems:"center", gap:5, transition:"all 150ms"}}>
+                {t.label}
+                {t.badge>0 && (
+                  <span style={{background:adminTab===t.id?T.red500:T.red500, color:T.white, borderRadius:9999, fontSize: 12, fontWeight:700, padding:"1px 6px"}}>
+                    {t.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          <div aria-hidden="true" style={{position:"absolute",top:0,right:0,bottom:0,width:34,pointerEvents:"none",background:"linear-gradient(90deg, rgba(255,255,255,0), #ffffff 72%)",display:"flex",alignItems:"center",justifyContent:"flex-end"}}>
+            <ChevronRight size={18} color={T.grey400}/>
+          </div>
         </div>
       </div>
 
