@@ -25,7 +25,7 @@ export function EditSurgeryItemsSheet({initialItems, allItems, onSave, onClose, 
         <h2 style={{margin:0, fontSize: 24, fontWeight:700, color:T.grey900}}>준비 품목 편집</h2>
         <button onClick={onClose} style={{border:"none", background:"none", cursor:"pointer"}}><X size={24} color={T.grey500}/></button>
       </div>
-      {title && <p style={{margin:"0 0 14px", fontSize: 16, color:T.grey500}}>{title}</p>}
+      {title && <p style={{margin:"0 0 14px", fontSize: 16, lineHeight:"22px", color:T.grey500, wordBreak:"keep-all", overflowWrap:"anywhere"}}>{title}</p>}
 
       {!picking && (
         <>
@@ -36,19 +36,23 @@ export function EditSurgeryItemsSheet({initialItems, allItems, onSave, onClose, 
               const item = allItems.find(it=>it.id===r.item_id);
               const enough = item && item.current_qty>=r.qty;
               return (
-                <div key={r.item_id} style={{display:"flex", alignItems:"center", gap:10, padding:"14px 16px", borderTop:i===0?"none":`1px solid ${T.grey100}`}}>
-                  <div style={{flex:1, minWidth:0}}>
-                    <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item?.name||"삭제된 품목"}</p>
-                    <p style={{margin:"2px 0 0", fontSize: 16, color:enough?T.grey500:T.red500}}>현재 {item?.current_qty??0}{item?.unit||""} {!enough&&item?"· 부족":""}</p>
+                <div key={r.item_id} style={{display:"flex", flexDirection:"column", gap:10, padding:"14px 16px", borderTop:i===0?"none":`1px solid ${T.grey100}`}}>
+                  <div style={{display:"flex", alignItems:"flex-start", gap:10}}>
+                    <div style={{flex:1, minWidth:0}}>
+                      <p style={{margin:0, fontSize: 16, lineHeight:"22px", fontWeight:600, color:T.grey900, wordBreak:"keep-all", overflowWrap:"anywhere"}}>{item?.name||"삭제된 품목"}</p>
+                      <p style={{margin:"2px 0 0", fontSize: 16, color:enough?T.grey500:T.red500}}>현재 {item?.current_qty??0}{item?.unit||""} {!enough&&item?"· 부족":""}</p>
+                    </div>
+                    <button onClick={()=>removeRow(r.item_id)} style={{border:"none", background:"none", cursor:"pointer", padding:4, flexShrink:0}}><X size={20} color={T.grey400}/></button>
                   </div>
-                  <div style={{display:"flex", alignItems:"center", gap:6}}>
-                    <button onClick={()=>updateQty(r.item_id, r.qty-1)} style={{width:40, height:40, borderRadius:9999, border:`1px solid ${T.grey200}`, background:T.white, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}><Minus size={18} color={T.grey700}/></button>
-                    <input value={r.qty} onChange={e=>updateQty(r.item_id, e.target.value)} type="number" min={1}
-                      style={{width:44, textAlign:"center", padding:"6px 0", borderRadius:8, border:`1px solid ${T.grey200}`, background:T.white, fontSize: 16, fontWeight:700, color:T.grey900, fontFamily:font, outline:"none"}}/>
-                    <button onClick={()=>updateQty(r.item_id, r.qty+1)} style={{width:40, height:40, borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}><Plus size={18} color={T.white}/></button>
+                  <div style={{display:"flex", alignItems:"center", justifyContent:"flex-end", gap:10}}>
+                    <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0}}>
+                      <button onClick={()=>updateQty(r.item_id, r.qty-1)} style={{width:40, height:40, borderRadius:9999, border:`1px solid ${T.grey200}`, background:T.white, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}><Minus size={18} color={T.grey700}/></button>
+                      <input value={r.qty} onChange={e=>updateQty(r.item_id, e.target.value)} type="number" min={1}
+                        style={{width:44, textAlign:"center", padding:"6px 0", borderRadius:8, border:`1px solid ${T.grey200}`, background:T.white, fontSize: 16, fontWeight:700, color:T.grey900, fontFamily:font, outline:"none"}}/>
+                      <button onClick={()=>updateQty(r.item_id, r.qty+1)} style={{width:40, height:40, borderRadius:9999, border:"none", background:T.blue500, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}><Plus size={18} color={T.white}/></button>
+                      <span style={{fontSize: 16, color:T.grey400, minWidth:24, textAlign:"right"}}>{item?.unit||""}</span>
+                    </div>
                   </div>
-                  <span style={{fontSize: 16, color:T.grey400, width:24, textAlign:"right"}}>{item?.unit||""}</span>
-                  <button onClick={()=>removeRow(r.item_id)} style={{border:"none", background:"none", cursor:"pointer", padding:4}}><X size={20} color={T.grey400}/></button>
                 </div>
               );
             })}
@@ -77,7 +81,7 @@ export function EditSurgeryItemsSheet({initialItems, allItems, onSave, onClose, 
               <button onClick={()=>addRow(item.id)} style={{width:"100%", display:"flex", alignItems:"center", gap:12, padding:"18px 0", background:"none", border:"none", cursor:"pointer", fontFamily:font}}>
                 <div style={{width:8, height:8, borderRadius:9999, background:catColor(item.category_id), flexShrink:0}}/>
                 <div style={{flex:1, textAlign:"left"}}>
-                  <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900}}>{item.name}</p>
+                  <p style={{margin:0, fontSize: 16, lineHeight:"22px", fontWeight:600, color:T.grey900, wordBreak:"keep-all", overflowWrap:"anywhere"}}>{item.name}</p>
                   <p style={{margin:0, fontSize: 16, color:T.grey500}}>현재 {item.current_qty}{item.unit}</p>
                 </div>
                 <Plus size={20} color={T.blue500}/>
