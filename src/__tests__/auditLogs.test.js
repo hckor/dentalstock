@@ -53,6 +53,7 @@ describe('auditLogsApi', () => {
           sessionToken: 'token',
           visible: 'ok',
         },
+        shipping_status: '배달완료',
       },
     });
 
@@ -63,6 +64,7 @@ describe('auditLogsApi', () => {
         sessionToken: '[redacted]',
         visible: 'ok',
       },
+      shipping_status: '배달완료',
     });
   });
 });

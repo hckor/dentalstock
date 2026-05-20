@@ -54,6 +54,37 @@ export const addReceiptShippingEvent = (order, timestamp) => [
   ...getStoredShippingEvents(order),
 ];
 
+export const hasShippingEventStatus = (order, status) =>
+  getStoredShippingEvents(order).some(event => event.status === status);
+
+export function getNextShippingProgressEvent(order, timestamp = new Date().toISOString()) {
+  if (!order?.tracking_number) return null;
+  if (!hasShippingEventStatus(order, "배송출발")) {
+    return {
+      status: "배송출발",
+      timestamp,
+      label: "배송사가 상품을 인수했습니다",
+      location: order.carrier || "배송사",
+      completed: true,
+    };
+  }
+  if (!hasShippingEventStatus(order, "배달완료")) {
+    return {
+      status: "배달완료",
+      timestamp,
+      label: "치과에 도착했습니다",
+      location: "치과 접수대",
+      completed: true,
+    };
+  }
+  return null;
+}
+
+export const addShippingProgressEvent = (order, event) => [
+  event,
+  ...getStoredShippingEvents(order),
+];
+
 const buildFallbackShippingEvents = (order) => {
   const carrier = order?.carrier || "배송사";
   const approvedAt = order?.reviewed_at || order?.requested_at;

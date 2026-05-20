@@ -9,6 +9,7 @@ import { Avatar } from "../../shared/Avatar";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { SurgeryAdminTab } from "./SurgeryAdminTab";
 import { VendorSettingsTab } from "./VendorSettingsTab";
+import { ActivityLogTab } from "./ActivityLogTab";
 import { BottomSheet } from "../../shared/BottomSheet";
 import { InitialInventoryModal } from "../../modals/InitialInventoryModal";
 
@@ -30,6 +31,7 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
     {id:"staff",     label:"직원 관리"},
     {id:"items",     label:"품목 관리"},
     {id:"vendor",    label:"도매 설정"},
+    {id:"activity",  label:"활동 로그"},
   ];
 
   return (
@@ -158,6 +160,8 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
         )}
 
         {adminTab === "vendor" && <VendorSettingsTab showToast={showToast}/>}
+
+        {adminTab === "activity" && <ActivityLogTab/>}
       </div>
 
       {showInitialInventory && (

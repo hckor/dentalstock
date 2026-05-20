@@ -408,4 +408,92 @@ describe('useOrderActions', () => {
     ]);
     expect(mockShowToast).toHaveBeenCalledWith('송장이 등록됐습니다');
   });
+
+  it('refreshTracking: 송장 등록 주문의 배송 상태를 배송출발로 갱신', () => {
+    const trackedOrder = {
+      ...orders[0],
+      status: 'ordered',
+      carrier: 'CJ대한통운',
+      tracking_number: '1234567890',
+      shipping_events: [
+        { status: '배송중', timestamp: '2026-05-01T12:00:00Z', location: 'CJ대한통운', completed: true },
+      ],
+    };
+    const { result } = renderHook(() =>
+      useOrderActions({
+        orders: [trackedOrder],
+        setOrders: mockSetOrders,
+        items,
+        setItems: mockSetItems,
+        setTxs: mockSetTxs,
+        setNotifs: mockSetNotifs,
+        currentUser,
+        showToast: mockShowToast,
+        setModal: mockSetModal
+      })
+    );
+
+    act(() => {
+      result.current.refreshTracking('o1');
+    });
+
+    const ordersUpdater = mockSetOrders.mock.calls[0][0];
+    const newOrders = ordersUpdater([trackedOrder]);
+    expect(newOrders[0].shipping_events[0]).toMatchObject({
+      status: '배송출발',
+      location: 'CJ대한통운',
+      completed: true,
+    });
+    expect(mockSetNotifs).not.toHaveBeenCalled();
+    expect(mockShowToast).toHaveBeenCalledWith('배송 상태가 갱신되었습니다');
+  });
+
+  it('refreshTracking: 배송출발 이후 배달완료 알림을 생성', () => {
+    const trackedOrder = {
+      ...orders[0],
+      status: 'ordered',
+      carrier: 'CJ대한통운',
+      tracking_number: '1234567890',
+      shipping_events: [
+        { status: '배송출발', timestamp: '2026-05-01T12:00:00Z', location: 'CJ대한통운', completed: true },
+        { status: '배송중', timestamp: '2026-05-01T11:00:00Z', location: 'CJ대한통운', completed: true },
+      ],
+    };
+    const { result } = renderHook(() =>
+      useOrderActions({
+        orders: [trackedOrder],
+        setOrders: mockSetOrders,
+        items,
+        setItems: mockSetItems,
+        setTxs: mockSetTxs,
+        setNotifs: mockSetNotifs,
+        currentUser,
+        showToast: mockShowToast,
+        setModal: mockSetModal
+      })
+    );
+
+    act(() => {
+      result.current.refreshTracking('o1');
+    });
+
+    const ordersUpdater = mockSetOrders.mock.calls[0][0];
+    const newOrders = ordersUpdater([trackedOrder]);
+    expect(newOrders[0].delivery_completed_at).toBeDefined();
+    expect(newOrders[0].shipping_events[0]).toMatchObject({
+      status: '배달완료',
+      location: '치과 접수대',
+      completed: true,
+    });
+
+    const notifsUpdater = mockSetNotifs.mock.calls[0][0];
+    const newNotifs = notifsUpdater([]);
+    expect(newNotifs[0]).toMatchObject({
+      type: 'delivered',
+      item_id: '1',
+      message: '거즈 배달완료',
+      sub: '입고 확인이 필요합니다',
+    });
+    expect(mockShowToast).toHaveBeenCalledWith('배달완료 알림이 생성되었습니다');
+  });
 });

@@ -18,7 +18,7 @@ function makeDemoTracking(orderId) {
   };
 }
 
-export function ShippingTrackingScreen({orders, allItems, currentUser, canApprove, openModal, showToast, approveOrder, rejectOrder, startTracking, confirmReceipt}) {
+export function ShippingTrackingScreen({orders, allItems, currentUser, canApprove, openModal, showToast, approveOrder, rejectOrder, startTracking, refreshTracking, confirmReceipt}) {
   const [trackingTab, setTrackingTab] = useState("auto_wait");
 
   const visibleOrders = useMemo(
@@ -71,6 +71,9 @@ export function ShippingTrackingScreen({orders, allItems, currentUser, canApprov
       setTrackingTab("in_transit");
     } else if (actionType === "tracking_detail") {
       openModal("shipping_detail", order);
+    } else if (actionType === "tracking_refresh") {
+      refreshTracking(order.id);
+      setTrackingTab("in_transit");
     } else if (actionType === "confirm_receipt") {
       if (!canApprove) {
         showToast("입고 확인 권한이 없습니다");

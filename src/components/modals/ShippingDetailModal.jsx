@@ -7,6 +7,7 @@ export function ShippingDetailModal({ order, item, onClose, openModal, canApprov
 
   const hasPrice = Number.isFinite(order.price) && order.price > 0;
   const shippingTimeline = getShippingEvents(order);
+  const isDelivered = shippingTimeline[0]?.status === "배달완료" && order.status === "ordered";
 
   return (
     <div style={{ padding: "16px 20px 0" }}>
@@ -42,6 +43,14 @@ export function ShippingDetailModal({ order, item, onClose, openModal, canApprov
           {order.tracking_number || "송장 미등록"}
         </p>
       </div>
+
+      {isDelivered && (
+        <div style={{ background: T.green50, borderRadius: 12, padding: "13px 15px", marginBottom: 20, border: `1px solid ${T.green500}33` }}>
+          <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.green500, lineHeight: "22px" }}>
+            배달완료됨 · 입고 확인이 필요합니다
+          </p>
+        </div>
+      )}
 
       {/* 타임라인 */}
       <p style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600, color: T.grey700 }}>배송 현황</p>

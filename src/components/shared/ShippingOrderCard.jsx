@@ -1,7 +1,8 @@
 import { memo } from "react";
-import { CheckCircle2, ChevronRight, FileText, Navigation, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronRight, FileText, Navigation, RefreshCw, XCircle } from "lucide-react";
 import { T, font } from "../../constants/colors";
 import { ORDER_ST } from "../../constants/orderStates";
+import { getShippingEvents } from "../../utils/shippingEvents";
 import { Card } from "./Card";
 import { Chip } from "./Chip";
 
@@ -93,11 +94,15 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
 
       case "in_transit": {
         const hasTracking = !!order.tracking_number;
+        const latestShippingEvent = getShippingEvents(order)[0];
+        const isDelivered = latestShippingEvent?.status === "배달완료";
         return (
           <div style={bodyStyle}>
             <StatusHeader item={item} statusMeta={os}>
               <p style={metaStyle}>
-                <span style={{ fontWeight: 600, color: T.teal500 }}>{hasTracking ? "배송 추적 중" : "송장 미등록"}</span>
+                <span style={{ fontWeight: 600, color: isDelivered ? T.green500 : T.teal500 }}>
+                  {hasTracking ? (isDelivered ? "배달완료" : latestShippingEvent?.status || "배송 추적 중") : "송장 미등록"}
+                </span>
                 {order.carrier && ` · ${order.carrier}`}
               </p>
               {order.tracking_number && (
@@ -108,19 +113,27 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
             </StatusHeader>
 
             {(hasTracking || canApprove) && (
-              <div style={actionRowStyle}>
-                <ActionButton
-                  variant="neutralOutline"
-                  onClick={() => onActionClick(hasTracking ? "tracking_detail" : "tracking_start")}
-                >
-                  {hasTracking ? <FileText size={18} style={{ flexShrink: 0 }} /> : <Navigation size={18} style={{ flexShrink: 0 }} />}
-                  {hasTracking ? "송장 상세" : "송장 등록"}
-                  {hasTracking && <ChevronRight size={18} style={{ flexShrink: 0 }} />}
-                </ActionButton>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={actionRowStyle}>
+                  <ActionButton
+                    variant="neutralOutline"
+                    onClick={() => onActionClick(hasTracking ? "tracking_detail" : "tracking_start")}
+                  >
+                    {hasTracking ? <FileText size={18} style={{ flexShrink: 0 }} /> : <Navigation size={18} style={{ flexShrink: 0 }} />}
+                    {hasTracking ? "송장 상세" : "송장 등록"}
+                    {hasTracking && <ChevronRight size={18} style={{ flexShrink: 0 }} />}
+                  </ActionButton>
+                  {hasTracking && canApprove && (
+                    <ActionButton variant="neutralOutline" onClick={() => onActionClick("tracking_refresh")}>
+                      <RefreshCw size={18} style={{ flexShrink: 0 }} />
+                      배송 갱신
+                    </ActionButton>
+                  )}
+                </div>
                 {canApprove && (
-                  <ActionButton onClick={() => onActionClick("confirm_receipt")}>
+                  <ActionButton onClick={() => onActionClick("confirm_receipt")} style={{ width: "100%" }}>
                     <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
-                    입고 확인
+                    {isDelivered ? "입고 확인" : "입고 확인"}
                   </ActionButton>
                 )}
               </div>

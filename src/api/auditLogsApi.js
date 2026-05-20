@@ -1,13 +1,18 @@
 import { appRepository } from "../repositories/appRepository";
 
-const SENSITIVE_KEY_PATTERN = /(password|credential|token|cookie|session|pin|card|secret|username)/i;
+const SENSITIVE_KEY_PATTERN = /(password|credential|token|cookie|session|card|secret|username)/i;
+const PIN_KEY_PATTERN = /^(pin|pinCode|pinHash|pin_hash)$/i;
+
+function isSensitiveKey(key) {
+  return SENSITIVE_KEY_PATTERN.test(key) || PIN_KEY_PATTERN.test(key);
+}
 
 function redactSensitiveMetadata(value) {
   if (Array.isArray(value)) return value.map(redactSensitiveMetadata);
   if (!value || typeof value !== "object") return value;
 
   return Object.entries(value).reduce((acc, [key, entry]) => {
-    acc[key] = SENSITIVE_KEY_PATTERN.test(key) ? "[redacted]" : redactSensitiveMetadata(entry);
+    acc[key] = isSensitiveKey(key) ? "[redacted]" : redactSensitiveMetadata(entry);
     return acc;
   }, {});
 }

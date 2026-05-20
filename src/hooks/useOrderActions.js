@@ -1,7 +1,12 @@
 import { auditLogsApi } from "../api/auditLogsApi";
 import { getActiveOrder } from "../utils/helpers";
 import { can } from "../constants/permissions";
-import { addReceiptShippingEvent, buildInitialShippingEvents } from "../utils/shippingEvents";
+import {
+  addReceiptShippingEvent,
+  addShippingProgressEvent,
+  buildInitialShippingEvents,
+  getNextShippingProgressEvent,
+} from "../utils/shippingEvents";
 
 export function useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal }) {
   // ── 발주 요청 → pending 주문 즉시 생성 ───────────────
@@ -183,5 +188,63 @@ export function useOrderActions({ orders, setOrders, items, setItems, setTxs, se
     showToast("송장이 등록됐습니다");
   };
 
-  return { submitOrder, approveOrder, rejectOrder, confirmReceipt, startTracking };
+  const refreshTracking = (orderId) => {
+    if (!can(currentUser.role, "orders_approve")) {
+      showToast("배송 갱신 권한이 없습니다");
+      return;
+    }
+    const order = orders.find(o => o.id === orderId);
+    if (!order || order.status !== "ordered" || !order.tracking_number) {
+      showToast("갱신할 송장 정보를 찾을 수 없습니다.");
+      return;
+    }
+    const item = items.find(i => i.id === order.item_id);
+    const refreshedAt = new Date().toISOString();
+    const nextEvent = getNextShippingProgressEvent(order, refreshedAt);
+    if (!nextEvent) {
+      showToast("이미 최신 배송 상태입니다");
+      return;
+    }
+
+    setOrders(p => p.map(o => o.id === orderId
+      ? {
+          ...o,
+          delivery_completed_at: nextEvent.status === "배달완료" ? refreshedAt : o.delivery_completed_at,
+          shipping_events: addShippingProgressEvent(o, nextEvent),
+        }
+      : o
+    ));
+
+    auditLogsApi.record({
+      action: nextEvent.status === "배달완료" ? "order.delivered" : "order.tracking_refreshed",
+      entityType: "order",
+      entityId: orderId,
+      actor: currentUser,
+      metadata: {
+        item_id: order.item_id,
+        carrier: order.carrier || "",
+        tracking_number_last4: String(order.tracking_number || "").slice(-4),
+        shipping_status: nextEvent.status,
+      },
+      at: refreshedAt,
+    });
+
+    if (item && nextEvent.status === "배달완료") {
+      setNotifs(p => [{
+        id: `n${Date.now()}`,
+        type: "delivered",
+        item_id: item.id,
+        message: `${item.name} 배달완료`,
+        sub: "입고 확인이 필요합니다",
+        is_read: false,
+        created_at: refreshedAt,
+      }, ...p]);
+      showToast("배달완료 알림이 생성되었습니다");
+      return;
+    }
+
+    showToast("배송 상태가 갱신되었습니다");
+  };
+
+  return { submitOrder, approveOrder, rejectOrder, confirmReceipt, startTracking, refreshTracking };
 }
