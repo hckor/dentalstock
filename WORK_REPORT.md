@@ -144,3 +144,14 @@
 - 초기 데이터 시드와 리셋도 repository를 통해 실행되므로, 나중에 Firestore/REST 구현체로 바꿀 때 앱 화면과 훅을 덜 건드릴 수 있습니다.
 - repository 테스트를 추가해 collection/value repository의 `list/save/get/set/remove` 계약과 초기 데이터 복구 동작을 고정했습니다.
 - `npm run lint`, `npm test` 14개 파일 132개 테스트, `npm run build`, 최종 회귀 E2E 21개를 모두 통과했습니다.
+
+## 백엔드 스키마/보안 기준
+
+데이터 레이어 다음 단계로 `clinicId` 기반 백엔드 전환 초안과 보안 기준을 정리했습니다.
+
+- `docs/DATA_BACKEND_SCHEMA.md`에 Firestore/백엔드 collection 구조를 정의했습니다: `clinics/{clinicId}/users`, `items`, `txs`, `orders`, `surgeries`, `notifs`, `settings/app`, `vendorCredentials`, `auditLogs`.
+- 모든 업무 데이터는 `clinicId` 하위에 격리하고, 요청자의 `auth.token.clinicId`와 문서의 `clinicId`가 일치해야 한다는 규칙을 명시했습니다.
+- 도매몰 ID/PW는 `settings` 문서가 아니라 server-only `vendorCredentials`에 저장하고, AES-256-GCM + KMS/Secret Manager 키 분리를 전제로 했습니다.
+- `docs/SECURITY_CHECKLIST.md`에 Critical/High/Medium 보안 체크리스트를 추가했습니다.
+- `src/security/dataClassification.js`에 데이터 분류와 server-only 필드 목록을 코드로 추가했고, `securityPolicy.test.js`로 도매몰 비밀번호/세션성 데이터가 클라이언트 저장 가능 필드로 통과하지 않도록 기준을 고정했습니다.
+- `npm run lint`, `npm test` 15개 파일 134개 테스트, `npm run build`, 최종 회귀 E2E 21개를 모두 통과했습니다.
