@@ -25,4 +25,18 @@ describe('api mode adapter', () => {
     expect(adapter.baseUrl).toBe('http://127.0.0.1:8787');
     expect(adapter.activeStorage).toBe('local');
   });
+
+  it('supabase mode 플래그를 읽되 현재 활성 저장소는 local로 유지한다', () => {
+    const config = getApiConfig({
+      VITE_DENTALSTOCK_API_MODE: 'supabase',
+      VITE_SUPABASE_URL: 'https://example.supabase.co',
+      VITE_SUPABASE_PUBLISHABLE_KEY: 'publishable',
+    });
+    const adapter = getRepositoryAdapter(config);
+
+    expect(config.mode).toBe('supabase');
+    expect(config.isSupabaseMode).toBe(true);
+    expect(adapter.isRemoteEnabled).toBe(true);
+    expect(adapter.activeStorage).toBe('local');
+  });
 });

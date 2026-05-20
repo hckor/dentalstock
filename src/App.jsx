@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { font } from "./constants/colors";
 import { WifiOff } from "lucide-react";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
+import { getApiConfig } from "./config/apiMode";
 import { seedIfEmpty, resetToInitial } from "./api/seed";
 import { usersApi } from "./api/usersApi";
 import { itemsApi } from "./api/itemsApi";
@@ -10,9 +11,11 @@ import { ordersApi } from "./api/ordersApi";
 import { surgeriesApi } from "./api/surgeriesApi";
 import { notifsApi } from "./api/notifsApi";
 import { authApi } from "./api/authApi";
+import { supabaseAuthApi } from "./api/supabaseAuthApi";
 import { usePersistedState } from "./hooks/usePersistedState";
 import { LoginSelect } from "./components/auth/LoginSelect";
 import { LoginPin } from "./components/auth/LoginPin";
+import { LoginSupabase } from "./components/auth/LoginSupabase";
 import { MainApp } from "./components/MainApp";
 
 // 모듈 로드 시점에 1회 시드 (테스트에서도 안전하게 호출됨)
@@ -25,8 +28,13 @@ const isStandalone =
 
 function DentalStockInner() {
   const { tokens: dynamicT } = useTheme();
-  const [appState,    setAppState]    = useState(() => authApi.getCurrentUser() ? "app" : "login_select");
-  const [currentUser, setCurrentUser] = useState(() => authApi.getCurrentUser());
+  const apiConfig = getApiConfig();
+  const isSupabaseMode = apiConfig.isSupabaseMode;
+  const [appState,    setAppState]    = useState(() => {
+    if (isSupabaseMode) return "supabase_loading";
+    return authApi.getCurrentUser() ? "app" : "login_select";
+  });
+  const [currentUser, setCurrentUser] = useState(() => isSupabaseMode ? null : authApi.getCurrentUser());
   const [pinTarget,   setPinTarget]   = useState(null);
   const [isOnline,    setIsOnline]    = useState(navigator.onLine);
 
@@ -39,6 +47,27 @@ function DentalStockInner() {
 
   const unread        = notifs.filter(n=>!n.is_read).length;
   const pendingOrders = orders.filter(o=>o.status==="pending").length;
+
+  useEffect(() => {
+    if (!isSupabaseMode) return;
+    let ignore = false;
+    supabaseAuthApi.getCurrentUser()
+      .then(user => {
+        if (ignore) return;
+        if (user) {
+          setCurrentUser(user);
+          setAppState("app");
+        } else {
+          setAppState("supabase_login");
+        }
+      })
+      .catch(() => {
+        if (!ignore) setAppState("supabase_login");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [isSupabaseMode]);
 
   // 개발/데모용: 콘솔에서 window.__dentalStockReset() 호출 시 초기화
   useEffect(() => {
@@ -57,16 +86,20 @@ function DentalStockInner() {
   }, []);
 
   const handleLogin = (user) => {
-    authApi.setSession(user);
+    if (!isSupabaseMode) authApi.setSession(user);
     setCurrentUser(user);
     setAppState("app");
   };
 
-  const handleLogout = () => {
-    authApi.clearSession();
+  const handleLogout = async () => {
+    if (isSupabaseMode) {
+      await supabaseAuthApi.signOut();
+    } else {
+      authApi.clearSession();
+    }
     setCurrentUser(null);
     setPinTarget(null);
-    setAppState("login_select");
+    setAppState(isSupabaseMode ? "supabase_login" : "login_select");
   };
 
   const appContent = (
@@ -77,6 +110,12 @@ function DentalStockInner() {
           <WifiOff size={15}/> 오프라인 · 저장된 데이터로 동작 중
         </div>
       )}
+      {appState==="supabase_loading" && (
+        <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", color:dynamicT.grey500, fontSize:16, fontWeight:600}}>
+          로그인 상태 확인 중...
+        </div>
+      )}
+      {appState==="supabase_login" && <LoginSupabase onSuccess={handleLogin}/>}
       {appState==="login_select" && <LoginSelect users={users} onSelect={u=>{setPinTarget(u);setAppState("login_pin");}}/>}
       {appState==="login_pin"    && pinTarget && <LoginPin user={pinTarget} onSuccess={(u)=>handleLogin(u || pinTarget)} onBack={()=>{setPinTarget(null);setAppState("login_select");}}/>}
       {appState==="app"          && currentUser && (
