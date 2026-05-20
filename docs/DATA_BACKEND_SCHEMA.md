@@ -10,6 +10,19 @@
 - 도매몰 비밀번호와 세션성 데이터는 클라이언트 문서에 저장하지 않는다.
 - 자동 주문은 항상 승인 이벤트 이후에만 실행한다.
 
+## 현재 백엔드 골격
+
+`server/`에는 자동화 서버의 첫 골격이 있다.
+
+- `GET /health`: 서버 상태 확인
+- `GET /api/orders`: clinicId 범위 주문 목록 stub
+- `POST /api/orders/:orderId/approve`: 승인 작업 queue stub
+- `POST /api/tracking/refresh`: 배송 추적 provider stub
+- `GET /api/vendor-credentials/:vendorId/status`: 도매 계정 연결 상태 stub
+- `POST /api/vendor-credentials/:vendorId`: 내부 토큰이 없으면 기본 비활성화
+
+실제 운영 전에는 이 골격 위에 영속 DB, 인증, 암호화 credential store, 외부 배송 API를 붙인다.
+
 ## Collection 구조
 
 ```txt

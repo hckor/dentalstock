@@ -1,0 +1,49 @@
+import { sendJson } from "./http.js";
+
+export function applySecurityHeaders(res) {
+  res.setHeader("x-content-type-options", "nosniff");
+  res.setHeader("x-frame-options", "DENY");
+  res.setHeader("referrer-policy", "no-referrer");
+  res.setHeader("permissions-policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("cache-control", "no-store");
+}
+
+export function applyCors(req, res, allowedOrigins) {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("access-control-allow-origin", origin);
+    res.setHeader("vary", "origin");
+  }
+  res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
+  res.setHeader("access-control-allow-headers", "content-type,x-clinic-id,x-user-id,x-user-role,x-internal-admin-token");
+}
+
+export function createRateLimiter({ windowMs, max }) {
+  const buckets = new Map();
+
+  return function rateLimit(req, res) {
+    const now = Date.now();
+    const key = req.socket.remoteAddress || "unknown";
+    const bucket = buckets.get(key);
+
+    if (!bucket || now - bucket.startedAt > windowMs) {
+      buckets.set(key, { count: 1, startedAt: now });
+      return true;
+    }
+
+    bucket.count += 1;
+    if (bucket.count > max) {
+      sendJson(res, 429, { error: "rate_limited" });
+      return false;
+    }
+    return true;
+  };
+}
+
+export function readRequestContext(req) {
+  return {
+    clinicId: req.headers["x-clinic-id"] || "demo-clinic",
+    userId: req.headers["x-user-id"] || "anonymous",
+    role: req.headers["x-user-role"] || "unknown",
+  };
+}

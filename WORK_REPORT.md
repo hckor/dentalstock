@@ -189,3 +189,16 @@
 - audit log 마스킹 규칙이 `shipping_status`를 오탐해 `[redacted]`로 표시하던 문제를 고쳤습니다.
 - 배송 갱신/배달완료 단위 테스트를 추가했습니다.
 - `npm run lint`, `npm test` 16개 파일 140개 테스트, `npm run build`, 최신 UX E2E 7개, 최종 회귀 E2E 21개를 모두 통과했습니다.
+
+## 백엔드 골격/프론트 어댑터
+
+자동화 서버를 붙일 수 있도록 백엔드 기본 구조와 프론트 API 모드 경계를 추가했습니다.
+
+- `server/` 폴더에 Node HTTP 기반 API skeleton을 추가했습니다. 현재는 의존성 설치 없이 실행/테스트 가능하도록 만들었고, 라우트/서비스 경계는 Express/Fastify로 교체하기 쉽게 분리했습니다.
+- 기본 라우트는 `GET /health`, `GET /api/orders`, `POST /api/orders/:orderId/approve`, `POST /api/tracking/refresh`, `GET/POST /api/vendor-credentials/:vendorId`입니다.
+- 보안 기본값으로 no-store/security headers, CORS allow-list, clinicId 헤더 컨텍스트, 간단한 rate limit, vendor credential write 기본 비활성화를 넣었습니다.
+- `server/services/trackingService.js`와 `vendorCredentialService.js`를 추가해 실제 스윗트래커/암호화 저장소로 교체할 인터페이스를 마련했습니다.
+- `.env.example`에 서버 포트/호스트/CORS/rate limit/internal token과 프론트 `VITE_DENTALSTOCK_API_MODE` 값을 정리했습니다.
+- 프론트에는 `apiMode`, `repositoryAdapter`, `remoteRepository`를 추가했습니다. 현재 앱은 안정성을 위해 계속 local storage를 active storage로 쓰고, `server` 모드는 기능 플래그로 노출만 합니다.
+- 서버 테스트는 포트를 열지 않고 handler를 직접 호출해 sandbox/CI에서도 안정적으로 돌도록 구성했습니다.
+- `npm run server:check`, `npm run lint`, `npm test` 18개 파일 146개 테스트, `npm run build`, 최신 UX E2E 7개, 최종 회귀 E2E 21개를 모두 통과했습니다.

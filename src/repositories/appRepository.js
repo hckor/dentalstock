@@ -12,6 +12,7 @@ import {
   createValueRepository,
   localRepository,
 } from "./localRepository";
+import { getRepositoryAdapter } from "./repositoryAdapter";
 
 function writeInitialData() {
   appRepository.users.save(INITIAL_USERS);
@@ -23,6 +24,7 @@ function writeInitialData() {
 }
 
 export const appRepository = {
+  adapter: getRepositoryAdapter(),
   users: createCollectionRepository(STORAGE_KEYS.users, INITIAL_USERS),
   items: createCollectionRepository(STORAGE_KEYS.items, INIT_ITEMS),
   txs: createCollectionRepository(STORAGE_KEYS.txs, INIT_TXS),

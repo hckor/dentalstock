@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node server/index.js",
+    "server:check": "vitest run server/__tests__/server.test.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
