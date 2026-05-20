@@ -107,3 +107,25 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 ```
 
 Do not add `SUPABASE_SERVICE_ROLE_KEY` to the frontend deployment. Use it only in a server-only environment after backend persistence or order workers are implemented.
+
+## 6. Staff invite Edge Function
+
+The app's staff invite form calls `invite-staff`. Deploy it after running the staff management migration:
+
+```bash
+supabase functions deploy invite-staff --project-ref tausnjxzqmnhoeslgbmc
+```
+
+Set these function secrets in Supabase:
+
+```bash
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<service-role-key> --project-ref tausnjxzqmnhoeslgbmc
+supabase secrets set INVITE_REDIRECT_URL=<your-vercel-or-local-login-url> --project-ref tausnjxzqmnhoeslgbmc
+```
+
+Security behavior:
+
+- The browser sends only the signed-in user's JWT.
+- The Edge Function checks that the caller is an active `owner`.
+- `SUPABASE_SERVICE_ROLE_KEY` is used only inside the Edge Function to send the Auth invite and create the matching `profiles` row.
+- Invite roles are limited to `manager`, `hygienist`, or `staff`.

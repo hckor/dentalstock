@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, RotateCcw, ClipboardList, PackagePlus, ChevronRight } from "lucide-react";
+import { LogOut, RotateCcw, ClipboardList, PackagePlus, ChevronRight, Send } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
 import { T, font, monoFont } from "../../../constants/colors";
 import { can, ROLE_META } from "../../../constants/permissions";
@@ -13,9 +13,11 @@ import { ActivityLogTab } from "./ActivityLogTab";
 import { BottomSheet } from "../../shared/BottomSheet";
 import { InitialInventoryModal } from "../../modals/InitialInventoryModal";
 
-export function AdminScreen({users, currentUser, orders, items, setItems, txs, surgeries, addSurgery, deleteSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast, onStaffActiveChange, onStaffRoleChange}) {
+export function AdminScreen({users, currentUser, orders, items, setItems, txs, surgeries, addSurgery, deleteSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast, onInviteStaff, onStaffActiveChange, onStaffRoleChange}) {
   const [adminTab, setAdminTab] = useState("surgery");
   const [showInitialInventory, setShowInitialInventory] = useState(false);
+  const [inviteForm, setInviteForm] = useState({email:"", name:"", role:"hygienist"});
+  const [inviteBusy, setInviteBusy] = useState(false);
   const canManageStaff = can(currentUser.role, "staff");
 
   const handleInitialInventorySave = (quantities) => {
@@ -24,6 +26,26 @@ export function AdminScreen({users, currentUser, orders, items, setItems, txs, s
         ? { ...item, current_qty: quantities[item.id] }
         : item
     ));
+  };
+
+  const submitInvite = async (event) => {
+    event.preventDefault();
+    if (!canManageStaff || inviteBusy) return;
+
+    const email = inviteForm.email.trim();
+    if (!email.includes("@")) {
+      showToast?.("초대할 이메일을 확인해주세요");
+      return;
+    }
+
+    setInviteBusy(true);
+    const ok = await onInviteStaff?.({
+      email,
+      name: inviteForm.name.trim(),
+      role: inviteForm.role,
+    });
+    if (ok) setInviteForm({email:"", name:"", role:"hygienist"});
+    setInviteBusy(false);
   };
 
   const tabs = [
@@ -93,6 +115,49 @@ export function AdminScreen({users, currentUser, orders, items, setItems, txs, s
                 {!canManageStaff && <p style={{margin:0, fontSize: 13, color:T.grey500}}>원장 계정만 직원 상태와 권한을 바꿀 수 있습니다.</p>}
               </div>
             </div>
+            {canManageStaff && (
+              <Card style={{padding:16, marginBottom:12}}>
+                <form onSubmit={submitInvite} style={{display:"flex", flexDirection:"column", gap:10}}>
+                  <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
+                    <div>
+                      <p style={{margin:0, fontSize: 16, fontWeight:700, color:T.grey900}}>직원 초대</p>
+                      <p style={{margin:"2px 0 0", fontSize: 13, color:T.grey500}}>이메일로 초대하고 권한을 미리 지정합니다.</p>
+                    </div>
+                  </div>
+                  <input
+                    value={inviteForm.email}
+                    onChange={(event)=>setInviteForm(prev=>({...prev, email:event.target.value}))}
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="직원 이메일"
+                    style={{height:48, border:`1px solid ${T.grey200}`, borderRadius:12, background:T.grey50, padding:"0 14px", fontSize:15, color:T.grey900, fontFamily:font, outlineColor:T.blue500}}
+                  />
+                  <div style={{display:"grid", gridTemplateColumns:"1fr 122px", gap:8}}>
+                    <input
+                      value={inviteForm.name}
+                      onChange={(event)=>setInviteForm(prev=>({...prev, name:event.target.value}))}
+                      placeholder="이름"
+                      style={{minWidth:0, height:48, border:`1px solid ${T.grey200}`, borderRadius:12, background:T.grey50, padding:"0 14px", fontSize:15, color:T.grey900, fontFamily:font, outlineColor:T.blue500}}
+                    />
+                    <select
+                      value={inviteForm.role}
+                      onChange={(event)=>setInviteForm(prev=>({...prev, role:event.target.value}))}
+                      style={{height:48, border:`1px solid ${T.grey200}`, borderRadius:12, background:T.grey50, color:T.grey900, fontFamily:font, fontSize: 14, fontWeight:700, padding:"0 10px", outlineColor:T.blue500}}>
+                      <option value="hygienist">위생사</option>
+                      <option value="manager">매니저</option>
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={inviteBusy || !inviteForm.email.trim()}
+                    style={{height:48, border:"none", borderRadius:12, background:inviteBusy || !inviteForm.email.trim()?T.grey200:T.blue500, color:T.white, fontSize:15, fontWeight:700, fontFamily:font, cursor:inviteBusy || !inviteForm.email.trim()?"not-allowed":"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+                    <Send size={17}/>
+                    {inviteBusy ? "초대 중..." : "초대 보내기"}
+                  </button>
+                </form>
+              </Card>
+            )}
             <Card style={{marginBottom:16}}>
               {users.map((u, i) => {
                 const m    = ROLE_META[u.role] || ROLE_META.hygienist;

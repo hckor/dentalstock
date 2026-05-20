@@ -99,6 +99,33 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     }
   }, [currentUser, setUsers, showToast]);
 
+  const inviteStaff = useCallback(async ({ email, name, role: nextRole }) => {
+    try {
+      if (!supabaseStaffApi.isEnabled() || !currentUser?.clinicId) {
+        showToast("Supabase 모드에서만 직원 초대를 보낼 수 있습니다");
+        return false;
+      }
+
+      const invited = await supabaseStaffApi.inviteStaff({ email, name, role: nextRole });
+      setUsers(prev => {
+        const exists = prev.some(user => user.id === invited.id);
+        return exists
+          ? prev.map(user => user.id === invited.id ? {...user, ...invited} : user)
+          : [...prev, invited];
+      });
+      showToast("직원 초대 메일을 보냈습니다");
+      return true;
+    } catch (error) {
+      const message = error?.message === "user_already_exists"
+        ? "이미 가입된 이메일입니다"
+        : error?.message === "owner_required"
+          ? "원장 계정만 직원을 초대할 수 있습니다"
+          : "직원 초대를 보내지 못했습니다";
+      showToast(message);
+      return false;
+    }
+  }, [currentUser, setUsers, showToast]);
+
   const filteredItems = useMemo(
     () => items.filter(i => i.name.includes(search) && (cat===0 || i.category_id===cat)),
     [items, search, cat]
@@ -134,7 +161,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
           {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} approveOrders={approveOrders} rejectOrder={rejectOrder} startTracking={startTracking} refreshTracking={refreshTracking} confirmReceipt={confirmReceipt}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
-          {tab==="admin"     && canApprove && <AdminScreen users={users} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
+          {tab==="admin"     && canApprove && <AdminScreen users={users} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
         </Suspense>
       </div>
 

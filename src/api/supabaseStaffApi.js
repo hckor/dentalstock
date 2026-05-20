@@ -47,6 +47,22 @@ export const supabaseStaffApi = {
     return mapSupabaseProfile(data);
   },
 
+  async inviteStaff({ email, name, role }) {
+    const { data, error } = await getSupabaseClient()
+      .functions
+      .invoke("invite-staff", {
+        body: {
+          email,
+          name,
+          role: toSupabaseRole(role),
+        },
+      });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return mapSupabaseProfile(data?.profile || data);
+  },
+
   async updateMyProfile(name) {
     const { data, error } = await getSupabaseClient()
       .rpc("update_my_profile", { p_name: name });
