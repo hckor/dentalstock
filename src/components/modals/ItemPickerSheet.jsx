@@ -13,7 +13,7 @@ export function ItemPickerSheet({items, setSelItem, onClose}) {
 
   return (
     <div style={{padding:"0 20px"}}>
-      <div style={{position:"sticky",top:0,zIndex:2,display:"flex",justifyContent:"space-between",alignItems:"center",margin:"0 -20px 12px",padding:"16px 20px 12px",background:T.white,borderBottom:`1px solid ${T.grey100}`}}>
+      <div style={{position:"sticky",top:16,zIndex:2,display:"flex",justifyContent:"space-between",alignItems:"center",margin:"0 -20px 12px",padding:"16px 20px 12px",background:T.white,borderBottom:`1px solid ${T.grey100}`,boxShadow:"0 4px 8px rgba(255,255,255,0.9)"}}>
         <h2 style={{margin:0, fontSize: 24, fontWeight:700, color:T.grey900}}>품목 선택</h2>
         <button aria-label="닫기" onClick={onClose} style={{border:"none", background:T.grey100, borderRadius:9999, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}><X size={22} color={T.grey600}/></button>
       </div>
