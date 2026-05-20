@@ -159,7 +159,7 @@ export function AdminScreen({users, setUsers, currentUser, orders, items, setIte
           </>
         )}
 
-        {adminTab === "vendor" && <VendorSettingsTab showToast={showToast}/>}
+        {adminTab === "vendor" && <VendorSettingsTab currentUser={currentUser} showToast={showToast}/>}
 
         {adminTab === "activity" && <ActivityLogTab/>}
       </div>

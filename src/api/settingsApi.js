@@ -59,6 +59,9 @@ function normalizeSettings(saved) {
 }
 
 export const settingsApi = {
+  normalize(settings) {
+    return normalizeSettings(sanitizeSettings(settings));
+  },
   load() {
     const saved = appRepository.settings.get();
     const hadServerOwnedVendorFields = hasServerOwnedVendorFields(saved);
@@ -66,9 +69,12 @@ export const settingsApi = {
     if (hadServerOwnedVendorFields) appRepository.settings.set(safeSettings);
     return normalizeSettings(safeSettings);
   },
-  save(settings) {
+  set(settings) {
     const safeSettings = sanitizeSettings(settings);
     appRepository.settings.set(safeSettings);
     return normalizeSettings(safeSettings);
+  },
+  save(settings) {
+    return this.set(settings);
   },
 };

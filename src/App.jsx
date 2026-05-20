@@ -11,9 +11,11 @@ import { ordersApi } from "./api/ordersApi";
 import { surgeriesApi } from "./api/surgeriesApi";
 import { notifsApi } from "./api/notifsApi";
 import { authApi } from "./api/authApi";
+import { settingsApi } from "./api/settingsApi";
 import { supabaseAuthApi } from "./api/supabaseAuthApi";
 import { supabaseItemsApi } from "./api/supabaseItemsApi";
 import { supabaseOrdersApi } from "./api/supabaseOrdersApi";
+import { supabaseSettingsApi } from "./api/supabaseSettingsApi";
 import { usePersistedState } from "./hooks/usePersistedState";
 import { LoginSelect } from "./components/auth/LoginSelect";
 import { LoginPin } from "./components/auth/LoginPin";
@@ -104,6 +106,22 @@ function DentalStockInner() {
       ignore = true;
     };
   }, [currentUser?.clinicId, isSupabaseMode, setOrders]);
+
+  useEffect(() => {
+    if (!isSupabaseMode || !currentUser?.clinicId) return;
+    let ignore = false;
+    supabaseSettingsApi.getForClinic(currentUser.clinicId)
+      .then(remoteSettings => {
+        if (ignore || !remoteSettings) return;
+        settingsApi.set(remoteSettings);
+      })
+      .catch(() => {
+        if (!ignore) setSyncStatus("Supabase 설정을 불러오지 못했습니다");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [currentUser?.clinicId, isSupabaseMode]);
 
   // 개발/데모용: 콘솔에서 window.__dentalStockReset() 호출 시 초기화
   useEffect(() => {

@@ -6,6 +6,7 @@ import { Divider } from "../../shared/Divider";
 import { Chip } from "../../shared/Chip";
 import { Inp } from "../../shared/Inp";
 import { settingsApi } from "../../../api/settingsApi";
+import { supabaseSettingsApi } from "../../../api/supabaseSettingsApi";
 import { vendorCredentialsApi } from "../../../api/vendorCredentialsApi";
 
 const MIN_ORDER_AMOUNT = 1000;
@@ -53,7 +54,7 @@ function TogglePill({ active, label, onClick, icon: Icon }) {
   );
 }
 
-export function VendorSettingsTab({ showToast }) {
+export function VendorSettingsTab({ currentUser, showToast }) {
   const [initial, setInitial] = useState(() => settingsApi.load());
   const [vendors, setVendors] = useState(initial.vendors);
   const [credentials, setCredentials] = useState({});
@@ -64,6 +65,7 @@ export function VendorSettingsTab({ showToast }) {
   const [preferredVendor, setPreferredVendor] = useState(initial.preferredVendor);
   const [maxOrderAmount, setMaxOrderAmount] = useState(initial.maxOrderAmount);
   const [saveAttempted, setSaveAttempted] = useState(false);
+  const [saving, setSaving] = useState(false);
   const hasDraftCredentials = useMemo(() => (
     Object.values(credentials).some(credential => credential?.username || credential?.password)
   ), [credentials]);
@@ -123,26 +125,40 @@ export function VendorSettingsTab({ showToast }) {
 
   const handleSave = async () => {
     setSaveAttempted(true);
+    if (saving) return;
     if (maxOrderAmountError) {
       showToast?.(maxOrderAmountError);
       return;
     }
 
     const next = { vendors, preferredVendor, maxOrderAmount };
-    const savedSettings = settingsApi.save(next);
-    const savedCredentialStatuses = hasDraftCredentials
-      ? await vendorCredentialsApi.saveAll(credentials)
-      : {};
-    const nextCredentialStatuses = {
-      ...credentialStatuses,
-      ...savedCredentialStatuses,
-    };
-    setInitial(savedSettings);
-    setCredentials({});
-    setCredentialStatuses(nextCredentialStatuses);
-    setSaveAttempted(false);
-    const failedCredential = Object.values(savedCredentialStatuses).find(status => !status.connected && !status.stored);
-    showToast?.(failedCredential?.message || "자동발주 설정이 저장되었습니다");
+    setSaving(true);
+    try {
+      const savedSettings = supabaseSettingsApi.isEnabled() && currentUser?.clinicId
+        ? await supabaseSettingsApi.saveForClinic(currentUser.clinicId, next)
+        : settingsApi.save(next);
+      settingsApi.set(savedSettings);
+      const savedCredentialStatuses = hasDraftCredentials
+        ? await vendorCredentialsApi.saveAll(credentials)
+        : {};
+      const nextCredentialStatuses = {
+        ...credentialStatuses,
+        ...savedCredentialStatuses,
+      };
+      setInitial(savedSettings);
+      setVendors(savedSettings.vendors);
+      setPreferredVendor(savedSettings.preferredVendor);
+      setMaxOrderAmount(savedSettings.maxOrderAmount);
+      setCredentials({});
+      setCredentialStatuses(nextCredentialStatuses);
+      setSaveAttempted(false);
+      const failedCredential = Object.values(savedCredentialStatuses).find(status => !status.connected && !status.stored);
+      showToast?.(failedCredential?.message || "자동발주 설정이 저장되었습니다");
+    } catch {
+      showToast?.("자동발주 설정 저장에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -325,18 +341,18 @@ export function VendorSettingsTab({ showToast }) {
       <button
         type="button"
         onClick={handleSave}
-        disabled={!isDirty}
+        disabled={!isDirty || saving}
         style={{
           marginTop: 20,
           width: "100%",
           padding: "18px 0",
           borderRadius: 9999,
           border: "none",
-          background: isDirty ? T.blue500 : T.grey200,
-          color: isDirty ? T.white : T.grey500,
+          background: isDirty && !saving ? T.blue500 : T.grey200,
+          color: isDirty && !saving ? T.white : T.grey500,
           fontSize: 16,
           fontWeight: 600,
-          cursor: isDirty ? "pointer" : "default",
+          cursor: isDirty && !saving ? "pointer" : "default",
           fontFamily: font,
           display: "flex",
           alignItems: "center",
@@ -345,7 +361,7 @@ export function VendorSettingsTab({ showToast }) {
           transition: "all 150ms",
         }}
       >
-        {isDirty ? <><Save size={18} /> 설정 저장</> : <><Check size={18} /> 저장됨</>}
+        {saving ? "저장 중..." : isDirty ? <><Save size={18} /> 설정 저장</> : <><Check size={18} /> 저장됨</>}
       </button>
     </div>
   );
