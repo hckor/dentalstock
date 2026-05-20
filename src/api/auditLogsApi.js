@@ -1,4 +1,5 @@
 import { appRepository } from "../repositories/appRepository";
+import { supabaseActivityApi } from "./supabaseActivityApi";
 
 const SENSITIVE_KEY_PATTERN = /(password|credential|token|cookie|session|card|secret|username)/i;
 const PIN_KEY_PATTERN = /^(pin|pinCode|pinHash|pin_hash)$/i;
@@ -47,6 +48,9 @@ export const auditLogsApi = {
     };
 
     appRepository.auditLogs.save([log, ...this.list()]);
+    if (supabaseActivityApi.isEnabled() && actor?.clinicId) {
+      void supabaseActivityApi.recordAuditLog(log, actor).catch(() => {});
+    }
     return log;
   },
 };

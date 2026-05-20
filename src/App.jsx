@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { font } from "./constants/colors";
 import { WifiOff } from "lucide-react";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
@@ -12,7 +12,9 @@ import { surgeriesApi } from "./api/surgeriesApi";
 import { notifsApi } from "./api/notifsApi";
 import { authApi } from "./api/authApi";
 import { settingsApi } from "./api/settingsApi";
+import { auditLogsApi } from "./api/auditLogsApi";
 import { supabaseAuthApi } from "./api/supabaseAuthApi";
+import { supabaseActivityApi } from "./api/supabaseActivityApi";
 import { supabaseItemsApi } from "./api/supabaseItemsApi";
 import { supabaseOrdersApi } from "./api/supabaseOrdersApi";
 import { supabaseSettingsApi } from "./api/supabaseSettingsApi";
@@ -50,6 +52,16 @@ function DentalStockInner() {
   const [orders,    setOrders]    = usePersistedState(() => ordersApi.list(),    ordersApi.save);
   const [surgeries, setSurgeries] = usePersistedState(() => surgeriesApi.list(), surgeriesApi.save);
   const [notifs,    setNotifs]    = usePersistedState(() => notifsApi.list(),    notifsApi.save);
+
+  const setSyncedNotifs = useCallback((updater) => {
+    setNotifs(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      if (isSupabaseMode && currentUser?.clinicId) {
+        void supabaseActivityApi.saveNotifsForClinic(currentUser.clinicId, next).catch(() => {});
+      }
+      return next;
+    });
+  }, [currentUser, isSupabaseMode, setNotifs]);
 
   const unread        = notifs.filter(n=>!n.is_read).length;
   const pendingOrders = orders.filter(o=>o.status==="pending").length;
@@ -107,6 +119,54 @@ function DentalStockInner() {
       ignore = true;
     };
   }, [currentUser?.clinicId, isSupabaseMode, setOrders]);
+
+  useEffect(() => {
+    if (!isSupabaseMode || !currentUser?.clinicId) return;
+    let ignore = false;
+    supabaseActivityApi.listTxsByClinic(currentUser.clinicId)
+      .then(remoteTxs => {
+        if (ignore) return;
+        if (remoteTxs.length > 0) setTxs(remoteTxs);
+      })
+      .catch(() => {
+        if (!ignore) setSyncStatus("Supabase 입출고 내역을 불러오지 못했습니다");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [currentUser?.clinicId, isSupabaseMode, setTxs]);
+
+  useEffect(() => {
+    if (!isSupabaseMode || !currentUser?.clinicId) return;
+    let ignore = false;
+    supabaseActivityApi.listNotifsByClinic(currentUser.clinicId)
+      .then(remoteNotifs => {
+        if (ignore) return;
+        if (remoteNotifs.length > 0) setNotifs(remoteNotifs);
+      })
+      .catch(() => {
+        if (!ignore) setSyncStatus("Supabase 알림을 불러오지 못했습니다");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [currentUser?.clinicId, isSupabaseMode, setNotifs]);
+
+  useEffect(() => {
+    if (!isSupabaseMode || !currentUser?.clinicId) return;
+    let ignore = false;
+    supabaseActivityApi.listAuditLogsByClinic(currentUser.clinicId)
+      .then(remoteLogs => {
+        if (ignore) return;
+        if (remoteLogs.length > 0) auditLogsApi.save(remoteLogs);
+      })
+      .catch(() => {
+        if (!ignore) setSyncStatus("Supabase 활동 로그를 불러오지 못했습니다");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [currentUser?.clinicId, isSupabaseMode]);
 
   useEffect(() => {
     if (!isSupabaseMode || !currentUser?.clinicId) return;
@@ -201,7 +261,7 @@ function DentalStockInner() {
           txs={txs} setTxs={setTxs}
           orders={orders} setOrders={setOrders}
           surgeries={surgeries} setSurgeries={setSurgeries}
-          notifs={notifs} setNotifs={setNotifs}
+          notifs={notifs} setNotifs={setSyncedNotifs}
           unread={unread} pendingOrders={pendingOrders}
           onLogout={handleLogout}
         />
