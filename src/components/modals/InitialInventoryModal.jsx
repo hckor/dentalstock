@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Check, Plus, Search, X } from "lucide-react";
-import { T, font, monoFont } from "../../constants/colors";
+import { T, font } from "../../constants/colors";
 import { DENTAL_MATERIAL_CATALOG } from "../../data/dentalMaterialCatalog";
-import { getMaterialSourceLabel, materialToInventoryItem, searchMaterials } from "../../utils/dentalMaterialCatalog";
+import { cleanMaterialName, getMaterialSourceLabel, materialToInventoryItem, searchMaterials } from "../../utils/dentalMaterialCatalog";
 import { Inp } from "../shared/Inp";
 
 const segmentStyle = {
@@ -17,12 +17,6 @@ const segmentStyle = {
 };
 
 const materialKey = (material) => `${material.source}:${material.source_product_id || material.product_code}`;
-
-function formatPrice(value) {
-  const number = Number(value);
-  if (!Number.isFinite(number) || number <= 0) return "가격 미확인";
-  return `${number.toLocaleString("ko-KR")}원`;
-}
 
 export function InitialInventoryModal({ items, onSave, onClose }) {
   const [tab, setTab] = useState("catalog");
@@ -137,8 +131,9 @@ export function InitialInventoryModal({ items, onSave, onClose }) {
           <div style={{ maxHeight: "50vh", overflowY: "auto", marginBottom: 20 }}>
             {visibleMaterials.map((material) => {
               const key = materialKey(material);
+              const displayName = cleanMaterialName(material.name);
               const selected = Boolean(selectedMaterials[key]);
-              const exists = existingNames.has(String(material.name || "").trim().toLowerCase());
+              const exists = existingNames.has(displayName.toLowerCase());
 
               return (
                 <div key={key} style={{ padding: "14px 0", borderBottom: `1px solid ${T.grey100}` }}>
@@ -177,13 +172,10 @@ export function InitialInventoryModal({ items, onSave, onClose }) {
                         )}
                       </div>
                       <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey900, lineHeight: 1.35 }}>
-                        {material.name}
+                        {displayName}
                       </p>
                       <p style={{ margin: "4px 0 0", fontSize: 13, color: T.grey500, lineHeight: 1.45 }}>
                         {[material.product_code, material.spec, material.manufacturer].filter(Boolean).join(" · ")}
-                      </p>
-                      <p style={{ margin: "5px 0 0", fontSize: 13, color: T.grey600, fontFamily: monoFont, fontWeight: 700 }}>
-                        {formatPrice(material.sale_price_krw ?? material.list_price_krw)}
                       </p>
                       {selected && (
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 92px", gap: 8, alignItems: "center", marginTop: 10 }}>
