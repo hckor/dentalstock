@@ -23,6 +23,10 @@ function getEnv(name: string) {
   return Deno.env.get(name) || "";
 }
 
+function getPublicApiKey() {
+  return getEnv("SUPABASE_ANON_KEY") || getEnv("SUPABASE_PUBLISHABLE_KEY") || getEnv("SUPABASE_PUBLISHABLE_KEYS");
+}
+
 function normalizeEmail(value: unknown) {
   return String(value || "").trim().toLowerCase();
 }
@@ -37,6 +41,27 @@ function normalizeRole(value: unknown) {
   return INVITABLE_ROLES.has(role) ? role : "hygienist";
 }
 
+function normalizeRedirectUrl(value: string) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.hostname === "localhost" || url.hostname === "127.0.0.1"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function mapInviteError(error: { message?: string } | null) {
+  const message = error?.message?.toLowerCase() || "";
+  if (message.includes("already")) return "user_already_exists";
+  if (message.includes("rate")) return "invite_email_rate_limited";
+  if (message.includes("redirect")) return "invite_redirect_invalid";
+  if (message.includes("smtp") || message.includes("email")) return "invite_delivery_unavailable";
+  return "invite_failed";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -47,10 +72,10 @@ Deno.serve(async (req) => {
   }
 
   const supabaseUrl = getEnv("SUPABASE_URL");
-  const anonKey = getEnv("SUPABASE_ANON_KEY");
+  const publicApiKey = getPublicApiKey();
   const serviceRoleKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
 
-  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+  if (!supabaseUrl || !publicApiKey || !serviceRoleKey) {
     return json({ error: "server_not_configured" }, 500);
   }
 
@@ -74,7 +99,7 @@ Deno.serve(async (req) => {
     return json({ error: "invalid_email" }, 400);
   }
 
-  const userClient = createClient(supabaseUrl, anonKey, {
+  const userClient = createClient(supabaseUrl, publicApiKey, {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false },
   });
@@ -98,7 +123,11 @@ Deno.serve(async (req) => {
     return json({ error: "owner_required" }, 403);
   }
 
-  const redirectTo = getEnv("INVITE_REDIRECT_URL") || undefined;
+  const redirectTo = normalizeRedirectUrl(getEnv("INVITE_REDIRECT_URL"));
+  if (redirectTo === null) {
+    return json({ error: "invite_redirect_invalid" }, 500);
+  }
+
   const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
     data: {
       clinic_id: actorProfile.clinic_id,
@@ -110,11 +139,7 @@ Deno.serve(async (req) => {
   });
 
   if (inviteError || !inviteData.user) {
-    return json({
-      error: inviteError?.message?.toLowerCase().includes("already")
-        ? "user_already_exists"
-        : "invite_failed",
-    }, 400);
+    return json({ error: mapInviteError(inviteError) }, 400);
   }
 
   const { data: profile, error: profileError } = await adminClient

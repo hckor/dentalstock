@@ -15,15 +15,11 @@ Then run all later migration files in filename order.
 Current required order:
 
 1. `20260520_initial_dentalstock_schema.sql`
-2. `20260520_rls_hardening.sql`
-3. `20260520_items_bridge_and_seed.sql`
-4. `20260520_stock_transaction_rpc.sql`
-5. `20260520_orders_bridge_and_seed.sql`
-6. `20260520_order_receipt_rpc.sql`
-7. `20260520_surgeries_bridge_and_usage_rpc.sql`
-8. `20260520_activity_bridge.sql`
-9. `20260520_staff_management.sql`
-10. `20260520_price_monitoring.sql`
+2. `20260521_security_hardening.sql`
+
+`20260520_initial_dentalstock_schema.sql` is the consolidated baseline. Older
+20260520 split files are archived in `supabase/migrations_archive/20260520/`
+for review only; they should not be run separately.
 
 The migration creates the first production-ready tables with RLS enabled:
 
@@ -70,6 +66,7 @@ Server-only values:
 
 ```bash
 SUPABASE_URL=https://tausnjxzqmnhoeslgbmc.supabase.co
+SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 SUPABASE_SERVICE_ROLE_KEY=<service-role-or-secret-key>
 ```
 
@@ -124,6 +121,7 @@ Set these function secrets in Supabase:
 
 ```bash
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<service-role-key> --project-ref tausnjxzqmnhoeslgbmc
+supabase secrets set SUPABASE_PUBLISHABLE_KEY=<publishable-key> --project-ref tausnjxzqmnhoeslgbmc
 supabase secrets set INVITE_REDIRECT_URL=<your-vercel-or-local-login-url> --project-ref tausnjxzqmnhoeslgbmc
 ```
 

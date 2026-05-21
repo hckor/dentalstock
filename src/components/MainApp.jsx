@@ -121,6 +121,9 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       const inviteErrorMessages = {
         authentication_required: "다시 로그인한 뒤 초대해주세요",
         invalid_email: "초대할 이메일을 확인해주세요",
+        invite_delivery_unavailable: "Supabase 메일 발송 설정을 확인해주세요",
+        invite_email_rate_limited: "메일 발송 제한 중입니다. 잠시 뒤 다시 시도해주세요",
+        invite_redirect_invalid: "초대 링크 주소 설정을 확인해주세요",
         invite_failed: "초대 메일 발송에 실패했습니다",
         owner_required: "원장 계정만 직원을 초대할 수 있습니다",
         profile_create_failed: "직원 프로필 생성에 실패했습니다",

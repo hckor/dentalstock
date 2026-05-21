@@ -1,12 +1,12 @@
 export const PROFILE_SELECT = "id, clinic_id, email, name, role, is_active, disabled_at, last_seen_at, created_at, updated_at";
 
 export function mapSupabaseRole(role) {
-  if (role === "owner" || role === "manager") return role;
+  if (role === "owner" || role === "manager" || role === "staff") return role;
   return "hygienist";
 }
 
 export function toSupabaseRole(role) {
-  if (role === "owner" || role === "manager" || role === "hygienist") return role;
+  if (role === "owner" || role === "manager" || role === "hygienist" || role === "staff") return role;
   return "hygienist";
 }
 

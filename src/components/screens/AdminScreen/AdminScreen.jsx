@@ -145,6 +145,7 @@ export function AdminScreen({users, currentUser, orders, items, setItems, txs, s
                       onChange={(event)=>setInviteForm(prev=>({...prev, role:event.target.value}))}
                       style={{height:48, border:`1px solid ${T.grey200}`, borderRadius:12, background:T.grey50, color:T.grey900, fontFamily:font, fontSize: 14, fontWeight:700, padding:"0 10px", outlineColor:T.blue500}}>
                       <option value="hygienist">위생사</option>
+                      <option value="staff">스태프</option>
                       <option value="manager">매니저</option>
                     </select>
                   </div>
@@ -187,6 +188,7 @@ export function AdminScreen({users, currentUser, orders, items, setItems, txs, s
                           <option value="owner">원장</option>
                           <option value="manager">매니저</option>
                           <option value="hygienist">치과위생사</option>
+                          <option value="staff">스태프</option>
                         </select>
                         <button
                           disabled={controlsDisabled}
