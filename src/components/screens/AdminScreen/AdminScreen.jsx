@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LogOut, RotateCcw, ClipboardList, PackagePlus, ChevronRight, Send } from "lucide-react";
 import { resetToInitial } from "../../../api/seed";
+import { supabaseItemsApi } from "../../../api/supabaseItemsApi";
 import { T, font, monoFont } from "../../../constants/colors";
 import { can, ROLE_META } from "../../../constants/permissions";
 import { Card } from "../../shared/Card";
@@ -20,12 +21,31 @@ export function AdminScreen({users, currentUser, orders, items, setItems, txs, s
   const [inviteBusy, setInviteBusy] = useState(false);
   const canManageStaff = can(currentUser.role, "staff");
 
-  const handleInitialInventorySave = (quantities) => {
-    setItems(prev => prev.map(item =>
-      quantities[item.id] !== undefined
-        ? { ...item, current_qty: quantities[item.id] }
-        : item
-    ));
+  const handleInitialInventorySave = async (payload) => {
+    const quantities = payload?.quantities || payload || {};
+    const newItems = Array.isArray(payload?.newItems) ? payload.newItems : [];
+    const nextItems = [
+      ...items.map(item =>
+        quantities[item.id] !== undefined
+          ? { ...item, current_qty: quantities[item.id] }
+          : item
+      ),
+      ...newItems.filter(item => !items.some(existing => existing.id === item.id || existing.name === item.name)),
+    ];
+
+    try {
+      if (supabaseItemsApi.isEnabled() && currentUser?.clinicId) {
+        const remoteItems = await supabaseItemsApi.saveInitialInventory(currentUser.clinicId, nextItems);
+        setItems(remoteItems);
+      } else {
+        setItems(nextItems);
+      }
+      showToast?.(newItems.length ? `카탈로그 품목 ${newItems.length}개를 추가했습니다` : "초기 재고를 저장했습니다");
+      return true;
+    } catch {
+      showToast?.("초기 재고를 저장하지 못했습니다");
+      return false;
+    }
   };
 
   const submitInvite = async (event) => {

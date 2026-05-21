@@ -50,6 +50,7 @@ function toItemPayload(item) {
     name: item.name,
     category: item.category_id,
     unit: item.unit || "개",
+    stock: Number(item.current_qty) || 0,
     min_stock: Number(item.min_qty) || 0,
     memo: item.location || "",
     app_data: appData,
@@ -102,5 +103,22 @@ export const supabaseItemsApi = {
 
     if (error) throw error;
     return mapSupabaseItem(data);
+  },
+
+  async saveInitialInventory(clinicId, items) {
+    if (!clinicId || !Array.isArray(items) || items.length === 0) return [];
+    const rows = items.map(item => ({
+      clinic_id: clinicId,
+      legacy_id: item.id,
+      ...toItemPayload(item),
+    }));
+
+    const { data, error } = await getSupabaseClient()
+      .from("items")
+      .upsert(rows, { onConflict: "clinic_id,legacy_id" })
+      .select("id, legacy_id, name, category, unit, stock, min_stock, desired_stock, memo, app_data, updated_at");
+
+    if (error) throw error;
+    return (data || []).map(mapSupabaseItem).sort(compareAppItems);
   },
 };
