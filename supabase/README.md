@@ -16,6 +16,7 @@ Current required order:
 
 1. `20260520_initial_dentalstock_schema.sql`
 2. `20260521_security_hardening.sql`
+3. `20260522_dental_material_catalog.sql`
 
 `20260520_initial_dentalstock_schema.sql` is the consolidated baseline. Older
 20260520 split files are archived in `supabase/migrations_archive/20260520/`
@@ -34,8 +35,14 @@ The migration creates the first production-ready tables with RLS enabled:
 - `audit_logs`
 - `vendor_products`
 - `price_snapshots`
+- `dental_materials`
 - server-only `vendor_credentials`
 - server-only `order_jobs`
+
+Vendor product catalog seed data lives in:
+
+- `data/dental_materials.seed.json`: normalized source data for review.
+- `data/dental_materials.seed.sql`: upsert SQL for `public.dental_materials`.
 
 ## 2. Create the first owner profile
 
