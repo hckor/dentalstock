@@ -1,4 +1,5 @@
 import { T } from "../../../constants/colors";
+import { ORDER_ST } from "../../../constants/orderStates";
 import { getShippingEvents } from "../../../utils/shippingEvents";
 import { getVendorPriceCandidates } from "../../../utils/vendorSelection";
 
@@ -79,6 +80,7 @@ export function getDuplicateReviewSignal(duplicateInfo, item) {
 }
 
 export function getApprovalDecision(order, item, duplicateInfo, monthlyProjectedAmount = 0) {
+  const holdTone = ORDER_ST.hold;
   const candidates = getVendorPriceCandidates(item, order.qty);
   const selectedUnitPrice = getSelectedUnitPrice(order, item);
   const selectedAmount = Number.isFinite(Number(selectedUnitPrice)) ? Number(selectedUnitPrice) * Number(order.qty || 0) : null;
@@ -111,13 +113,13 @@ export function getApprovalDecision(order, item, duplicateInfo, monthlyProjected
   const hasOrderedDuplicate = Number(duplicateInfo?.orderedCount || 0) > 0;
   const hasPendingDuplicate = Number(duplicateInfo?.pendingCount || 0) > 0;
   const recommendation = requiresOwnerApproval
-    ? { label: "보류 추천", color: T.purple500, bg: T.purple50, summary: "매니저 단독 승인 불가" }
+    ? { label: "보류 추천", color: holdTone.text, bg: holdTone.bg, summary: "매니저 단독 승인 불가" }
     : priceSignal.needsReview
-      ? { label: "보류 추천", color: T.orange500, bg: T.orange50, summary: "가격 확인 후 재판단" }
+      ? { label: "보류 추천", color: T.warning, bg: T.warningBg, summary: "가격 확인 후 재판단" }
       : isLowStock
-        ? { label: "승인 추천", color: T.blue500, bg: T.blue50, summary: "재고 보충 필요" }
+        ? { label: "승인 추천", color: T.primary, bg: T.primaryBg, summary: "재고 보충 필요" }
         : isOverstock
-          ? { label: "반려 검토", color: T.red500, bg: T.red50, summary: "현재 재고 충분" }
+          ? { label: "반려 검토", color: T.danger, bg: T.dangerBg, summary: "현재 재고 충분" }
           : { label: "보류 추천", color: T.grey700, bg: T.grey100, summary: "긴급도 낮음" };
   const gateLabel = requiresOwnerApproval
     ? "원장 승인 필요"
@@ -151,31 +153,31 @@ export function getApprovalDecision(order, item, duplicateInfo, monthlyProjected
       label: "부족 여부",
       value: isLowStock ? `${stockGap}${item.unit} 부족` : "기준 범위",
       detail: `현재 ${item.current_qty}${item.unit} · 최소 ${item.min_qty}${item.unit}`,
-      color: isLowStock ? T.red500 : T.green500,
+      color: isLowStock ? T.danger : T.success,
     },
     {
       label: "중복 발주",
       value: duplicateSignal ? "검토 필요" : "중복 없음",
       detail: duplicateSignal?.reason || "같은 품목 진행/대기 없음",
-      color: duplicateSignal ? T.red500 : T.green500,
+      color: duplicateSignal ? T.danger : T.success,
     },
     {
       label: "최저가/가격",
       value: !hasPriceCandidate ? "후보 없음" : priceSignal.needsReview ? "확인 필요" : isLowestCandidate ? "최저가 후보" : "가격 확인됨",
       detail: priceSignal.reason,
-      color: !hasPriceCandidate || priceSignal.needsReview ? T.orange500 : T.blue500,
+      color: !hasPriceCandidate || priceSignal.needsReview ? T.warning : T.primary,
     },
     {
       label: "한도 추정",
       value: singleLimitExceeded || monthlyLimitExceeded ? "원장 확인" : "한도 내",
       detail: `1회 ${selectedAmount === null ? "미확인" : formatCompactCurrency(selectedAmount)} · 월 ${formatCompactCurrency(monthlyProjectedAmount)}`,
-      color: singleLimitExceeded || monthlyLimitExceeded ? T.purple500 : T.green500,
+      color: singleLimitExceeded || monthlyLimitExceeded ? holdTone.text : T.success,
     },
     {
       label: "원장 승인",
       value: requiresOwnerApproval ? "필요" : "불필요",
       detail: requiresOwnerApproval ? ownerReviewReasons.join(" · ") : "매니저 승인 가능",
-      color: requiresOwnerApproval ? T.purple500 : T.green500,
+      color: requiresOwnerApproval ? holdTone.text : T.success,
     },
   ];
 

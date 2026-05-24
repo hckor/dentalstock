@@ -109,7 +109,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
           <div style={bodyStyle}>
             <StatusHeader item={item} statusMeta={os}>
               <p style={metaStyle}>
-                <span style={{ fontWeight: 600, color: isDelivered ? T.green500 : T.teal500 }}>
+                <span style={{ fontWeight: 600, color: isDelivered ? ORDER_ST.received.text : ORDER_ST.ordered.text }}>
                   {hasTracking ? (isDelivered ? "배달완료" : latestShippingEvent?.status || "배송 추적 중") : "송장 미등록"}
                 </span>
                 {order.carrier && ` · ${order.carrier}`}
@@ -117,7 +117,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
               <p style={metaStyle}>거래처: {vendorLabel}</p>
               {Number(order.received_qty) > 0 && (
                 <p style={metaStyle}>
-                  부분입고 <span style={{ fontWeight: 700, color: T.orange500 }}>{order.received_qty}/{order.qty}{item.unit}</span>
+                  부분입고 <span style={{ fontWeight: 700, color: T.warning }}>{order.received_qty}/{order.qty}{item.unit}</span>
                 </p>
               )}
               {order.tracking_number && (
@@ -188,7 +188,7 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
               <p style={metaStyle}>거래처: {vendorLabel}</p>
               {order.reviewed_by && (
                 <p style={metaStyle}>
-                  <span style={{ fontWeight: 600, color: T.green500 }}>✓ 입고 완료</span>
+                  <span style={{ fontWeight: 600, color: ORDER_ST.received.text }}>✓ 입고 완료</span>
                   {` · ${order.reviewed_by}`}
                 </p>
               )}

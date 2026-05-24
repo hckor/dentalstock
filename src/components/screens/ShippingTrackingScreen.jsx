@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, Package } from "lucide-react";
 import { T, font } from "../../constants/colors";
 import { can } from "../../constants/permissions";
+import { ORDER_ST } from "../../constants/orderStates";
 import { Card } from "../shared/Card";
 import { ShippingOrderCard } from "../shared/ShippingOrderCard";
 import { useInventory } from "../../contexts/InventoryContext";
@@ -54,6 +55,8 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
   const primaryTabDefs = tabDefs.filter(tab => !["hold", "rejected"].includes(tab.id));
   const holdTab = tabDefs.find(tab => tab.id === "hold");
   const rejectedTab = tabDefs.find(tab => tab.id === "rejected");
+  const holdTone = ORDER_ST.hold;
+  const rejectedTone = ORDER_ST.rejected;
 
   const currentOrders = groupedOrders[trackingTab];
   const currentShipmentGroups = useMemo(
@@ -254,7 +257,7 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
             }}
           >
             {tab.label}
-            <span style={{minWidth:20,padding:"1px 6px",borderRadius:9999,boxSizing:"border-box",background:active?T.blue50:T.white,color:tab.count>0?(active?T.blue500:T.grey700):T.grey400,fontSize:12,fontWeight:700,lineHeight:"18px"}}>
+            <span style={{minWidth:20,padding:"1px 6px",borderRadius:9999,boxSizing:"border-box",background:active?T.primaryBg:T.white,color:tab.count>0?(active?T.primary:T.grey700):T.grey400,fontSize:12,fontWeight:700,lineHeight:"18px"}}>
               {tab.count}
             </span>
           </button>
@@ -267,7 +270,7 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
           {holdTab && (
             <button
               onClick={() => setTrackingTab(holdTab.id)}
-              style={{minWidth:0,padding:"7px 8px",borderRadius:9999,border:`1px solid ${trackingTab===holdTab.id?`${T.purple500}33`:T.grey200}`,background:trackingTab===holdTab.id?T.purple50:T.white,color:trackingTab===holdTab.id?T.purple500:T.grey500,fontFamily:font,fontSize:13,fontWeight:700,lineHeight:"18px",cursor:"pointer",whiteSpace:"nowrap",wordBreak:"keep-all"}}
+              style={{minWidth:0,padding:"7px 8px",borderRadius:9999,border:`1px solid ${trackingTab===holdTab.id?holdTone.border:T.grey200}`,background:trackingTab===holdTab.id?holdTone.bg:T.white,color:trackingTab===holdTab.id?holdTone.text:T.grey500,fontFamily:font,fontSize:13,fontWeight:700,lineHeight:"18px",cursor:"pointer",whiteSpace:"nowrap",wordBreak:"keep-all"}}
             >
               {holdTab.label} {holdTab.count}건
             </button>
@@ -275,7 +278,7 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
           {rejectedTab && (
           <button
             onClick={() => setTrackingTab(rejectedTab.id)}
-            style={{minWidth:0,padding:"7px 8px",borderRadius:9999,border:`1px solid ${trackingTab===rejectedTab.id?`${T.red500}33`:T.grey200}`,background:trackingTab===rejectedTab.id?T.red50:T.white,color:trackingTab===rejectedTab.id?T.red500:T.grey500,fontFamily:font,fontSize:13,fontWeight:700,lineHeight:"18px",cursor:"pointer",whiteSpace:"nowrap",wordBreak:"keep-all"}}
+            style={{minWidth:0,padding:"7px 8px",borderRadius:9999,border:`1px solid ${trackingTab===rejectedTab.id?rejectedTone.border:T.grey200}`,background:trackingTab===rejectedTab.id?rejectedTone.bg:T.white,color:trackingTab===rejectedTab.id?rejectedTone.text:T.grey500,fontFamily:font,fontSize:13,fontWeight:700,lineHeight:"18px",cursor:"pointer",whiteSpace:"nowrap",wordBreak:"keep-all"}}
           >
             {rejectedTab.label} {rejectedTab.count}건
           </button>
@@ -297,8 +300,8 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
                 width: 34,
                 height: 34,
                 borderRadius: 9999,
-                border: `1px solid ${selectedPendingCount ? T.blue500 : T.grey300}`,
-                background: selectedPendingCount ? T.blue500 : T.white,
+                border: `1px solid ${selectedPendingCount ? T.primary : T.grey300}`,
+                background: selectedPendingCount ? T.primary : T.white,
                 color: T.white,
                 display: "flex",
                 alignItems: "center",
@@ -324,7 +327,7 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
                 padding: "10px 15px",
                 borderRadius: 9999,
                 border: "none",
-                background: selectedPendingCount ? T.blue500 : T.grey200,
+                background: selectedPendingCount ? T.primary : T.grey200,
                 color: selectedPendingCount ? T.white : T.grey500,
                 fontFamily: font,
                 fontSize: 14,

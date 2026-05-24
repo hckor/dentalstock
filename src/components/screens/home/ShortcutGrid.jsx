@@ -9,7 +9,7 @@ export function ShortcutGrid({ title = "빠른 실행", actions, quiet = false }
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         {actions.map(action => {
           const Icon = action.Icon;
-          const quietColor = action.color || (action.primary ? T.blue500 : T.grey700);
+          const quietColor = action.color || (action.primary ? T.primary : T.grey700);
           return (
             <button
               key={action.label}
@@ -19,7 +19,7 @@ export function ShortcutGrid({ title = "빠른 실행", actions, quiet = false }
                 minHeight: 68,
                 border: quiet ? `1px solid ${action.primary ? `${quietColor}55` : T.grey200}` : "none",
                 borderRadius: 14,
-                background: quiet ? T.white : action.primary ? T.blue500 : T.white,
+                background: quiet ? T.white : action.primary ? T.primary : T.white,
                 color: quiet ? T.grey800 : action.primary ? T.white : T.grey800,
                 boxShadow: T.shadowCard,
                 padding: "13px 14px",

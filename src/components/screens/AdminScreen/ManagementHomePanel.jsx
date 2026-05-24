@@ -18,8 +18,8 @@ export function ManagementHomePanel({
     <>
       <Card style={{padding:16, marginBottom:12}}>
         <div style={{display:"flex", alignItems:"flex-start", gap:12}}>
-          <div style={{width:40, height:40, borderRadius:12, background:T.blue50, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-            <Settings2 size={21} color={T.blue500}/>
+          <div style={{width:40, height:40, borderRadius:12, background:T.primaryBg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+            <Settings2 size={21} color={T.primary}/>
           </div>
           <div style={{flex:1, minWidth:0}}>
             <p style={{margin:0, fontSize:18, lineHeight:"24px", fontWeight:900, color:T.grey900}}>관리 메인</p>
@@ -30,9 +30,9 @@ export function ManagementHomePanel({
         </div>
         <div style={{display:"grid", gridTemplateColumns:"repeat(3, minmax(0, 1fr))", gap:8, marginTop:14}}>
           {[
-            {label:"활성 직원", value:activeStaffCount, detail:inactiveStaffCount ? `비활성 ${inactiveStaffCount}` : "전체 활성", color:T.blue500},
-            {label:"기준값 완료", value:baselineReadyCount, detail:`전체 ${items.length}`, color:T.green500},
-            {label:"승인 대기", value:pendingOrderPolicyCount, detail:"발주 정책 확인", color:T.orange500},
+            {label:"활성 직원", value:activeStaffCount, detail:inactiveStaffCount ? `비활성 ${inactiveStaffCount}` : "전체 활성", color:T.primary},
+            {label:"기준값 완료", value:baselineReadyCount, detail:`전체 ${items.length}`, color:T.success},
+            {label:"승인 대기", value:pendingOrderPolicyCount, detail:"발주 정책 확인", color:T.warning},
           ].map(summary => (
             <div key={summary.label} style={{minWidth:0, border:`1px solid ${T.grey200}`, borderRadius:12, background:T.white, padding:"10px 11px"}}>
               <p style={{margin:"0 0 4px", fontSize:12, lineHeight:"16px", fontWeight:700, color:T.grey500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{summary.label}</p>

@@ -88,8 +88,8 @@ function PriceCheckButton({ checking, disabled, onClick }) {
         padding: "7px 11px",
         borderRadius: 9999,
         border: "none",
-        background: disabled ? T.grey200 : T.blue50,
-        color: disabled ? T.grey500 : T.blue500,
+        background: disabled ? T.grey200 : T.primaryBg,
+        color: disabled ? T.grey500 : T.primary,
         fontFamily: font,
         fontSize: 13,
         fontWeight: 700,
@@ -107,14 +107,14 @@ function PriceCheckButton({ checking, disabled, onClick }) {
 }
 
 function PriceCandidateRow({ candidate, isBest }) {
-  const stockColor = candidate.vendor_in_stock ? (isBest ? T.blue500 : T.grey400) : T.red500;
+  const stockColor = candidate.vendor_in_stock ? (isBest ? T.primary : T.grey400) : T.danger;
 
   return (
     <div
       style={{
         ...priceCandidateRowBaseStyle,
         background: isBest ? T.white : "transparent",
-        border: isBest ? `1px solid ${T.blue500}22` : `1px solid ${T.grey100}`,
+        border: isBest ? `1px solid ${T.primary}22` : `1px solid ${T.grey100}`,
       }}
     >
       <span style={{ ...candidateDotBaseStyle, background: stockColor }} />
@@ -128,7 +128,7 @@ function PriceCandidateRow({ candidate, isBest }) {
           기본 {formatCurrency(candidate.vendor_base_price)} · 배송 {formatCurrency(candidate.vendor_shipping_fee)} · {formatLastChecked(candidate.vendor_last_checked_at)}
         </p>
       </div>
-      <p style={{ ...candidatePriceStyle, color: isBest ? T.blue500 : T.grey800 }}>
+      <p style={{ ...candidatePriceStyle, color: isBest ? T.primary : T.grey800 }}>
         {formatCurrency(candidate.vendor_price)}
       </p>
     </div>
@@ -179,8 +179,8 @@ export function ApprovalDecisionPanel({ order, item, duplicateInfo, monthlyProje
   const decision = getApprovalDecision(order, item, duplicateInfo, monthlyProjectedAmount);
   const rows = [
     { label: "이번 승인 금액", value: decision.selectedAmount === null ? "가격 미확인" : formatCompactCurrency(decision.selectedAmount), color: T.grey900 },
-    { label: "승인 권한", value: decision.decision.gateLabel, color: decision.requiresOwnerApproval ? T.purple500 : T.green500 },
-    { label: "거래처", value: decision.bestSavings > 0 ? `${decision.vendorLabel} · ${formatCurrency(decision.bestSavings)} 절감 여지` : decision.vendorLabel, color: T.blue500 },
+    { label: "승인 권한", value: decision.decision.gateLabel, color: decision.decision.color },
+    { label: "거래처", value: decision.bestSavings > 0 ? `${decision.vendorLabel} · ${formatCurrency(decision.bestSavings)} 절감 여지` : decision.vendorLabel, color: T.primary },
   ];
 
   return (
@@ -285,8 +285,8 @@ export function SelectToggle({ itemName, selected, onChange }) {
       onClick={onChange}
       style={{
         ...selectToggleBaseStyle,
-        border: `1px solid ${selected ? T.blue500 : T.grey300}`,
-        background: selected ? T.blue500 : T.white,
+        border: `1px solid ${selected ? T.primary : T.grey300}`,
+        background: selected ? T.primary : T.white,
       }}
     >
       {selected && <CheckCircle2 size={17} color={T.white} strokeWidth={3} />}

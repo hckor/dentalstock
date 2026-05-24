@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { T } from "../../../constants/colors";
+import { ORDER_ST } from "../../../constants/orderStates";
 import { dateKey, todayKey } from "../../../utils/helpers";
 
 export const toValidDate = (value) => {
@@ -48,7 +49,7 @@ export function useStaffSummaries({ users, items, txs, orders, surgeries }) {
             at: tx.created_at,
             title: tx.type === "in" ? "입고 등록" : "출고 등록",
             detail: item?.name || tx.item_name || "재고 기록",
-            color: tx.type === "in" ? T.teal500 : T.orange500,
+            color: tx.type === "in" ? T.primary : T.danger,
           };
         }),
         ...orderRequests.map(order => {
@@ -57,7 +58,7 @@ export function useStaffSummaries({ users, items, txs, orders, surgeries }) {
             at: order.requested_at,
             title: "발주 요청",
             detail: item?.name || "품목 미지정",
-            color: T.blue500,
+            color: ORDER_ST.pending.text,
           };
         }),
         ...orderReviews.map(order => {
@@ -66,20 +67,20 @@ export function useStaffSummaries({ users, items, txs, orders, surgeries }) {
             at: order.reviewed_at,
             title: order.status === "rejected" ? "발주 반려" : "발주 승인",
             detail: item?.name || "품목 미지정",
-            color: order.status === "rejected" ? T.red500 : T.green500,
+            color: order.status === "rejected" ? ORDER_ST.rejected.text : ORDER_ST.ordered.text,
           };
         }),
         ...prepConfirmations.map(surgery => ({
           at: surgery.prepared_at,
           title: "수술 준비 확인",
           detail: surgery.title || "수술 일정",
-          color: T.green500,
+          color: T.success,
         })),
         ...usageConfirmations.map(surgery => ({
           at: surgery.usage_confirmed_at,
           title: "실사용량 확인",
           detail: surgery.title || "수술 일정",
-          color: T.purple500,
+          color: T.success,
         })),
       ]
         .filter(activity => toValidDate(activity.at))

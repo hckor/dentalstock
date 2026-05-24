@@ -1,5 +1,6 @@
 import { ArrowRight, PackageSearch } from "lucide-react";
 import { T, font, monoFont } from "../../../constants/colors";
+import { ORDER_ST } from "../../../constants/orderStates";
 import { formatMoney as money } from "../../../utils/money";
 import { SecTitle } from "../../shared/SecTitle";
 import { pagePad, oneLine, countText, signedMoney } from "./homeStyles";
@@ -10,21 +11,21 @@ export function OwnerCostStatusCard({ dashboard, setTab }) {
   const hasWasteRisk = dashboard.cost.wasteRiskAmount > 0;
   const pendingAmount = dashboard.orders.pendingAmount;
   const status = hasIncrease || hasWasteRisk || pendingAmount > 0
-    ? {
-        label: hasIncrease ? "증가 확인" : hasWasteRisk ? "낭비 위험" : "승인 대기",
-        color: hasIncrease ? T.orange500 : hasWasteRisk ? T.red500 : T.blue500,
-        bg: hasIncrease ? T.orange50 : hasWasteRisk ? T.red50 : T.blue50,
-      }
-    : {
-        label: "안정",
-        color: T.green500,
-        bg: T.green50,
-      };
+	    ? {
+	        label: hasIncrease ? "증가 확인" : hasWasteRisk ? "낭비 위험" : "승인 대기",
+	        color: hasIncrease ? T.warning : hasWasteRisk ? T.danger : ORDER_ST.pending.text,
+	        bg: hasIncrease ? T.warningBg : hasWasteRisk ? T.dangerBg : ORDER_ST.pending.bg,
+	      }
+	    : {
+	        label: "안정",
+	        color: T.success,
+	        bg: T.successBg,
+	      };
   const deltaText = delta === 0 ? "전월과 동일" : `전월 대비 ${signedMoney(delta)}`;
   const metrics = [
-    { label: "승인 대기", value: money(pendingAmount), color: pendingAmount > 0 ? T.orange500 : T.green500 },
-    { label: "낭비 위험", value: money(dashboard.cost.wasteRiskAmount), color: hasWasteRisk ? T.red500 : T.green500 },
-    { label: "절감 추정", value: money(dashboard.cost.estimatedSavings), color: dashboard.cost.estimatedSavings > 0 ? T.green500 : T.grey700 },
+	    { label: "승인 대기", value: money(pendingAmount), color: pendingAmount > 0 ? ORDER_ST.pending.text : T.success },
+	    { label: "낭비 위험", value: money(dashboard.cost.wasteRiskAmount), color: hasWasteRisk ? T.danger : T.success },
+	    { label: "절감 추정", value: money(dashboard.cost.estimatedSavings), color: dashboard.cost.estimatedSavings > 0 ? T.success : T.grey700 },
   ];
 
   return (
@@ -51,7 +52,7 @@ export function OwnerCostStatusCard({ dashboard, setTab }) {
             <p style={{ margin: 0, fontSize: 30, lineHeight: "36px", fontWeight: 900, color: T.grey900, fontFamily: monoFont, fontVariantNumeric: "tabular-nums", ...oneLine }}>
               {money(dashboard.cost.monthlySpend)}
             </p>
-            <p style={{ margin: "5px 0 0", fontSize: 14, lineHeight: "20px", fontWeight: 800, color: hasIncrease ? T.orange500 : delta < 0 ? T.green500 : T.grey500 }}>
+	            <p style={{ margin: "5px 0 0", fontSize: 14, lineHeight: "20px", fontWeight: 800, color: hasIncrease ? T.warning : delta < 0 ? T.success : T.grey500 }}>
               {deltaText}
             </p>
           </div>
@@ -71,7 +72,7 @@ export function OwnerCostStatusCard({ dashboard, setTab }) {
           ))}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 12, color: T.blue500, fontSize: 13, lineHeight: "18px", fontWeight: 900 }}>
+	        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 12, color: T.primary, fontSize: 13, lineHeight: "18px", fontWeight: 900 }}>
           비용 상세
           <ArrowRight size={14} />
         </div>
@@ -86,12 +87,12 @@ export function OwnerInventoryShortcutCard({ dashboard, setTab }) {
   const incomingCount = dashboard.inventory.incoming.length;
   const needsAttention = dashboard.inventory.attentionCount > 0;
   const status = needsAttention
-    ? { label: "확인 필요", color: T.orange500, bg: T.orange50 }
-    : { label: "안정", color: T.green500, bg: T.green50 };
-  const metrics = [
-    { label: "부족", value: countText(lowCount, "개"), color: lowCount > 0 ? T.red500 : T.green500 },
-    { label: "유통기한", value: countText(expiryCount, "개"), color: expiryCount > 0 ? T.orange500 : T.green500 },
-    { label: "입고대기", value: countText(incomingCount, "개"), color: incomingCount > 0 ? T.blue500 : T.green500 },
+	    ? { label: "확인 필요", color: T.warning, bg: T.warningBg }
+	    : { label: "안정", color: T.success, bg: T.successBg };
+	  const metrics = [
+	    { label: "부족", value: countText(lowCount, "개"), color: lowCount > 0 ? T.warning : T.success },
+	    { label: "유통기한", value: countText(expiryCount, "개"), color: expiryCount > 0 ? T.danger : T.success },
+	    { label: "입고대기", value: countText(incomingCount, "개"), color: incomingCount > 0 ? ORDER_ST.ordered.text : T.success },
   ];
 
   return (
@@ -140,7 +141,7 @@ export function OwnerInventoryShortcutCard({ dashboard, setTab }) {
           ))}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 11, color: T.blue500, fontSize: 13, lineHeight: "18px", fontWeight: 900 }}>
+	        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 11, color: T.primary, fontSize: 13, lineHeight: "18px", fontWeight: 900 }}>
           재고 보기
           <ArrowRight size={14} />
         </div>

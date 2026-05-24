@@ -5,9 +5,9 @@ import { getStatus } from "../../../utils/helpers";
 export function StatsBar({ items, setTab }) {
   const stats = useMemo(() => [
     {label:"전체", value:items.length,                                      color:T.grey900},
-    {label:"정상", value:items.filter(i=>getStatus(i)==="ok").length,        color:T.green500},
-    {label:"부족", value:items.filter(i=>getStatus(i)==="warning").length,   color:T.orange500},
-    {label:"소진", value:items.filter(i=>getStatus(i)==="danger").length,    color:T.red500},
+	    {label:"정상", value:items.filter(i=>getStatus(i)==="ok").length,        color:T.success},
+	    {label:"부족", value:items.filter(i=>getStatus(i)==="warning").length,   color:T.warning},
+	    {label:"소진", value:items.filter(i=>getStatus(i)==="danger").length,    color:T.danger},
   ], [items]);
 
   return (

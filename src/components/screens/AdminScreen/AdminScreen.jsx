@@ -2,6 +2,7 @@ import { useState } from "react";
 import { History, Store, Tags, Truck, UsersRound } from "lucide-react";
 import { supabaseItemsApi } from "../../../api/supabaseItemsApi";
 import { T } from "../../../constants/colors";
+import { ORDER_ST } from "../../../constants/orderStates";
 import { can } from "../../../constants/permissions";
 import { getItemIdentityKey } from "../../../utils/itemIdentity";
 import { AnalyticsTab } from "./AnalyticsTab";
@@ -116,11 +117,12 @@ export function AdminScreen({initialTab = "surgery", standalone = false, managem
   const tabs = managementOnly
     ? allTabs.filter(tab => managementTabIds.includes(tab.id))
     : allTabs;
+  const shippingTone = ORDER_ST.ordered;
   const managementSections = [
-    {id:"shipping", label:"배송 현황", detail:activeShippingCount ? `진행 ${activeShippingCount}건` : "정상", description:`승인대기, 보류${holdOrderCount ? ` ${holdOrderCount}건` : ""}, 배송중, 입고완료 상태를 확인합니다.`, Icon:Truck, color:T.teal500, onClick:onOpenShipping},
-    {id:"staff", label:"직원 관리", detail:`활성 ${activeStaffCount}명`, description:"직원 초대, 권한 변경, 활성/비활성 상태를 관리합니다.", Icon:UsersRound, color:T.blue500},
-    {id:"items", label:"품목 관리", detail:`기준 ${baselineReadyCount}/${items.length}`, description:"품목 추가, 기준값 입력, 재고실사와 초기 데이터를 정리합니다.", Icon:Tags, color:T.green500},
-    {id:"vendor", label:"도매 설정", detail:`연동 ${vendorLinkedCount}개`, description:"거래처 계정, 자동발주 조건, 가격 감시 정책을 설정합니다.", Icon:Store, color:T.orange500},
+    {id:"shipping", label:"배송 현황", detail:activeShippingCount ? `진행 ${activeShippingCount}건` : "정상", description:`승인대기, 보류${holdOrderCount ? ` ${holdOrderCount}건` : ""}, 배송중, 입고완료 상태를 확인합니다.`, Icon:Truck, color:shippingTone.text, onClick:onOpenShipping},
+    {id:"staff", label:"직원 관리", detail:`활성 ${activeStaffCount}명`, description:"직원 초대, 권한 변경, 활성/비활성 상태를 관리합니다.", Icon:UsersRound, color:T.primary},
+    {id:"items", label:"품목 관리", detail:`기준 ${baselineReadyCount}/${items.length}`, description:"품목 추가, 기준값 입력, 재고실사와 초기 데이터를 정리합니다.", Icon:Tags, color:T.success},
+    {id:"vendor", label:"도매 설정", detail:`연동 ${vendorLinkedCount}개`, description:"거래처 계정, 자동발주 조건, 가격 감시 정책을 설정합니다.", Icon:Store, color:T.warning},
     {id:"activity", label:"활동 로그", detail:"변경 이력", description:"입출고, 발주, 수술 준비, 보안 관련 기록을 확인합니다.", Icon:History, color:T.grey700},
   ];
   const selectedManagementSection = managementSections.find(section => section.id === adminTab);

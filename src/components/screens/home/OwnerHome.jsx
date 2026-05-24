@@ -26,22 +26,22 @@ export function OwnerHome(props) {
         bg: holdTone.bg,
       }
     : ownerRiskCount > 0
-    ? {
-        Icon: AlertTriangle,
-        title: `오늘 먼저 볼 경영 신호 ${ownerRiskCount}개`,
-        sub: "비용 흐름과 수술 준비 상태만 먼저 확인하면 됩니다",
-        badge: "확인",
-        color: T.orange500,
-        bg: T.orange50,
-      }
+	    ? {
+	        Icon: AlertTriangle,
+	        title: `오늘 먼저 볼 경영 신호 ${ownerRiskCount}개`,
+	        sub: "비용 흐름과 수술 준비 상태만 먼저 확인하면 됩니다",
+	        badge: "확인",
+	        color: T.warning,
+	        bg: T.warningBg,
+	      }
     : {
         Icon: CheckCircle2,
-        title: "비용·수술 흐름이 안정적이에요",
-        sub: "급한 경영 알림은 없고, 아래 핵심 화면에서 세부만 확인하면 됩니다",
-        badge: "안심",
-        color: T.green500,
-        bg: T.green50,
-      };
+	        title: "비용·수술 흐름이 안정적이에요",
+	        sub: "급한 경영 알림은 없고, 아래 핵심 화면에서 세부만 확인하면 됩니다",
+	        badge: "안심",
+	        color: T.success,
+	        bg: T.successBg,
+	      };
   const actions = [
     ownerReviewCount > 0 && {
       key: "owner-review",
@@ -61,10 +61,10 @@ export function OwnerHome(props) {
       Icon: CalendarDays,
       title: prepPending ? `수술 준비 미완료 ${prepPending}건` : "수술 준비 흐름 정상",
       sub: highCost ? `고비용 예상: ${highCost.title} · ${money(highCost.expectedCost)}` : `이번 주 수술 ${dashboard.surgery.week.length}건`,
-      value: countText(dashboard.surgery.week.length),
-      actionLabel: "수술 보기",
-      color: prepPending ? T.orange500 : T.blue500,
-      iconBg: prepPending ? T.orange50 : T.blue50,
+	      value: countText(dashboard.surgery.week.length),
+	      actionLabel: "수술 보기",
+	      color: prepPending ? T.warning : T.primary,
+	      iconBg: prepPending ? T.warningBg : T.primaryBg,
       urgent: prepPending > 0,
       onClick: () => setTab("admin:surgery"),
     },

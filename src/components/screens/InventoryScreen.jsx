@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, CalendarClock, ShoppingCart } from "lucide-react";
 import { T, font, monoFont } from "../../constants/colors";
 import { CATEGORIES } from "../../constants/categories";
+import { ORDER_ST } from "../../constants/orderStates";
 import { getStatus, getActiveOrder, todayKey } from "../../utils/helpers";
 import { compactMoney, itemUnitPrice, orderAmount, toNumber } from "../../utils/money";
 import { Card } from "../shared/Card";
@@ -43,6 +44,13 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
   const [risk, setRisk] = useState(() => loadSavedRisk(currentUser?.role));
   const isOwner = currentUser?.role === "owner";
   const stockToday = todayKey();
+  const inventoryTone = {
+    low: { color: T.warning, bg: T.warningBg },
+    expiry: { color: T.danger, bg: T.dangerBg },
+    overstock: { color: T.hold, bg: T.holdBg },
+    incoming: { color: ORDER_ST.ordered.text, bg: ORDER_ST.ordered.bg },
+    ok: { color: T.success, bg: T.successBg },
+  };
   const itemMap = useMemo(() => new Map(items.map(item => [item.id, item])), [items]);
   const orderedOrders = useMemo(() => orders.filter(order => order.status === "ordered"), [orders]);
   const orderedItemIds = useMemo(
@@ -122,10 +130,10 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
   const attentionCount = useMemo(() => riskRows.filter(row => row.low || row.expirySoon).length, [riskRows]);
   const riskOptions = [
     { id: "all", label: "전체", count: riskCounts.all, color: T.grey700 },
-    { id: "low", label: "부족", count: riskCounts.low, color: T.orange500 },
-    { id: "expiry", label: "유통기한", count: riskCounts.expiry, color: T.red500 },
-    { id: "overstock", label: "과잉", count: riskCounts.overstock, color: T.purple500 },
-    { id: "incoming", label: "입고대기", count: riskCounts.incoming, color: T.teal500 },
+    { id: "low", label: "부족", count: riskCounts.low, color: inventoryTone.low.color },
+    { id: "expiry", label: "유통기한", count: riskCounts.expiry, color: inventoryTone.expiry.color },
+    { id: "overstock", label: "과잉", count: riskCounts.overstock, color: inventoryTone.overstock.color },
+    { id: "incoming", label: "입고대기", count: riskCounts.incoming, color: inventoryTone.incoming.color },
   ];
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -193,37 +201,37 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
       const shortageQty = Math.max(1, minQty - currentQty);
       insights.push({
         label: unitPrice ? `보충 예상 ${compactMoney(shortageQty * unitPrice)}` : "보충 비용 미확인",
-        color: T.orange500,
-        bg: T.orange50,
+        color: inventoryTone.low.color,
+        bg: inventoryTone.low.bg,
       });
     }
     if (row.expirySoon) {
       insights.push({
         label: unitPrice ? `낭비 위험 ${compactMoney(currentQty * unitPrice)}` : "유통기한 비용 미확인",
-        color: T.red500,
-        bg: T.red50,
+        color: inventoryTone.expiry.color,
+        bg: inventoryTone.expiry.bg,
       });
     }
     if (row.overstock) {
       const overQty = Math.max(0, currentQty - minQty);
       insights.push({
         label: unitPrice ? `과잉 묶인 금액 ${compactMoney(overQty * unitPrice)}` : "과잉 비용 미확인",
-        color: T.purple500,
-        bg: T.purple50,
+        color: inventoryTone.overstock.color,
+        bg: inventoryTone.overstock.bg,
       });
     }
     if (activeOrder) {
       insights.push({
         label: `${activeOrder.qty}${item.unit} 발주 진행 중`,
-        color: T.teal500,
-        bg: T.teal50,
+        color: inventoryTone.incoming.color,
+        bg: inventoryTone.incoming.bg,
       });
     }
     if (!row.low && !row.expirySoon && !row.overstock && !activeOrder) {
       insights.push({
         label: "현재 조치 필요 없음",
-        color: T.green500,
-        bg: T.green50,
+        color: inventoryTone.ok.color,
+        bg: inventoryTone.ok.bg,
       });
     }
     return insights.slice(0, 3);
@@ -253,10 +261,10 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
   };
 
   const ownerRiskTone = (row) => {
-    if (row.expirySoon) return T.red500;
-    if (row.low) return T.orange500;
-    if (row.overstock) return T.purple500;
-    if (row.incoming) return T.teal500;
+    if (row.expirySoon) return inventoryTone.expiry.color;
+    if (row.low) return inventoryTone.low.color;
+    if (row.overstock) return inventoryTone.overstock.color;
+    if (row.incoming) return inventoryTone.incoming.color;
     return T.grey700;
   };
 
@@ -271,16 +279,16 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
                 <p style={{ margin: 0, fontSize: 16, lineHeight: "22px", fontWeight: 900, color: T.grey900 }}>경영자용 재고 요약</p>
                 <p style={{ margin: "3px 0 0", fontSize: 12, lineHeight: "17px", color: T.grey500 }}>재고 수량보다 비용 영향이 큰 항목을 먼저 보여줍니다.</p>
               </div>
-              <span style={{ flexShrink: 0, borderRadius: 9999, background: attentionCount > 0 ? T.orange50 : T.green50, color: attentionCount > 0 ? T.orange500 : T.green500, padding: "6px 9px", fontSize: 12, fontWeight: 900, whiteSpace: "nowrap" }}>
+              <span style={{ flexShrink: 0, borderRadius: 9999, background: attentionCount > 0 ? inventoryTone.low.bg : inventoryTone.ok.bg, color: attentionCount > 0 ? inventoryTone.low.color : inventoryTone.ok.color, padding: "6px 9px", fontSize: 12, fontWeight: 900, whiteSpace: "nowrap" }}>
                 확인 {ownerTopRows.length}건
               </span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: ownerTopRows.length ? 12 : 0 }}>
               {[
-                { label: "부족 보충 예상액", value: compactMoney(ownerCostSummary.shortageAmount), color: ownerCostSummary.shortageAmount > 0 ? T.orange500 : T.grey700 },
-                { label: "유통기한 손실 위험액", value: compactMoney(ownerCostSummary.expiryRiskAmount), color: ownerCostSummary.expiryRiskAmount > 0 ? T.red500 : T.grey700 },
-                { label: "과잉재고 묶인 금액", value: compactMoney(ownerCostSummary.overstockAmount), color: ownerCostSummary.overstockAmount > 0 ? T.purple500 : T.grey700 },
-                { label: "입고대기 금액", value: compactMoney(ownerCostSummary.incomingAmount), color: ownerCostSummary.incomingAmount > 0 ? T.teal500 : T.grey700 },
+                { label: "부족 보충 예상액", value: compactMoney(ownerCostSummary.shortageAmount), color: ownerCostSummary.shortageAmount > 0 ? inventoryTone.low.color : T.grey700 },
+                { label: "유통기한 손실 위험액", value: compactMoney(ownerCostSummary.expiryRiskAmount), color: ownerCostSummary.expiryRiskAmount > 0 ? inventoryTone.expiry.color : T.grey700 },
+                { label: "과잉재고 묶인 금액", value: compactMoney(ownerCostSummary.overstockAmount), color: ownerCostSummary.overstockAmount > 0 ? inventoryTone.overstock.color : T.grey700 },
+                { label: "입고대기 금액", value: compactMoney(ownerCostSummary.incomingAmount), color: ownerCostSummary.incomingAmount > 0 ? inventoryTone.incoming.color : T.grey700 },
               ].map(summary => (
                 <div key={summary.label} style={{ minWidth: 0, borderRadius: 12, background: T.grey50, padding: "11px 10px" }}>
                   <p style={{ margin: 0, fontSize: 12, lineHeight: "17px", fontWeight: 800, color: T.grey600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{summary.label}</p>
@@ -322,9 +330,9 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
           <>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
               {[
-                { label: "전체 재고", value: items.length, color: T.blue500 },
-                { label: "확인 필요", value: attentionCount, color: T.orange500 },
-                { label: "입고 대기", value: orderedOrders.length, color: T.teal500 },
+                { label: "전체 재고", value: items.length, color: T.primary },
+                { label: "확인 필요", value: attentionCount, color: inventoryTone.low.color },
+                { label: "입고 대기", value: orderedOrders.length, color: inventoryTone.incoming.color },
               ].map(summary => (
                 <Card key={summary.label} style={{ padding: "12px 10px" }}>
                   <p style={{ margin: "0 0 4px", fontSize: 16, color: T.grey500 }}>{summary.label}</p>
@@ -340,14 +348,14 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
                 <p style={{ margin: 0, fontSize: 15, lineHeight: "20px", fontWeight: 800, color: T.grey900 }}>재고 리스크 우선순위</p>
                 <p style={{ margin: "2px 0 0", fontSize: 12, lineHeight: "17px", color: T.grey500 }}>부족, 유통기한, 입고대기를 먼저 봅니다.</p>
               </div>
-              <span style={{ flexShrink: 0, borderRadius: 9999, background: T.orange50, color: T.orange500, padding: "5px 9px", fontSize: 12, fontWeight: 800 }}>
+              <span style={{ flexShrink: 0, borderRadius: 9999, background: inventoryTone.low.bg, color: inventoryTone.low.color, padding: "5px 9px", fontSize: 12, fontWeight: 800 }}>
                 {priorityRows.length}건
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {priorityRows.map(({ item, statusText, low, expirySoon, incoming, overstock }) => {
                 const activeOrder = getActiveOrder(orders, item.id);
-                const tone = low ? T.orange500 : expirySoon ? T.red500 : incoming ? T.teal500 : overstock ? T.purple500 : T.grey600;
+                const tone = low ? inventoryTone.low.color : expirySoon ? inventoryTone.expiry.color : incoming ? inventoryTone.incoming.color : overstock ? inventoryTone.overstock.color : T.grey600;
                 return (
                   <button
                     key={item.id}
@@ -407,7 +415,7 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
                   padding: "7px 14px",
                   borderRadius: 12,
                   border: active ? "none" : `1px solid ${T.grey200}`,
-                  background: active ? T.blue500 : T.white,
+	                  background: active ? T.primary : T.white,
                   color: active ? T.white : T.grey600,
                   fontSize: 14,
                   fontWeight: 600,
@@ -460,7 +468,7 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
         {alertItems.length > 0 && (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-              <div style={{ width: 7, height: 7, borderRadius: 9999, background: T.red500, flexShrink: 0 }} />
+              <div style={{ width: 7, height: 7, borderRadius: 9999, background: inventoryTone.expiry.color, flexShrink: 0 }} />
               <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey700, flex: 1 }}>확인 필요 {alertItems.length}</p>
               <button
                 type="button"
@@ -472,7 +480,7 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
                   padding: "9px 13px",
                   borderRadius: 9999,
                   border: "none",
-                  background: bulkableCount ? T.blue500 : T.grey200,
+	                  background: bulkableCount ? T.primary : T.grey200,
                   color: bulkableCount ? T.white : T.grey500,
                   fontSize: 14,
                   fontWeight: 700,
@@ -496,7 +504,7 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
             {alertItems.map(renderItem)}
             {okItems.length > 0 && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, marginTop: 6 }}>
-                <div style={{ width: 7, height: 7, borderRadius: 9999, background: T.green500 }} />
+                <div style={{ width: 7, height: 7, borderRadius: 9999, background: inventoryTone.ok.color }} />
                 <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey700 }}>정상</p>
               </div>
             )}

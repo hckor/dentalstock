@@ -30,8 +30,8 @@ export const actionButtonBase = {
 };
 
 export const actionButtonVariants = {
-  primary: { border: "none", background: T.blue500, color: T.white },
-  dangerOutline: { border: `1.5px solid ${T.red500}55`, background: T.white, color: T.red500 },
+  primary: { border: "none", background: T.primary, color: T.white },
+  dangerOutline: { border: `1.5px solid ${T.danger}55`, background: T.white, color: T.danger },
   neutralOutline: { border: `1.5px solid ${T.grey300}`, background: T.white, color: T.grey700 },
 };
 
@@ -63,8 +63,8 @@ export const candidateMetaStyle = { margin: "2px 0 0", fontSize: 12, color: T.gr
 export const candidatePriceStyle = { margin: 0, flexShrink: 0, fontFamily: monoFont, fontSize: 14, fontWeight: 700 };
 export const candidateBadgeBaseStyle = { borderRadius: 9999, padding: "2px 7px", fontSize: 11, fontWeight: 700 };
 export const candidateBadgeVariants = {
-  best: { background: T.blue50, color: T.blue500 },
-  soldOut: { background: T.red50, color: T.red500 },
+  best: { background: T.primaryBg, color: T.primary },
+  soldOut: { background: T.dangerBg, color: T.danger },
 };
 export const emptyCandidateStyle = { margin: "10px 0 0", fontSize: 13, color: T.grey500, lineHeight: 1.45 };
 export const selectToggleBaseStyle = {
@@ -88,8 +88,8 @@ export const reviewNoticeBaseStyle = {
   margin: "0 0 10px",
 };
 export const reviewNoticeToneStyles = {
-  warning: { border: `1px solid ${T.orange500}33`, background: T.orange50, color: T.orange500 },
-  danger: { border: `1px solid ${T.red500}33`, background: T.red50, color: T.red500 },
+  warning: { border: `1px solid ${T.warning}33`, background: T.warningBg, color: T.warning },
+  danger: { border: `1px solid ${T.danger}33`, background: T.dangerBg, color: T.danger },
 };
 export const holdStatusMeta = { bg: T.holdBg, text: T.hold, border: T.holdLine, label: "보류됨", short: "보류" };
 export const checklistGridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(132px, 1fr))", gap: 7 };
