@@ -170,7 +170,9 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     : myOrders.filter(o => o.status === "pending" || o.status === "ordered").length;
 
   const adminSection = tab.startsWith("admin:") ? tab.slice("admin:".length) : null;
+  const shippingSection = tab.startsWith("shipping:") ? tab.slice("shipping:".length) : null;
   const adminInitialTab = tab === "admin" ? "staff" : adminSection || "surgery";
+  const shippingInitialTab = shippingSection || "auto_wait";
   const navItems = role === "owner"
       ? [
           {id:"home",            Icon:Home,         label:"홈"},
@@ -212,7 +214,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="home"      && <HomeScreen currentUser={currentUser} users={users} setTab={setTab} openModal={openModal} canApprove={canApprove} openItemsEditor={openItemsEditor}/>}
           {tab==="inventory" && <InventoryScreen search={search} setSearch={setSearch} cat={cat} setCat={setCat} currentUser={currentUser} onItemClick={openDetail} onExpiryClick={openExpiry} onBulkOrderClick={()=>openModal("bulk_order")}/>}
           {tab==="inout"     && <InOutScreen openModal={openModal}/>}
-          {tab==="shipping"  && <ShippingTrackingScreen currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} onRunPriceMonitor={runPriceMonitor}/>}
+          {(tab==="shipping" || shippingSection) && <ShippingTrackingScreen key={shippingInitialTab} currentUser={currentUser} canApprove={canApprove} initialTab={shippingInitialTab} openModal={openModal} showToast={showToast} onRunPriceMonitor={runPriceMonitor}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
           {(tab==="admin" || adminSection) && canApprove && <AdminScreen key={adminInitialTab} initialTab={adminInitialTab} standalone={Boolean(adminSection)} managementOnly={tab === "admin"} users={users} currentUser={currentUser} onLogout={onLogout} openItemsEditor={openItemsEditor} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
         </Suspense>

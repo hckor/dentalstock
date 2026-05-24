@@ -22,10 +22,10 @@ import {
   makeDemoTracking,
 } from "./ShippingTrackingScreen/shippingTrackingUtils";
 
-export function ShippingTrackingScreen({currentUser, canApprove, openModal, showToast, onRunPriceMonitor}) {
+export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "auto_wait", openModal, showToast, onRunPriceMonitor}) {
   const { items: allItems } = useInventory();
   const { orders, approveOrder, approveOrders, rejectOrder, startTracking, refreshTracking, confirmReceipt } = useOrders();
-  const [trackingTab, setTrackingTab] = useState("auto_wait");
+  const [trackingTab, setTrackingTab] = useState(initialTab);
   const [deselectedPendingIds, setDeselectedPendingIds] = useState([]);
   const [priceCheckingIds, setPriceCheckingIds] = useState([]);
 

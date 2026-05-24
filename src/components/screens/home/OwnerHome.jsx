@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, CheckCircle2, Users } from "lucide-react";
+import { AlertTriangle, CalendarDays, CheckCircle2, ClipboardList, Users } from "lucide-react";
 import { T } from "../../../constants/colors";
 import { formatMoney as money } from "../../../utils/money";
 import { ActionQueue } from "./ActionQueue";
@@ -11,9 +11,20 @@ export function OwnerHome(props) {
   const prepPending = dashboard.surgery.prepPending.length;
   const highCost = dashboard.surgery.highCost[0];
   const activeUsers = users.filter(user => user.active !== false).length;
+  const ownerReviewCount = dashboard.orders.ownerReview.length;
+  const ownerReviewHoldCount = dashboard.orders.ownerReview.filter(order => order.status === "hold").length;
   const costNeedsReview = dashboard.cost.monthDelta > 0 || dashboard.cost.wasteRiskAmount > 0 || dashboard.cost.fastUsageItems.length > 0;
-  const ownerRiskCount = [costNeedsReview, prepPending > 0].filter(Boolean).length;
-  const summary = ownerRiskCount > 0
+  const ownerRiskCount = [ownerReviewCount > 0, costNeedsReview, prepPending > 0].filter(Boolean).length;
+  const summary = ownerReviewCount > 0
+    ? {
+        Icon: AlertTriangle,
+        title: `원장 승인 요청 ${ownerReviewCount}건 먼저 확인`,
+        sub: "매니저가 보류로 넘겼거나 원장 승인 기준에 걸린 발주입니다",
+        badge: "승인",
+        color: T.purple500,
+        bg: T.purple50,
+      }
+    : ownerRiskCount > 0
     ? {
         Icon: AlertTriangle,
         title: `오늘 먼저 볼 경영 신호 ${ownerRiskCount}개`,
@@ -31,6 +42,18 @@ export function OwnerHome(props) {
         bg: T.green50,
       };
   const actions = [
+    ownerReviewCount > 0 && {
+      key: "owner-review",
+      Icon: ClipboardList,
+      title: `원장 승인 요청 ${ownerReviewCount}건`,
+      sub: `검토 금액 ${money(dashboard.orders.ownerReviewAmount)}${ownerReviewHoldCount > 0 ? ` · 보류 ${ownerReviewHoldCount}건` : ""}`,
+      value: countText(ownerReviewCount),
+      actionLabel: "승인 검토",
+      color: T.purple500,
+      iconBg: T.purple50,
+      urgent: true,
+      onClick: () => setTab(ownerReviewHoldCount > 0 ? "shipping:hold" : "shipping"),
+    },
     {
       key: "surgery",
       Icon: CalendarDays,

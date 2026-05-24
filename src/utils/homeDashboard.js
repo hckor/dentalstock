@@ -1,5 +1,10 @@
 import { getStatus, todayKey } from "./helpers";
 import { highestVendorPrice, itemUnitPrice, orderUnitPrice, toNumber } from "./money";
+import {
+  getMonthlyProjectedAmounts,
+  getOrderApprovalGate,
+  getOrderDuplicateInfo,
+} from "./orderReview";
 import { getShippingEvents } from "./shippingEvents";
 
 const DAY = 86400000;
@@ -53,6 +58,23 @@ export function buildHomeDashboard({ items = [], txs = [], orders = [], surgerie
   const orderedOrders = orders.filter(order => order.status === "ordered");
   const receivedOrders = orders.filter(order => order.status === "received");
   const activeOrders = orders.filter(order => order.status === "pending" || order.status === "ordered");
+  const monthlyProjectedAmountByOrderId = getMonthlyProjectedAmounts(orders, items);
+  const ownerReviewOrders = orders.filter(order => {
+    if (!["pending", "hold"].includes(order.status)) return false;
+    if (order.status === "hold") return true;
+    const item = itemMap.get(order.item_id);
+    if (!item) return false;
+    return getOrderApprovalGate(
+      order,
+      item,
+      getOrderDuplicateInfo(order, orders),
+      monthlyProjectedAmountByOrderId[order.id]
+    ).requiresOwnerApproval;
+  });
+  const ownerReviewAmount = ownerReviewOrders.reduce((sum, order) => {
+    const item = itemMap.get(order.item_id);
+    return sum + orderUnitPrice(order, item) * toNumber(order.qty);
+  }, 0);
   const deliveredOrders = orderedOrders.filter(order => getShippingEvents(order)[0]?.status === "배달완료");
   const waitingTrackingOrders = orderedOrders.filter(order => !order.tracking_number);
   const pendingWithPrice = pendingOrders.filter(order => {
@@ -158,6 +180,8 @@ export function buildHomeDashboard({ items = [], txs = [], orders = [], surgerie
       ordered: orderedOrders,
       received: receivedOrders,
       active: activeOrders,
+      ownerReview: ownerReviewOrders,
+      ownerReviewAmount,
       delivered: deliveredOrders,
       waitingTracking: waitingTrackingOrders,
     },
