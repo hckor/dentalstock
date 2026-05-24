@@ -8,6 +8,7 @@
     "server": "node server/index.js",
     "server:check": "vitest run server/__tests__",
     "build": "vite build",
+    "catalog:generate": "node scripts/generateDentalMaterialCatalog.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
