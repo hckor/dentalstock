@@ -16,7 +16,7 @@ function formatAuthError(error) {
   return "로그인에 실패했습니다. 잠시 후 다시 시도해주세요";
 }
 
-export function LoginSupabase({ onSuccess }) {
+export function LoginSupabase({ onSuccess, onDemoSelect }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -93,10 +93,20 @@ export function LoginSupabase({ onSuccess }) {
           <LockKeyhole size={18}/>
           {busy ? "확인 중..." : "로그인"}
         </button>
+
+        {onDemoSelect && (
+          <button
+            type="button"
+            onClick={onDemoSelect}
+            style={{height:52, border:`1px solid ${T.grey200}`, borderRadius:12, background:T.white, color:T.grey800, fontSize:16, fontWeight:700, fontFamily:font, cursor:"pointer"}}
+          >
+            데모 프로필로 보기
+          </button>
+        )}
       </form>
 
       <p style={{margin:"auto 28px 28px", textAlign:"center", fontSize:13, lineHeight:1.5, color:T.grey500}}>
-        권한과 재고 데이터는 Supabase 보안 정책으로 병원별 분리됩니다.
+        실제 데이터는 Supabase 보안 정책으로 병원별 분리되고, 데모 프로필은 브라우저 안에서만 동작합니다.
       </p>
     </div>
   );
