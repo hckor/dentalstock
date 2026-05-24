@@ -23,7 +23,6 @@ import {
   emptyCandidateStyle,
   headerStyle,
   iconStyle,
-  metaStyle,
   nextActionLabelStyle,
   nextActionStyle,
   nextActionTextStyle,
