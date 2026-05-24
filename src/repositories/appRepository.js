@@ -23,6 +23,14 @@ function writeInitialData() {
   appRepository.notifs.save(INIT_NOTIFS);
 }
 
+function appendMissingDemoUsers() {
+  const users = appRepository.users.list();
+  const existingIds = new Set(users.map(user => user.id));
+  const missingUsers = INITIAL_USERS.filter(user => !existingIds.has(user.id));
+  if (missingUsers.length === 0) return;
+  appRepository.users.save([...users, ...missingUsers]);
+}
+
 export const appRepository = {
   adapter: getRepositoryAdapter(),
   users: createCollectionRepository(STORAGE_KEYS.users, INITIAL_USERS),
@@ -38,6 +46,10 @@ export const appRepository = {
 
   seedIfEmpty() {
     localRepository.ensureVersion(writeInitialData);
+  },
+
+  ensureDemoProfiles() {
+    appendMissingDemoUsers();
   },
 
   resetToInitial() {

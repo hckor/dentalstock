@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { font } from "./constants/colors";
 import { WifiOff } from "lucide-react";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
@@ -11,21 +11,22 @@ import { ordersApi } from "./api/ordersApi";
 import { surgeriesApi } from "./api/surgeriesApi";
 import { notifsApi } from "./api/notifsApi";
 import { authApi } from "./api/authApi";
-import { settingsApi } from "./api/settingsApi";
-import { auditLogsApi } from "./api/auditLogsApi";
 import { supabaseAuthApi } from "./api/supabaseAuthApi";
-import { supabaseActivityApi } from "./api/supabaseActivityApi";
-import { supabaseItemsApi } from "./api/supabaseItemsApi";
-import { supabaseOrdersApi } from "./api/supabaseOrdersApi";
-import { supabaseSettingsApi } from "./api/supabaseSettingsApi";
-import { supabaseStaffApi } from "./api/supabaseStaffApi";
-import { supabaseSurgeriesApi } from "./api/supabaseSurgeriesApi";
 import { usePersistedState } from "./hooks/usePersistedState";
+import { useSupabaseClinicSync } from "./hooks/useSupabaseClinicSync";
 import { LoginSelect } from "./components/auth/LoginSelect";
 import { LoginPin } from "./components/auth/LoginPin";
 import { LoginSupabase } from "./components/auth/LoginSupabase";
 import { MainApp } from "./components/MainApp";
 import { appRepository } from "./repositories/appRepository";
+import {
+  INITIAL_USERS,
+  INIT_ITEMS,
+  INIT_TXS,
+  INIT_ORDERS,
+  INIT_SURGERIES,
+  INIT_NOTIFS,
+} from "./data/initialData";
 
 // 로컬 데모 모드에서만 초기 데이터를 저장한다. Supabase 모드는 브라우저 저장을 최소화한다.
 if (!getApiConfig().isSupabaseMode) seedIfEmpty();
@@ -39,6 +40,8 @@ function DentalStockInner() {
   const { tokens: dynamicT } = useTheme();
   const apiConfig = getApiConfig();
   const isSupabaseMode = apiConfig.isSupabaseMode;
+  const [demoMode, setDemoMode] = useState(false);
+  const useSupabaseBackend = isSupabaseMode && !demoMode;
   const [appState,    setAppState]    = useState(() => {
     if (isSupabaseMode) return "supabase_loading";
     return authApi.getCurrentUser() ? "app" : "login_select";
@@ -48,7 +51,7 @@ function DentalStockInner() {
   const [isOnline,    setIsOnline]    = useState(navigator.onLine);
   const [syncStatus,  setSyncStatus]  = useState("");
 
-  const persistedOptions = { enabled: !isSupabaseMode };
+  const persistedOptions = { enabled: !useSupabaseBackend };
   const [users,     setUsers]     = usePersistedState(() => isSupabaseMode ? [] : usersApi.list(),     usersApi.save,     persistedOptions);
   const [items,     setItems]     = usePersistedState(() => isSupabaseMode ? [] : itemsApi.list(),     itemsApi.save,     persistedOptions);
   const [txs,       setTxs]       = usePersistedState(() => isSupabaseMode ? [] : txsApi.list(),       txsApi.save,       persistedOptions);
@@ -56,169 +59,22 @@ function DentalStockInner() {
   const [surgeries, setSurgeries] = usePersistedState(() => isSupabaseMode ? [] : surgeriesApi.list(), surgeriesApi.save, persistedOptions);
   const [notifs,    setNotifs]    = usePersistedState(() => isSupabaseMode ? [] : notifsApi.list(),    notifsApi.save,    persistedOptions);
 
-  const setSyncedNotifs = useCallback((updater) => {
-    setNotifs(prev => {
-      const next = typeof updater === "function" ? updater(prev) : updater;
-      if (isSupabaseMode && currentUser?.clinicId) {
-        void supabaseActivityApi.saveNotifsForClinic(currentUser.clinicId, next).catch(() => {});
-      }
-      return next;
-    });
-  }, [currentUser, isSupabaseMode, setNotifs]);
+  const { setSyncedNotifs } = useSupabaseClinicSync({
+    useSupabaseBackend,
+    currentUser,
+    setCurrentUser,
+    setAppState,
+    setUsers,
+    setItems,
+    setOrders,
+    setTxs,
+    setNotifs,
+    setSurgeries,
+    setSyncStatus,
+  });
 
   const unread        = notifs.filter(n=>!n.is_read).length;
   const pendingOrders = orders.filter(o=>o.status==="pending").length;
-
-  useEffect(() => {
-    if (!isSupabaseMode) return;
-    appRepository.clearLocalData();
-    let ignore = false;
-    supabaseAuthApi.getCurrentUser()
-      .then(user => {
-        if (ignore) return;
-        if (user) {
-          setCurrentUser(user);
-          setAppState("app");
-        } else {
-          setAppState("supabase_login");
-        }
-      })
-      .catch(() => {
-        if (!ignore) setAppState("supabase_login");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [isSupabaseMode]);
-
-  useEffect(() => {
-    if (!isSupabaseMode || !currentUser?.clinicId) return;
-    let ignore = false;
-    supabaseStaffApi.listByClinic(currentUser.clinicId)
-      .then(remoteUsers => {
-        if (ignore) return;
-        if (remoteUsers.length > 0) setUsers(remoteUsers);
-      })
-      .catch(() => {
-        if (!ignore) setSyncStatus("Supabase 직원 정보를 불러오지 못했습니다");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [currentUser?.clinicId, isSupabaseMode, setUsers]);
-
-  useEffect(() => {
-    if (!isSupabaseMode || !currentUser?.clinicId) return;
-    let ignore = false;
-    supabaseItemsApi.listByClinic(currentUser.clinicId)
-      .then(remoteItems => {
-        if (ignore) return;
-        if (remoteItems.length > 0) setItems(remoteItems);
-        setSyncStatus(remoteItems.length > 0 ? "" : "Supabase 재고 데이터가 아직 없습니다");
-      })
-      .catch(() => {
-        if (!ignore) setSyncStatus("Supabase 재고를 불러오지 못했습니다");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [currentUser?.clinicId, isSupabaseMode, setItems]);
-
-  useEffect(() => {
-    if (!isSupabaseMode || !currentUser?.clinicId) return;
-    let ignore = false;
-    supabaseOrdersApi.listByClinic(currentUser.clinicId)
-      .then(remoteOrders => {
-        if (ignore) return;
-        if (remoteOrders.length > 0) setOrders(remoteOrders);
-      })
-      .catch(() => {
-        if (!ignore) setSyncStatus("Supabase 발주 데이터를 불러오지 못했습니다");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [currentUser?.clinicId, isSupabaseMode, setOrders]);
-
-  useEffect(() => {
-    if (!isSupabaseMode || !currentUser?.clinicId) return;
-    let ignore = false;
-    supabaseActivityApi.listTxsByClinic(currentUser.clinicId)
-      .then(remoteTxs => {
-        if (ignore) return;
-        if (remoteTxs.length > 0) setTxs(remoteTxs);
-      })
-      .catch(() => {
-        if (!ignore) setSyncStatus("Supabase 입출고 내역을 불러오지 못했습니다");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [currentUser?.clinicId, isSupabaseMode, setTxs]);
-
-  useEffect(() => {
-    if (!isSupabaseMode || !currentUser?.clinicId) return;
-    let ignore = false;
-    supabaseActivityApi.listNotifsByClinic(currentUser.clinicId)
-      .then(remoteNotifs => {
-        if (ignore) return;
-        if (remoteNotifs.length > 0) setNotifs(remoteNotifs);
-      })
-      .catch(() => {
-        if (!ignore) setSyncStatus("Supabase 알림을 불러오지 못했습니다");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [currentUser?.clinicId, isSupabaseMode, setNotifs]);
-
-  useEffect(() => {
-    if (!isSupabaseMode || !currentUser?.clinicId) return;
-    let ignore = false;
-    supabaseActivityApi.listAuditLogsByClinic(currentUser.clinicId)
-      .then(remoteLogs => {
-        if (ignore) return;
-        if (remoteLogs.length > 0) auditLogsApi.save(remoteLogs);
-      })
-      .catch(() => {
-        if (!ignore) setSyncStatus("Supabase 활동 로그를 불러오지 못했습니다");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [currentUser?.clinicId, isSupabaseMode]);
-
-  useEffect(() => {
-    if (!isSupabaseMode || !currentUser?.clinicId) return;
-    let ignore = false;
-    supabaseSurgeriesApi.listByClinic(currentUser.clinicId)
-      .then(remoteSurgeries => {
-        if (ignore) return;
-        if (remoteSurgeries.length > 0) setSurgeries(remoteSurgeries);
-      })
-      .catch(() => {
-        if (!ignore) setSyncStatus("Supabase 수술 데이터를 불러오지 못했습니다");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [currentUser?.clinicId, isSupabaseMode, setSurgeries]);
-
-  useEffect(() => {
-    if (!isSupabaseMode || !currentUser?.clinicId) return;
-    let ignore = false;
-    supabaseSettingsApi.getForClinic(currentUser.clinicId)
-      .then(remoteSettings => {
-        if (ignore || !remoteSettings) return;
-        settingsApi.set(remoteSettings);
-      })
-      .catch(() => {
-        if (!ignore) setSyncStatus("Supabase 설정을 불러오지 못했습니다");
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [currentUser?.clinicId, isSupabaseMode]);
 
   // 개발/데모용: 콘솔에서 window.__dentalStockReset() 호출 시 초기화
   useEffect(() => {
@@ -237,13 +93,28 @@ function DentalStockInner() {
   }, []);
 
   const handleLogin = (user) => {
-    if (!isSupabaseMode) authApi.setSession(user);
+    if (!useSupabaseBackend) authApi.setSession(user);
     setCurrentUser(user);
     setAppState("app");
   };
 
+  const enterDemoMode = () => {
+    setDemoMode(true);
+    setCurrentUser(null);
+    setPinTarget(null);
+    setSyncStatus("");
+    authApi.clearSession();
+    setUsers(INITIAL_USERS);
+    setItems(INIT_ITEMS);
+    setTxs(INIT_TXS);
+    setOrders(INIT_ORDERS);
+    setSurgeries(INIT_SURGERIES);
+    setNotifs(INIT_NOTIFS);
+    setAppState("login_select");
+  };
+
   const handleLogout = async () => {
-    if (isSupabaseMode) {
+    if (useSupabaseBackend) {
       await supabaseAuthApi.signOut();
       appRepository.clearLocalData();
     } else {
@@ -251,19 +122,19 @@ function DentalStockInner() {
     }
     setCurrentUser(null);
     setPinTarget(null);
-    setAppState(isSupabaseMode ? "supabase_login" : "login_select");
+    setAppState(useSupabaseBackend ? "supabase_login" : "login_select");
   };
 
   const appContent = (
     <>
       {/* 오프라인 배너 */}
       {!isOnline && (
-        <div style={{position:"absolute", top:0, left:0, right:0, zIndex:9999, background:"#1e293b", color:"#fff", padding:"10px 16px", display:"flex", alignItems:"center", gap:8, fontSize: 12, fontWeight:600, fontFamily:font}}>
+        <div style={{position:"absolute", top:0, left:0, right:0, zIndex:9999, background:dynamicT.grey900, color:dynamicT.white, padding:"10px 16px", display:"flex", alignItems:"center", gap:8, fontSize: 12, fontWeight:600, fontFamily:font}}>
           <WifiOff size={15}/> 오프라인 · 저장된 데이터로 동작 중
         </div>
       )}
       {syncStatus && appState==="app" && (
-        <div style={{position:"absolute", top:0, left:0, right:0, zIndex:9998, background:dynamicT.grey900, color:"#fff", padding:"10px 16px", textAlign:"center", fontSize:12, fontWeight:700, fontFamily:font}}>
+        <div style={{position:"absolute", top:0, left:0, right:0, zIndex:9998, background:dynamicT.grey900, color:dynamicT.white, padding:"10px 16px", textAlign:"center", fontSize:12, fontWeight:700, fontFamily:font}}>
           {syncStatus}
         </div>
       )}
@@ -272,7 +143,7 @@ function DentalStockInner() {
           로그인 상태 확인 중...
         </div>
       )}
-      {appState==="supabase_login" && <LoginSupabase onSuccess={handleLogin}/>}
+      {appState==="supabase_login" && <LoginSupabase onSuccess={handleLogin} onDemoSelect={enterDemoMode}/>}
       {appState==="login_select" && <LoginSelect users={users} onSelect={u=>{setPinTarget(u);setAppState("login_pin");}}/>}
       {appState==="login_pin"    && pinTarget && <LoginPin user={pinTarget} onSuccess={(u)=>handleLogin(u || pinTarget)} onBack={()=>{setPinTarget(null);setAppState("login_select");}}/>}
       {appState==="app"          && currentUser && (
@@ -300,7 +171,7 @@ function DentalStockInner() {
       ) : (
         /* ── 브라우저: 폰 프레임 미리보기 ── */
         <div style={{display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100vh", background:dynamicT.grey100, fontFamily:font, padding:20}}>
-          <div style={{width:"min(100%, 390px)", height:"min(844px, calc(100vh - 40px))", background:dynamicT.grey50, borderRadius:24, boxShadow:"0px 8px 24px rgba(0,0,0,0.16)", display:"flex", flexDirection:"column", overflow:"hidden", position:"relative"}}>
+          <div style={{width:"min(100%, 390px)", height:"min(844px, calc(100vh - 40px))", background:dynamicT.grey50, borderRadius:24, boxShadow:dynamicT.shadowFloating, display:"flex", flexDirection:"column", overflow:"hidden", position:"relative"}}>
             {appContent}
           </div>
         </div>

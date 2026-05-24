@@ -105,6 +105,59 @@ export const supabaseItemsApi = {
     return mapSupabaseItem(data);
   },
 
+  async createItem(clinicId, item) {
+    if (!clinicId || !item?.name) throw new Error("item_create_payload_required");
+
+    const { data, error } = await getSupabaseClient()
+      .from("items")
+      .insert({
+        clinic_id: clinicId,
+        legacy_id: item.id,
+        ...toItemPayload(item),
+      })
+      .select("id, legacy_id, name, category, unit, stock, min_stock, desired_stock, memo, app_data, updated_at")
+      .single();
+
+    if (error) throw error;
+    return mapSupabaseItem(data);
+  },
+
+  async saveStocktakeAdjustments({ clinicId, actorId, changes }) {
+    if (!clinicId || !Array.isArray(changes) || changes.length === 0) return [];
+
+    const supabase = getSupabaseClient();
+    const savedItems = [];
+
+    for (const change of changes) {
+      const item = change.item;
+      if (!item?.supabase_id) throw new Error("item_id_required");
+
+      const beforeQty = toNumber(item.current_qty);
+      const afterQty = Math.max(0, toNumber(change.nextQty));
+      const delta = afterQty - beforeQty;
+      if (delta === 0) continue;
+
+      const savedItem = await this.updateItemDetails({
+        ...item,
+        current_qty: afterQty,
+        last_stocktake_at: change.checkedAt || new Date().toISOString(),
+      });
+      savedItems.push(savedItem);
+
+      const { error } = await supabase.from("txs").insert({
+        clinic_id: clinicId,
+        item_id: item.supabase_id,
+        type: "adjust",
+        quantity: Math.abs(delta),
+        reason: change.reason || `재고실사 보정 (${beforeQty} → ${afterQty})`,
+        actor_id: actorId || null,
+      });
+      if (error) throw error;
+    }
+
+    return savedItems;
+  },
+
   async saveInitialInventory(clinicId, items) {
     if (!clinicId || !Array.isArray(items) || items.length === 0) return [];
     const rows = items.map(item => ({
@@ -112,13 +165,46 @@ export const supabaseItemsApi = {
       legacy_id: item.id,
       ...toItemPayload(item),
     }));
+    const supabase = getSupabaseClient();
+    const legacyIds = rows.map(row => row.legacy_id).filter(Boolean);
 
-    const { data, error } = await getSupabaseClient()
+    const { data: existingRows, error: existingError } = await supabase
       .from("items")
-      .upsert(rows, { onConflict: "clinic_id,legacy_id" })
-      .select("id, legacy_id, name, category, unit, stock, min_stock, desired_stock, memo, app_data, updated_at");
+      .select("id, legacy_id")
+      .eq("clinic_id", clinicId)
+      .in("legacy_id", legacyIds);
 
-    if (error) throw error;
-    return (data || []).map(mapSupabaseItem).sort(compareAppItems);
+    if (existingError) throw existingError;
+
+    const existingByLegacyId = new Map((existingRows || []).map(row => [row.legacy_id, row.id]));
+    const inserts = [];
+    const updates = [];
+
+    rows.forEach(row => {
+      const existingId = existingByLegacyId.get(row.legacy_id);
+      if (existingId) {
+        const payload = { ...row };
+        delete payload.clinic_id;
+        delete payload.legacy_id;
+        updates.push({ id: existingId, payload });
+      } else {
+        inserts.push(row);
+      }
+    });
+
+    if (inserts.length > 0) {
+      const { error } = await supabase.from("items").insert(inserts);
+      if (error) throw error;
+    }
+
+    for (const update of updates) {
+      const { error } = await supabase
+        .from("items")
+        .update(update.payload)
+        .eq("id", update.id);
+      if (error) throw error;
+    }
+
+    return this.listByClinic(clinicId);
   },
 };
