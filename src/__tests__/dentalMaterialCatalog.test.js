@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { loadDentalMaterialCatalog } from "../data/dentalMaterialCatalog";
 import {
   buildMaterialCatalogGroups,
   cleanMaterialName,
@@ -14,6 +15,7 @@ import {
   groupMaterialsByCategoryAndType,
   inferMaterialCategoryId,
   inferMaterialUnit,
+  loadPreparedDentalMaterialCatalog,
   materialToInventoryItem,
   searchMaterials,
 } from "../utils/dentalMaterialCatalog";
@@ -216,5 +218,23 @@ describe("dental material catalog", () => {
     expect(filterPreparedMaterialCatalogGroups(groups, { query: "메디탑" }, 60, materialsById).items).toEqual([groups[0]]);
     expect(filterPreparedMaterialCatalogGroups(groups, { category: "의약품" }).items).toEqual([groups[1]]);
     expect(filterPreparedMaterialCatalogGroups(groups, { category: "소모품", type: "마스크" }).total).toBe(0);
+  });
+
+  it("사전 생성된 대형 카탈로그는 비동기로 불러와 검색에 사용한다", async () => {
+    const catalog = await loadPreparedDentalMaterialCatalog();
+    const firstGroup = catalog.groups[0];
+    const filtered = filterPreparedMaterialCatalogGroups(
+      catalog.groups,
+      { query: firstGroup.representativeName },
+      5,
+      catalog.materialsById
+    );
+
+    expect(catalog.summary.rawItemCount).toBeGreaterThan(0);
+    expect(catalog.groups).toHaveLength(catalog.summary.groupCount);
+    expect(catalog.materialsById.size).toBe(catalog.materials.length);
+    expect(filtered.items.some(group => group.key === firstGroup.key)).toBe(true);
+    await expect(loadDentalMaterialCatalog()).resolves.toHaveLength(catalog.summary.preparedMaterialCount);
+    await expect(loadPreparedDentalMaterialCatalog()).resolves.toBe(catalog);
   });
 });

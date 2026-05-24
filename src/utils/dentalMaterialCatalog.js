@@ -6,6 +6,31 @@ const SOURCE_LABELS = {
   jdent: "제이덴트",
 };
 
+let preparedCatalogPromise = null;
+
+export async function loadPreparedDentalMaterialCatalog() {
+  if (!preparedCatalogPromise) {
+    preparedCatalogPromise = import("../data/dentalMaterialCatalogPrepared.js")
+      .then(async (preparedCatalog) => {
+        const { materials, groups } = await preparedCatalog.loadDentalMaterialCatalogPreparedData();
+        return {
+          summary: preparedCatalog.DENTAL_MATERIAL_CATALOG_SUMMARY,
+          categoryOptions: preparedCatalog.DENTAL_MATERIAL_CATALOG_CATEGORY_OPTIONS,
+          typeOptionsByCategory: preparedCatalog.DENTAL_MATERIAL_CATALOG_TYPE_OPTIONS_BY_CATEGORY,
+          materials,
+          materialsById: new Map(materials.map(material => [material.catalog_id, material])),
+          groups,
+        };
+      })
+      .catch((error) => {
+        preparedCatalogPromise = null;
+        throw error;
+      });
+  }
+
+  return preparedCatalogPromise;
+}
+
 export function getMaterialSourceLabel(source) {
   return SOURCE_LABELS[source] || source || "거래처";
 }

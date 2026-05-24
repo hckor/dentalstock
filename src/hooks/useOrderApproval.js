@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
+import { ORDER_STATUS } from "../constants/orderStates";
 import { can } from "../constants/permissions";
 import { handleAppError } from "../utils/errorHandling";
 import {
@@ -19,6 +20,7 @@ import {
   getReviewToast,
   resolveReviewStatus,
 } from "../utils/orderRejection";
+import { isOrderReviewable, isOrderStatus, isOrderTransitionAllowed } from "../utils/orderStateMachine";
 import { buildVendorSnapshot, shouldUseSupabaseOrders } from "./orderActionShared";
 
 export function useOrderApprovalActions({
@@ -36,7 +38,7 @@ export function useOrderApprovalActions({
     }
 
     const order = orders.find(candidate => candidate.id === orderId);
-    if (!order || !["pending", "hold"].includes(order.status)) {
+    if (!order || !isOrderTransitionAllowed(order.status, ORDER_STATUS.ordered, { allowNoop: false })) {
       showToast("처리할 발주 요청을 찾을 수 없습니다.");
       return;
     }
@@ -104,7 +106,7 @@ export function useOrderApprovalActions({
     }
 
     const selectedIds = new Set(Array.isArray(orderIds) ? orderIds : []);
-    const targetOrders = orders.filter(order => selectedIds.has(order.id) && order.status === "pending");
+    const targetOrders = orders.filter(order => selectedIds.has(order.id) && isOrderStatus(order.status, ORDER_STATUS.pending));
 
     if (!targetOrders.length) {
       showToast("승인할 발주 요청이 없습니다");
@@ -171,7 +173,7 @@ export function useOrderApprovalActions({
     }
 
     const order = orders.find(candidate => candidate.id === orderId);
-    if (!order || !["pending", "hold"].includes(order.status)) {
+    if (!order || !isOrderReviewable(order.status) || !isOrderTransitionAllowed(order.status, resolvedStatus)) {
       showToast("처리할 발주 요청을 찾을 수 없습니다.");
       return;
     }

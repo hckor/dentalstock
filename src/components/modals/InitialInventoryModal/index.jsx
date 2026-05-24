@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   filterPreparedMaterialCatalogGroups,
+  loadPreparedDentalMaterialCatalog,
   materialToInventoryItem,
 } from "../../../utils/dentalMaterialCatalog";
 import { findSimilarInventoryItem } from "../../../utils/itemIdentity";
@@ -45,16 +46,10 @@ export function InitialInventoryModal({ items, onSave, onClose }) {
   useEffect(() => {
     let mounted = true;
 
-    import("../../../data/dentalMaterialCatalogPrepared.js")
+    loadPreparedDentalMaterialCatalog()
       .then((preparedCatalog) => {
         if (!mounted) return;
-        setCatalogData({
-          summary: preparedCatalog.DENTAL_MATERIAL_CATALOG_SUMMARY,
-          categoryOptions: preparedCatalog.DENTAL_MATERIAL_CATALOG_CATEGORY_OPTIONS,
-          typeOptionsByCategory: preparedCatalog.DENTAL_MATERIAL_CATALOG_TYPE_OPTIONS_BY_CATEGORY,
-          materialsById: new Map(preparedCatalog.DENTAL_MATERIAL_CATALOG_MATERIALS.map(material => [material.catalog_id, material])),
-          groups: preparedCatalog.DENTAL_MATERIAL_CATALOG_GROUPS,
-        });
+        setCatalogData(preparedCatalog);
         setCatalogStatus("ready");
       })
       .catch(() => {

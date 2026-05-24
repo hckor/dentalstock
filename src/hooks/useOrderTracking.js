@@ -1,8 +1,10 @@
 import { useCallback, useMemo } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
+import { ORDER_STATUS } from "../constants/orderStates";
 import { can } from "../constants/permissions";
 import { handleAppError } from "../utils/errorHandling";
+import { isOrderStatus } from "../utils/orderStateMachine";
 import {
   buildTrackingDeliveredNotification,
   buildTrackingRefreshPlan,
@@ -33,7 +35,7 @@ export function useOrderTrackingActions({
     }
 
     const order = orders.find(candidate => candidate.id === orderId);
-    if (!order || order.status !== "ordered") {
+    if (!order || !isOrderStatus(order.status, ORDER_STATUS.ordered)) {
       showToast("송장 등록할 주문을 찾을 수 없습니다.");
       return;
     }
@@ -116,7 +118,7 @@ export function useOrderTrackingActions({
     }
 
     const order = orders.find(candidate => candidate.id === orderId);
-    if (!order || order.status !== "ordered" || !order.tracking_number) {
+    if (!order || !isOrderStatus(order.status, ORDER_STATUS.ordered) || !order.tracking_number) {
       showToast("갱신할 송장 정보를 찾을 수 없습니다.");
       return;
     }

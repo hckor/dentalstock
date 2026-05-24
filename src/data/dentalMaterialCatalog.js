@@ -1,3 +1,5 @@
-export {
-  DENTAL_MATERIAL_CATALOG_MATERIALS as DENTAL_MATERIAL_CATALOG,
-} from "./dentalMaterialCatalogPrepared.js";
+export async function loadDentalMaterialCatalog() {
+  const preparedCatalog = await import("./dentalMaterialCatalogPrepared.js");
+  const { materials } = await preparedCatalog.loadDentalMaterialCatalogPreparedData();
+  return materials;
+}

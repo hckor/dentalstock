@@ -32,6 +32,12 @@ describe('security policy', () => {
 describe('supabase security migrations', () => {
   const initialMigration = readFileSync('supabase/migrations/20260520_initial_dentalstock_schema.sql', 'utf8');
   const hardeningMigration = readFileSync('supabase/migrations/20260521_security_hardening.sql', 'utf8');
+  const createPolicies = initialMigration.match(/create policy[\s\S]*?;/gi) || [];
+
+  function policiesFor(tableName) {
+    const tablePattern = new RegExp(`on\\s+public\\.${tableName}\\b`, 'i');
+    return createPolicies.filter(policy => tablePattern.test(policy));
+  }
 
   it('핵심 업무 테이블은 RLS가 켜져 있고 clinic 멤버십 조건을 사용한다', () => {
     [
@@ -55,12 +61,54 @@ describe('supabase security migrations', () => {
     expect(initialMigration).toContain('with check (public.can_manage_clinic(clinic_id));');
   });
 
-  it('도매 자격증명과 서버 작업 테이블은 브라우저 정책을 열지 않는다', () => {
-    const policies = initialMigration.match(/create policy[\s\S]*?;/gi) || [];
+  it('브라우저 정책은 clinic 멤버십/관리자 조건으로 병원 간 데이터를 격리한다', () => {
+    [
+      'clinics',
+      'profiles',
+      'items',
+      'txs',
+      'orders',
+      'surgeries',
+      'notifs',
+      'settings',
+      'audit_logs',
+    ].forEach(tableName => {
+      const tablePolicies = policiesFor(tableName);
+      expect(tablePolicies.length).toBeGreaterThan(0);
+      tablePolicies.forEach(policy => {
+        expect(policy).toMatch(/public\.(is_clinic_member|can_manage_clinic|is_clinic_owner)\((clinic_id|id)\)/i);
+      });
+    });
 
+    expect(initialMigration).toMatch(/where id = auth\.uid\(\)\s+and clinic_id = target_clinic_id\s+and is_active = true/i);
+    expect(initialMigration).toMatch(/where id = auth\.uid\(\)\s+and clinic_id = target_clinic_id\s+and role in \('owner', 'manager'\)\s+and is_active = true/i);
+  });
+
+  it('쓰기 정책은 same-clinic 소유권과 역할별 관리 권한을 요구한다', () => {
+    expect(initialMigration).toMatch(/create policy "owners can update clinic profiles"[\s\S]*using \(public\.is_clinic_owner\(clinic_id\)\)[\s\S]*with check \(public\.is_clinic_owner\(clinic_id\)\);/i);
+    expect(initialMigration).toMatch(/create policy "members can create stock transactions"[\s\S]*public\.is_clinic_member\(clinic_id\)[\s\S]*and actor_id = auth\.uid\(\)/i);
+    expect(initialMigration).toMatch(/create policy "members can create orders"[\s\S]*public\.is_clinic_member\(clinic_id\)[\s\S]*and requested_by = auth\.uid\(\)[\s\S]*and status = 'pending'/i);
+
+    [
+      ['items', 'create items'],
+      ['items', 'update items'],
+      ['orders', 'update orders'],
+      ['surgeries', 'create surgeries'],
+      ['surgeries', 'update surgeries'],
+      ['settings', 'create settings'],
+      ['settings', 'update settings'],
+    ].forEach(([tableName, policyName]) => {
+      expect(policiesFor(tableName).some(policy =>
+        policy.toLowerCase().includes(policyName) &&
+        /public\.can_manage_clinic\(clinic_id\)/i.test(policy)
+      )).toBe(true);
+    });
+  });
+
+  it('도매 자격증명과 서버 작업 테이블은 브라우저 정책을 열지 않는다', () => {
     expect(initialMigration).toMatch(/vendor_credentials and order_jobs intentionally .*no (browser|client) policies/i);
-    expect(policies.some(policy => /on public\.vendor_credentials/i.test(policy))).toBe(false);
-    expect(policies.some(policy => /on public\.order_jobs/i.test(policy))).toBe(false);
+    expect(createPolicies.some(policy => /on public\.vendor_credentials/i.test(policy))).toBe(false);
+    expect(createPolicies.some(policy => /on public\.order_jobs/i.test(policy))).toBe(false);
   });
 
   it('보안 강화 마이그레이션은 클라이언트 상태 스푸핑과 민감 설정 저장을 막는다', () => {

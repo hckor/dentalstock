@@ -1,4 +1,5 @@
 import { appRepository } from "../repositories/appRepository";
+import { handleAppError } from "../utils/errorHandling";
 import { supabaseActivityApi } from "./supabaseActivityApi";
 
 const SENSITIVE_KEY_PATTERN = /(password|credential|token|cookie|session|card|secret|username)/i;
@@ -49,7 +50,8 @@ export const auditLogsApi = {
 
     appRepository.auditLogs.save([log, ...this.list()]);
     if (supabaseActivityApi.isEnabled() && actor?.clinicId) {
-      void supabaseActivityApi.recordAuditLog(log, actor).catch(() => {});
+      void supabaseActivityApi.recordAuditLog(log, actor)
+        .catch(error => handleAppError(error, { context: `audit.${action}` }));
     }
     return log;
   },

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
+import { ORDER_STATUS } from "../constants/orderStates";
 import { can } from "../constants/permissions";
 import { handleAppError } from "../utils/errorHandling";
 import {
@@ -12,6 +13,7 @@ import {
   buildReceiptTx,
   getValidReceiptRows,
 } from "../utils/orderReceipt";
+import { isOrderTransitionAllowed } from "../utils/orderStateMachine";
 import { mergeUpdatedItem, mergeUpdatedOrder, shouldUseSupabaseOrders } from "./orderActionShared";
 
 export function useOrderReceiptActions({
@@ -32,7 +34,7 @@ export function useOrderReceiptActions({
     }
 
     const order = orders.find(candidate => candidate.id === orderId);
-    if (!order || order.status !== "ordered") {
+    if (!order || !isOrderTransitionAllowed(order.status, ORDER_STATUS.received, { allowNoop: false })) {
       showToast("입고 확인할 발주를 찾을 수 없습니다.");
       return;
     }
