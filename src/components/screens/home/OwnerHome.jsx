@@ -16,12 +16,12 @@ export function OwnerHome(props) {
   const ownerRiskCount = [ownerReviewCount > 0, costNeedsReview, prepPending > 0].filter(Boolean).length;
   const summary = ownerReviewCount > 0
     ? {
-        Icon: AlertTriangle,
+        Icon: ClipboardList,
         title: `원장 승인 요청 ${ownerReviewCount}건 먼저 확인`,
         sub: "매니저가 보류로 넘겼거나 원장 승인 기준에 걸린 발주입니다",
-        badge: "승인",
-        color: T.purple500,
-        bg: T.purple50,
+        badge: "결재",
+        color: T.grey700,
+        bg: T.grey50,
       }
     : ownerRiskCount > 0
     ? {
@@ -48,8 +48,9 @@ export function OwnerHome(props) {
       sub: `검토 금액 ${money(dashboard.orders.ownerReviewAmount)}${ownerReviewHoldCount > 0 ? ` · 보류 ${ownerReviewHoldCount}건` : ""}`,
       value: countText(ownerReviewCount),
       actionLabel: "승인 검토",
-      color: T.purple500,
-      iconBg: T.purple50,
+      color: T.blue500,
+      iconBg: T.blue50,
+      bg: T.white,
       urgent: true,
       onClick: () => setTab(ownerReviewHoldCount > 0 ? "shipping:hold" : "shipping"),
     },
