@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { font } from "./constants/colors";
 import { WifiOff } from "lucide-react";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
@@ -17,7 +17,6 @@ import { useSupabaseClinicSync } from "./hooks/useSupabaseClinicSync";
 import { LoginSelect } from "./components/auth/LoginSelect";
 import { LoginPin } from "./components/auth/LoginPin";
 import { LoginSupabase } from "./components/auth/LoginSupabase";
-import { MainApp } from "./components/MainApp";
 import { appRepository } from "./repositories/appRepository";
 import {
   INITIAL_USERS,
@@ -27,6 +26,8 @@ import {
   INIT_SURGERIES,
   INIT_NOTIFS,
 } from "./data/initialData";
+
+const MainApp = lazy(() => import("./components/MainApp").then(m => ({ default: m.MainApp })));
 
 // 로컬 데모 모드에서만 초기 데이터를 저장한다. Supabase 모드는 브라우저 저장을 최소화한다.
 if (!getApiConfig().isSupabaseMode) seedIfEmpty();
@@ -75,6 +76,11 @@ function DentalStockInner() {
 
   const unread        = notifs.filter(n=>!n.is_read).length;
   const pendingOrders = orders.filter(o=>o.status==="pending").length;
+  const appLoadingFallback = (
+    <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", color:dynamicT.grey500, fontSize:16, fontWeight:600}}>
+      화면 준비 중...
+    </div>
+  );
 
   // 개발/데모용: 콘솔에서 window.__dentalStockReset() 호출 시 초기화
   useEffect(() => {
@@ -147,16 +153,18 @@ function DentalStockInner() {
       {appState==="login_select" && <LoginSelect users={users} onSelect={u=>{setPinTarget(u);setAppState("login_pin");}}/>}
       {appState==="login_pin"    && pinTarget && <LoginPin user={pinTarget} onSuccess={(u)=>handleLogin(u || pinTarget)} onBack={()=>{setPinTarget(null);setAppState("login_select");}}/>}
       {appState==="app"          && currentUser && (
-        <MainApp
-          currentUser={currentUser} users={users} setUsers={setUsers}
-          items={items} setItems={setItems}
-          txs={txs} setTxs={setTxs}
-          orders={orders} setOrders={setOrders}
-          surgeries={surgeries} setSurgeries={setSurgeries}
-          notifs={notifs} setNotifs={setSyncedNotifs}
-          unread={unread} pendingOrders={pendingOrders}
-          onLogout={handleLogout}
-        />
+        <Suspense fallback={appLoadingFallback}>
+          <MainApp
+            currentUser={currentUser} users={users} setUsers={setUsers}
+            items={items} setItems={setItems}
+            txs={txs} setTxs={setTxs}
+            orders={orders} setOrders={setOrders}
+            surgeries={surgeries} setSurgeries={setSurgeries}
+            notifs={notifs} setNotifs={setSyncedNotifs}
+            unread={unread} pendingOrders={pendingOrders}
+            onLogout={handleLogout}
+          />
+        </Suspense>
       )}
     </>
   );

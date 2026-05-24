@@ -1,15 +1,15 @@
-import { useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseItemsApi } from "../api/supabaseItemsApi";
 
 export function useStockActions({ items, setItems, setTxs, setNotifs, currentUser, showToast, setModal }) {
   const inFlightRef = useRef(false);
 
-  const addTransactionLog = (type, selItem, form, qty) => {
+  const addTransactionLog = useCallback((type, selItem, form, qty) => {
     setTxs(p=>[{id:`t${Date.now()}`, item_id:selItem.id, type, qty, note:form.note, created_at:new Date().toISOString(), user:currentUser.name},...p]);
-  };
+  }, [currentUser, setTxs]);
 
-  const recordAuditLog = (type, selItem, form, qty, after) => {
+  const recordAuditLog = useCallback((type, selItem, form, qty, after) => {
     auditLogsApi.record({
       action: type === "in" ? "stock.in" : "stock.out",
       entityType: "item",
@@ -23,14 +23,14 @@ export function useStockActions({ items, setItems, setTxs, setNotifs, currentUse
         note: form.note || "",
       },
     });
-  };
+  }, [currentUser]);
 
-  const maybeNotifyLowStock = (item) => {
+  const maybeNotifyLowStock = useCallback((item) => {
     if (item.current_qty < item.min_qty)
       setNotifs(p=>[{id:`n${Date.now()}`, type:"low_stock", item_id:item.id, message:`${item.name} 재고가 부족합니다`, sub:`현재 ${item.current_qty}${item.unit} · 최소 ${item.min_qty}${item.unit}`, is_read:false, created_at:new Date().toISOString()},...p]);
-  };
+  }, [setNotifs]);
 
-  const commitLocal = (type, selItem, form, qty) => {
+  const commitLocal = useCallback((type, selItem, form, qty) => {
     const after = type==="in" ? selItem.current_qty+qty : selItem.current_qty-qty;
     const upd   = items.map(i=>i.id===selItem.id?{...i,current_qty:after}:i);
     setItems(upd);
@@ -40,9 +40,9 @@ export function useStockActions({ items, setItems, setTxs, setNotifs, currentUse
     maybeNotifyLowStock(u);
     showToast(`${type==="in"?"입고":"출고"} ${qty}${selItem.unit} 완료`);
     setModal(null);
-  };
+  }, [addTransactionLog, items, maybeNotifyLowStock, recordAuditLog, setItems, setModal, showToast]);
 
-  const commitSupabase = async (type, selItem, form, qty) => {
+  const commitSupabase = useCallback(async (type, selItem, form, qty) => {
     if (inFlightRef.current) return;
     if (!selItem.supabase_id) {
       showToast("Supabase 품목 연결 정보가 없습니다.");
@@ -74,9 +74,9 @@ export function useStockActions({ items, setItems, setTxs, setNotifs, currentUse
     } finally {
       inFlightRef.current = false;
     }
-  };
+  }, [addTransactionLog, maybeNotifyLowStock, recordAuditLog, setItems, setModal, showToast]);
 
-  const commit = (type, selItem, form) => {
+  const commit = useCallback((type, selItem, form) => {
     if (!selItem) return;
     const requestedQty = Math.max(1, parseInt(form.qty)||1);
     if (type==="out" && requestedQty > selItem.current_qty) {
@@ -89,7 +89,7 @@ export function useStockActions({ items, setItems, setTxs, setNotifs, currentUse
       return;
     }
     commitLocal(type, selItem, form, qty);
-  };
+  }, [commitLocal, commitSupabase, showToast]);
 
-  return { commit };
+  return useMemo(() => ({ commit }), [commit]);
 }

@@ -93,12 +93,12 @@ export function StaffHome(props) {
       <ActionQueue title="현장 바로 처리" actions={actions} summary={summary} />
       <TodaySurgerySection {...props} title="오늘 수술 준비" />
       <ShortcutGrid
-        title="재고 바로가기"
+        title="재고·발주 바로가기"
         actions={[
           { label: "재고 검색", sub: countText(dashboard.inventory.total, "개"), Icon: PackageSearch, onClick: () => setTab("inventory") },
           { label: "입출고 내역", sub: "오늘 기록 확인", Icon: Activity, onClick: () => setTab("inout") },
-          { label: "입고 등록", sub: "수량 추가", Icon: ArrowDownToLine, primary: true, onClick: () => openModal?.("in") },
-          { label: "출고 등록", sub: "사용량 기록", Icon: ArrowUpFromLine, onClick: () => openModal?.("out") },
+          { label: "발주 요청", sub: countText(lowCount, "개 부족"), Icon: ShoppingCart, primary: true, onClick: () => openModal?.("bulk_order") },
+          { label: "내 발주", sub: countText(myActiveOrders.length), Icon: CheckCircle2, onClick: () => setTab("shipping") },
         ]}
       />
       <StatsBar items={props.items} setTab={setTab} />

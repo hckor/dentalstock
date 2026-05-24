@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseSurgeriesApi } from "../api/supabaseSurgeriesApi";
 import { can } from "../constants/permissions";
@@ -14,7 +14,7 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
   const canManageSurgery = can(currentUser?.role, "surgery_manage");
   const canConfirmSurgery = can(currentUser?.role, "surgery_confirm");
 
-  const addSurgery = (data) => {
+  const addSurgery = useCallback((data) => {
     if (!canManageSurgery) {
       showToast("수술 일정 관리 권한이 없습니다.");
       return;
@@ -93,9 +93,9 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
       firePush(`today:${surgery.id}`, "오늘 수술 일정", `${surgery.title} · ${surgery.scheduled_time}`);
     }
     showToast("수술 일정이 등록되었습니다.");
-  };
+  }, [canManageSurgery, currentUser, firePush, setNotifs, setSurgeries, showToast]);
 
-  const confirmSurgeryPrep = (surgeryId) => {
+  const confirmSurgeryPrep = useCallback((surgeryId) => {
     if (!canConfirmSurgery) {
       showToast("수술 준비 확인 권한이 없습니다.");
       return;
@@ -142,9 +142,9 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
     });
     setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_ready", surgery_id:surgeryId, item_id:null, message:"수술 준비 확인이 완료되었습니다", sub:`${surgery.title} · ${currentUser.name}`, is_read:false, created_at:new Date().toISOString()},...p]);
     showToast("수술 준비가 확인되었습니다.");
-  };
+  }, [canConfirmSurgery, currentUser, setNotifs, setSurgeries, showToast, surgeries]);
 
-  const updateSurgeryItems = (surgeryId, newItems) => {
+  const updateSurgeryItems = useCallback((surgeryId, newItems) => {
     if (!canManageSurgery) {
       showToast("수술 준비 품목 수정 권한이 없습니다.");
       return;
@@ -190,9 +190,9 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
       },
     });
     showToast("준비 품목이 수정되었습니다.");
-  };
+  }, [canManageSurgery, currentUser, setSurgeries, showToast, surgeries]);
 
-  const confirmSurgeryUsage = (surgeryId, usageItems, note = "") => {
+  const confirmSurgeryUsage = useCallback((surgeryId, usageItems, note = "") => {
     if (!canConfirmSurgery) {
       showToast("수술 사용량 확인 권한이 없습니다.");
       return;
@@ -341,9 +341,9 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
     });
     setNotifs(p=>[{id:`n${Date.now()}`, type:"surgery_usage", surgery_id:surgeryId, item_id:null, message:"수술 실사용량 확인이 완료되었습니다", sub:`${surgery.title} · ${usedRows.length}개 품목 출고`, is_read:false, created_at:usageConfirmedAt},...p]);
     showToast(usedRows.length ? `실사용 ${usedRows.length}개 품목 출고 완료` : "사용 품목 없이 수술을 완료했습니다");
-  };
+  }, [canConfirmSurgery, currentUser, items, setItems, setNotifs, setSurgeries, setTxs, showToast, surgeries]);
 
-  const deleteSurgery = (surgeryId) => {
+  const deleteSurgery = useCallback((surgeryId) => {
     if (!canManageSurgery) {
       showToast("수술 일정 삭제 권한이 없습니다.");
       return;
@@ -398,7 +398,7 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
       },
     });
     showToast("수술 일정이 삭제되었습니다.");
-  };
+  }, [canManageSurgery, currentUser, firedRemindersRef, setNotifs, setSurgeries, showToast, surgeries]);
 
   // ── 로그인 직후: 브라우저 푸쉬 권한 요청 + 당일 수술 인앱 알림 자동 생성 ──
   useEffect(() => {
@@ -449,5 +449,11 @@ export function useSurgeryActions({ surgeries, setSurgeries, items = [], setItem
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surgeries]);
 
-  return { addSurgery, confirmSurgeryPrep, confirmSurgeryUsage, updateSurgeryItems, deleteSurgery };
+  return useMemo(() => ({
+    addSurgery,
+    confirmSurgeryPrep,
+    confirmSurgeryUsage,
+    updateSurgeryItems,
+    deleteSurgery,
+  }), [addSurgery, confirmSurgeryPrep, confirmSurgeryUsage, deleteSurgery, updateSurgeryItems]);
 }

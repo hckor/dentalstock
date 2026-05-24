@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
 import { can } from "../constants/permissions";
@@ -25,7 +26,7 @@ export function useOrderTrackingActions({
   repositoryAdapter,
   trackingClient,
 }) {
-  const startTracking = (orderId, carrier, trackingNumber) => {
+  const startTracking = useCallback((orderId, carrier, trackingNumber) => {
     if (!can(currentUser.role, "orders_approve")) {
       showToast("송장 등록 권한이 없습니다");
       return;
@@ -106,9 +107,9 @@ export function useOrderTrackingActions({
       setNotifs(prev => [notification, ...prev]);
     }
     showToast(buildTrackingRegisteredToast(targetOrders.length));
-  };
+  }, [currentUser, items, orders, setNotifs, setOrders, showToast]);
 
-  const refreshTracking = async (orderId) => {
+  const refreshTracking = useCallback(async (orderId) => {
     if (!can(currentUser.role, "orders_approve")) {
       showToast("배송 갱신 권한이 없습니다");
       return;
@@ -205,7 +206,7 @@ export function useOrderTrackingActions({
     }
 
     showToast(buildTrackingRefreshToast({ isDelivered: trackingPlan.isDelivered, hasItem: Boolean(item) }));
-  };
+  }, [currentUser, items, orders, repositoryAdapter, setNotifs, setOrders, showToast, trackingClient]);
 
-  return { startTracking, refreshTracking };
+  return useMemo(() => ({ startTracking, refreshTracking }), [refreshTracking, startTracking]);
 }

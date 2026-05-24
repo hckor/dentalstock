@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { appRepository } from "../repositories/appRepository";
 import { remoteRepository } from "../repositories/remoteRepository";
 import { useOrderApprovalActions } from "./useOrderApproval";
@@ -10,14 +11,19 @@ export function useOrderActions({
   trackingClient = remoteRepository,
   ...deps
 }) {
-  return {
-    ...useOrderSubmissionActions(deps),
-    ...useOrderApprovalActions(deps),
-    ...useOrderReceiptActions(deps),
-    ...useOrderTrackingActions({
-      ...deps,
-      repositoryAdapter,
-      trackingClient,
-    }),
-  };
+  const submissionActions = useOrderSubmissionActions(deps);
+  const approvalActions = useOrderApprovalActions(deps);
+  const receiptActions = useOrderReceiptActions(deps);
+  const trackingActions = useOrderTrackingActions({
+    ...deps,
+    repositoryAdapter,
+    trackingClient,
+  });
+
+  return useMemo(() => ({
+    ...submissionActions,
+    ...approvalActions,
+    ...receiptActions,
+    ...trackingActions,
+  }), [approvalActions, receiptActions, submissionActions, trackingActions]);
 }

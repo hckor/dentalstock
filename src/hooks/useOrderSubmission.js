@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
 import { getActiveOrder } from "../utils/helpers";
@@ -22,7 +23,7 @@ export function useOrderSubmissionActions({
   showToast,
   setModal,
 }) {
-  const submitOrder = (item, qty, note) => {
+  const submitOrder = useCallback((item, qty, note) => {
     if (getActiveOrder(orders, item.id)) {
       showToast("이미 진행 중인 발주가 있습니다.");
       setModal(null);
@@ -81,9 +82,9 @@ export function useOrderSubmissionActions({
     setNotifs(prev => [requestNotification, ...prev]);
     showToast(buildOrderRequestToast({ item }));
     setModal(null);
-  };
+  }, [currentUser, orders, setModal, setNotifs, setOrders, showToast]);
 
-  const submitBulkOrders = (orderItems, note = "") => {
+  const submitBulkOrders = useCallback((orderItems, note = "") => {
     const requests = normalizeOrderRequests(orderItems);
     const { availableRequests, skippedCount } = getAvailableOrderRequests(requests, orders);
 
@@ -142,7 +143,7 @@ export function useOrderSubmissionActions({
     setNotifs(prev => [buildBulkOrderRequestNotification({ count: newOrders.length, skippedCount, userName: currentUser.name, createdAt: now }), ...prev]);
     showToast(buildOrderRequestToast({ count: newOrders.length, skippedCount }));
     setModal(null);
-  };
+  }, [currentUser, orders, setModal, setNotifs, setOrders, showToast]);
 
-  return { submitOrder, submitBulkOrders };
+  return useMemo(() => ({ submitOrder, submitBulkOrders }), [submitBulkOrders, submitOrder]);
 }

@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
 import { can } from "../constants/permissions";
@@ -28,7 +29,7 @@ export function useOrderApprovalActions({
   currentUser,
   showToast,
 }) {
-  const approveOrder = (orderId, reviewNote) => {
+  const approveOrder = useCallback((orderId, reviewNote) => {
     if (!can(currentUser.role, "orders_approve_standard")) {
       showToast("승인 권한이 없습니다");
       return;
@@ -94,9 +95,9 @@ export function useOrderApprovalActions({
     });
     setNotifs(prev => [approvedNotification, ...prev]);
     showToast("발주가 승인되었습니다.");
-  };
+  }, [currentUser, items, orders, setNotifs, setOrders, showToast]);
 
-  const approveOrders = (orderIds, reviewNote = "일괄 승인") => {
+  const approveOrders = useCallback((orderIds, reviewNote = "일괄 승인") => {
     if (!can(currentUser.role, "orders_approve_standard")) {
       showToast("승인 권한이 없습니다");
       return;
@@ -159,9 +160,9 @@ export function useOrderApprovalActions({
     });
     setNotifs(prev => [buildBulkOrderApprovedNotification({ count: targetOrders.length, vendorGroupCount: vendorGroups.size, createdAt: reviewedAt }), ...prev]);
     showToast(`${targetOrders.length}건 일괄 승인 완료`);
-  };
+  }, [currentUser, items, orders, setNotifs, setOrders, showToast]);
 
-  const rejectOrder = (orderId, reviewNote, nextStatus = "rejected") => {
+  const rejectOrder = useCallback((orderId, reviewNote, nextStatus = "rejected") => {
     const resolvedStatus = resolveReviewStatus(nextStatus);
     const isHold = resolvedStatus === "hold";
     if (!can(currentUser.role, isHold ? "orders_hold" : "orders_reject")) {
@@ -222,7 +223,7 @@ export function useOrderApprovalActions({
     });
     setNotifs(prev => [notification, ...prev]);
     showToast(getReviewToast(isHold));
-  };
+  }, [currentUser, items, orders, setNotifs, setOrders, showToast]);
 
-  return { approveOrder, approveOrders, rejectOrder };
+  return useMemo(() => ({ approveOrder, approveOrders, rejectOrder }), [approveOrder, approveOrders, rejectOrder]);
 }

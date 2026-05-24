@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { auditLogsApi } from "../api/auditLogsApi";
 import { supabaseOrdersApi } from "../api/supabaseOrdersApi";
 import { can } from "../constants/permissions";
@@ -24,7 +25,7 @@ export function useOrderReceiptActions({
   showToast,
   setModal,
 }) {
-  const confirmReceipt = (orderId, actualQty, note) => {
+  const confirmReceipt = useCallback((orderId, actualQty, note) => {
     if (!can(currentUser.role, "orders_approve")) {
       showToast("입고 확인 권한이 없습니다");
       return;
@@ -105,9 +106,9 @@ export function useOrderReceiptActions({
     setNotifs(prev => [notification, ...prev]);
     showToast(buildReceiptToast({ item, actualQty, isFullyReceived }));
     setModal(null);
-  };
+  }, [currentUser, items, orders, setItems, setModal, setNotifs, setOrders, setTxs, showToast]);
 
-  const confirmReceipts = (receipts, note = "") => {
+  const confirmReceipts = useCallback((receipts, note = "") => {
     if (!can(currentUser.role, "orders_approve")) {
       showToast("입고 확인 권한이 없습니다");
       return;
@@ -188,7 +189,7 @@ export function useOrderReceiptActions({
     setNotifs(prev => [receiptPlan.notification, ...prev]);
     showToast(receiptPlan.toast);
     setModal(null);
-  };
+  }, [currentUser, items, orders, setItems, setModal, setNotifs, setOrders, setTxs, showToast]);
 
-  return { confirmReceipt, confirmReceipts };
+  return useMemo(() => ({ confirmReceipt, confirmReceipts }), [confirmReceipt, confirmReceipts]);
 }

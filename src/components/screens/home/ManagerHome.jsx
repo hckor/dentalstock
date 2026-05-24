@@ -95,8 +95,8 @@ export function ManagerHome(props) {
         actions={[
           { label: "발주 승인", sub: countText(dashboard.orders.pending.length), Icon: ClipboardList, primary: true, color: dashboard.orders.pending.length > 0 ? T.orange500 : T.grey700, onClick: () => setTab("shipping") },
           { label: "재고 부족", sub: countText(lowInventoryCount, "개"), Icon: PackageSearch, color: lowInventoryCount > 0 ? T.red500 : T.grey700, onClick: () => setTab("inventory") },
+          { label: "직원 관리", sub: `${activeUsers}명`, Icon: Users, color: T.blue500, onClick: () => setTab("admin:staff") },
           { label: "가격 후보", sub: countText(pendingWithPrice), Icon: TrendingDown, color: pendingWithPrice > 0 ? T.blue500 : T.grey700, onClick: () => setTab("shipping") },
-          { label: "관리", sub: `${activeUsers}명`, Icon: Users, onClick: () => setTab("admin") },
         ]}
         quiet
       />
