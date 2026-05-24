@@ -24,7 +24,7 @@ export function ManagementHomePanel({
           <div style={{flex:1, minWidth:0}}>
             <p style={{margin:0, fontSize:18, lineHeight:"24px", fontWeight:900, color:T.grey900}}>관리 메인</p>
             <p style={{margin:"4px 0 0", fontSize:14, lineHeight:"20px", color:T.grey600, wordBreak:"keep-all"}}>
-              직원, 품목, 도매 설정, 활동 로그를 각각 독립된 화면에서 관리합니다.
+              배송 현황, 직원, 품목, 도매 설정, 활동 로그를 각각 독립된 화면에서 관리합니다.
             </p>
           </div>
         </div>
@@ -46,11 +46,11 @@ export function ManagementHomePanel({
       <div style={{marginBottom:10}}>
         <p style={{margin:"0 0 8px", fontSize:15, lineHeight:"21px", fontWeight:900, color:T.grey700}}>관리 메뉴</p>
         <div style={{display:"flex", flexDirection:"column", gap:8}}>
-        {managementSections.map(({id, label, detail, description, Icon, color}) => (
+        {managementSections.map(({id, label, detail, description, Icon, color, onClick}) => (
           <button
             key={label}
             type="button"
-            onClick={()=>openManagementSection(id)}
+            onClick={()=>onClick ? onClick() : openManagementSection(id)}
             style={{minWidth:0, minHeight:76, border:`1px solid ${T.grey200}`, borderRadius:12, background:T.white, padding:"13px 14px", textAlign:"left", cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:12}}
           >
             <div style={{width:38, height:38, borderRadius:12, background:T.grey50, color, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>

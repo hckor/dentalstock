@@ -216,7 +216,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="inout"     && <InOutScreen openModal={openModal}/>}
           {(tab==="shipping" || shippingSection) && <ShippingTrackingScreen key={shippingInitialTab} currentUser={currentUser} canApprove={canApprove} initialTab={shippingInitialTab} openModal={openModal} showToast={showToast} onRunPriceMonitor={runPriceMonitor}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
-          {(tab==="admin" || adminSection) && canApprove && <AdminScreen key={adminInitialTab} initialTab={adminInitialTab} standalone={Boolean(adminSection)} managementOnly={tab === "admin"} users={users} currentUser={currentUser} onLogout={onLogout} openItemsEditor={openItemsEditor} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
+          {(tab==="admin" || adminSection) && canApprove && <AdminScreen key={adminInitialTab} initialTab={adminInitialTab} standalone={Boolean(adminSection)} managementOnly={tab === "admin"} users={users} currentUser={currentUser} onLogout={onLogout} openItemsEditor={openItemsEditor} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole} onOpenShipping={()=>setTab("shipping")}/>}
         </Suspense>
       </div>
 
