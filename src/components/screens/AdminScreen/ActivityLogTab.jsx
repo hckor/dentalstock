@@ -18,6 +18,7 @@ const filters = [
 const actionMeta = {
   "stock.in": { label: "입고 등록", color: T.blue500, bg: T.blue50 },
   "stock.out": { label: "출고 등록", color: T.red500, bg: T.red50 },
+  "stock.adjust": { label: "재고 보정", color: T.grey700, bg: T.grey100 },
   "order.requested": { label: "발주 요청", color: T.orange500, bg: T.orange50 },
   "order.approved": { label: "발주 승인", color: T.blue500, bg: T.blue50 },
   "order.rejected": { label: "발주 반려", color: T.red500, bg: T.red50 },

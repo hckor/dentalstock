@@ -9,6 +9,7 @@ import { Inp } from "../shared/Inp";
 export function EditItemModal({item, setItems, onClose, showToast}) {
   const [name,setName]=useState(item.name); const [catId,setCatId]=useState(item.category_id); const [unit,setUnit]=useState(item.unit); const [minQty,setMinQty]=useState(item.min_qty); const [loc,setLoc]=useState(item.location||"");
   const [vendorOptions, setVendorOptions] = useState(() => Array.isArray(item.vendor_options) ? item.vendor_options : []);
+  const [isTemporary, setIsTemporary] = useState(Boolean(item.is_temporary && item.temporary_status !== "resolved"));
   const [saving, setSaving] = useState(false);
   const vendors = settingsApi.load().vendors;
   const updateVendorOption = (index, field, value) => setVendorOptions(prev => prev.map((option, i) => i === index ? {...option, [field]: value} : option));
@@ -35,7 +36,18 @@ export function EditItemModal({item, setItems, onClose, showToast}) {
     .filter(option => option.vendor_id && option.price);
   const submit=async()=>{
     if (saving) return;
-    const nextItem = {...item,name,category_id:catId,unit,min_qty:minQty,location:loc,vendor_options:normalizeVendorOptions()};
+    const nextItem = {
+      ...item,
+      name,
+      category_id:catId,
+      unit,
+      min_qty:minQty,
+      location:loc,
+      vendor_options:normalizeVendorOptions(),
+      is_temporary:isTemporary,
+      temporary_status:isTemporary ? "needs_review" : "resolved",
+      reviewed_at:isTemporary ? item.reviewed_at || null : new Date().toISOString(),
+    };
     setSaving(true);
     try {
       if (supabaseItemsApi.isEnabled() && item.supabase_id) {
@@ -54,7 +66,15 @@ export function EditItemModal({item, setItems, onClose, showToast}) {
   };
   return (
     <div style={{padding:"16px 20px 0"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={{margin:0,fontSize: 24,fontWeight:700,color:T.grey900}}>품목 수정</h2><button onClick={onClose} style={{border:"none",background:"none",cursor:"pointer"}}><X size={24} color={T.grey500}/></button></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h2 style={{margin:0,fontSize: 24,fontWeight:700,color:T.grey900}}>품목 수정</h2><button aria-label="닫기" onClick={onClose} style={{border:"none",background:"none",cursor:"pointer"}}><X size={24} color={T.grey500}/></button></div>
+      {item.is_temporary && (
+        <button
+          type="button"
+          onClick={()=>setIsTemporary(prev=>!prev)}
+          style={{width:"100%", border:"none", borderRadius:12, background:isTemporary?T.orange50:T.green50, color:isTemporary?T.orange500:T.green500, padding:"12px 14px", marginBottom:14, fontFamily:font, fontSize:14, lineHeight:"20px", fontWeight:700, cursor:"pointer", textAlign:"left"}}>
+          {isTemporary ? "정리 필요 상태입니다. 눌러서 정식 품목으로 확정" : "정식 품목으로 확정됩니다. 다시 누르면 정리 필요로 되돌림"}
+        </button>
+      )}
       <p style={{margin:"0 0 6px",fontSize: 16,fontWeight:600,color:T.grey700}}>품목명</p><Inp value={name} onChange={e=>setName(e.target.value)} style={{marginBottom:12}}/>
       <p style={{margin:"0 0 8px",fontSize: 16,fontWeight:600,color:T.grey700}}>카테고리</p>
       <div style={{display:"flex",gap:8,marginBottom:12}}>{CATEGORIES.map(c=><button key={c.id} onClick={()=>setCatId(c.id)} style={{flex:1,padding:"14px 0",borderRadius:9999,border:"none",cursor:"pointer",fontFamily:font,fontSize: 16,fontWeight:600,background:catId===c.id?T.blue500:T.grey100,color:catId===c.id?T.white:T.grey700}}>{c.name}</button>)}</div>
