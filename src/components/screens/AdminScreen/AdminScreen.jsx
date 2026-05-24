@@ -16,6 +16,9 @@ import { ActivityLogTab } from "./ActivityLogTab";
 import { BottomSheet } from "../../shared/BottomSheet";
 import { InitialInventoryModal } from "../../modals/InitialInventoryModal";
 import { StocktakeSheet } from "../../modals/StocktakeSheet";
+import { useInventory } from "../../../contexts/InventoryContext";
+import { useOrders } from "../../../contexts/OrderContext";
+import { useSurgery } from "../../../contexts/SurgeryContext";
 
 const toValidDate = (value) => {
   if (!value) return null;
@@ -73,7 +76,10 @@ function ManagementSectionHeader({ section, onBack }) {
   );
 }
 
-export function AdminScreen({initialTab = "surgery", standalone = false, managementOnly = false, users, currentUser, orders, items, setItems, setTxs, txs, surgeries, addSurgery, deleteSurgery, onLogout, openItemsEditor, updateSurgeryItems, openModal, showToast, onInviteStaff, onRunPriceMonitor, onStaffActiveChange, onStaffRoleChange}) {
+export function AdminScreen({initialTab = "surgery", standalone = false, managementOnly = false, users, currentUser, onLogout, openItemsEditor, openModal, showToast, onInviteStaff, onRunPriceMonitor, onStaffActiveChange, onStaffRoleChange}) {
+  const { items, setItems, txs, setTxs } = useInventory();
+  const { orders } = useOrders();
+  const { surgeries, addSurgery, deleteSurgery, updateSurgeryItems } = useSurgery();
   const [adminTab, setAdminTab] = useState(initialTab === "stock" ? "items" : initialTab);
   const [managementView, setManagementView] = useState(null);
   const [showInitialInventory, setShowInitialInventory] = useState(false);

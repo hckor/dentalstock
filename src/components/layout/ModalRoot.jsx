@@ -9,14 +9,18 @@ import { AddItemModal } from "../modals/AddItemModal";
 import { EditItemModal } from "../modals/EditItemModal";
 import { EditSurgeryItemsSheet } from "../modals/EditSurgeryItemsSheet";
 import { ShippingDetailModal } from "../modals/ShippingDetailModal";
+import { useInventory } from "../../contexts/InventoryContext";
+import { useOrders } from "../../contexts/OrderContext";
 
 export function ModalRoot({
   modal, setModal, selItem, setSelItem, form, setForm,
-  items, setItems, orders, currentUser,
-  commit, submitOrder, submitBulkOrders, confirmReceipt, confirmReceipts, showToast,
+  currentUser,
+  showToast,
   canApprove,
   editItemsState, setEditItemsState, openModal,
 }) {
+  const { items, setItems, commit } = useInventory();
+  const { orders, submitOrder, submitBulkOrders, confirmReceipt, confirmReceipts } = useOrders();
   const bulkOrderContext = selItem?.type === "bulk_order_context" ? selItem : null;
 
   return (

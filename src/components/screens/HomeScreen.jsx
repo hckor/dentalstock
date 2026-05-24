@@ -16,6 +16,9 @@ import {
 } from "lucide-react";
 import { can } from "../../constants/permissions";
 import { T, font, monoFont } from "../../constants/colors";
+import { useInventory } from "../../contexts/InventoryContext";
+import { useOrders } from "../../contexts/OrderContext";
+import { useSurgery } from "../../contexts/SurgeryContext";
 import { buildHomeDashboard } from "../../utils/homeDashboard";
 import { formatMoney as money, toNumber } from "../../utils/money";
 import { SecTitle } from "../shared/SecTitle";
@@ -571,18 +574,14 @@ function StaffHome(props) {
 export function HomeScreen({
   currentUser,
   users = [],
-  items,
-  txs,
-  orders,
-  surgeries,
   setTab,
   openModal,
   canApprove,
-  confirmSurgeryPrep,
-  confirmSurgeryUsage,
   openItemsEditor,
-  updateSurgeryItems,
 }) {
+  const { items, txs } = useInventory();
+  const { orders } = useOrders();
+  const { surgeries, confirmSurgeryPrep, confirmSurgeryUsage, updateSurgeryItems } = useSurgery();
   const role = currentUser?.role || "staff";
   const dashboard = useMemo(() => buildHomeDashboard({ items, txs, orders, surgeries }), [items, orders, surgeries, txs]);
   const canManageSurgery = can(role, "surgery_manage");

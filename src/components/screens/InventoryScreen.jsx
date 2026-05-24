@@ -6,6 +6,8 @@ import { getStatus, getActiveOrder, todayKey } from "../../utils/helpers";
 import { compactMoney, itemUnitPrice, orderAmount, toNumber } from "../../utils/money";
 import { Card } from "../shared/Card";
 import { ItemCard } from "../shared/ItemCard";
+import { useInventory } from "../../contexts/InventoryContext";
+import { useOrders } from "../../contexts/OrderContext";
 
 const ALL_CATS = [{ id: 0, name: "전체", color: T.grey700 }, ...CATEGORIES];
 const DAY = 86400000;
@@ -35,7 +37,9 @@ const loadSavedRisk = (role) => {
   }
 };
 
-export function InventoryScreen({ items, search, setSearch, cat, setCat, orders, currentUser, onItemClick, onExpiryClick, onBulkOrderClick }) {
+export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, onItemClick, onExpiryClick, onBulkOrderClick }) {
+  const { items } = useInventory();
+  const { orders } = useOrders();
   const [risk, setRisk] = useState(() => loadSavedRisk(currentUser?.role));
   const isOwner = currentUser?.role === "owner";
   const stockToday = todayKey();

@@ -4,6 +4,8 @@ import { T, font } from "../../constants/colors";
 import { can } from "../../constants/permissions";
 import { Card } from "../shared/Card";
 import { ShippingOrderCard } from "../shared/ShippingOrderCard";
+import { useInventory } from "../../contexts/InventoryContext";
+import { useOrders } from "../../contexts/OrderContext";
 import {
   getMonthlyProjectedAmounts,
   getOrderApprovalGate,
@@ -20,7 +22,9 @@ import {
   makeDemoTracking,
 } from "./ShippingTrackingScreen/shippingTrackingUtils";
 
-export function ShippingTrackingScreen({orders, allItems, currentUser, canApprove, openModal, showToast, approveOrder, approveOrders, rejectOrder, startTracking, refreshTracking, confirmReceipt, onRunPriceMonitor}) {
+export function ShippingTrackingScreen({currentUser, canApprove, openModal, showToast, onRunPriceMonitor}) {
+  const { items: allItems } = useInventory();
+  const { orders, approveOrder, approveOrders, rejectOrder, startTracking, refreshTracking, confirmReceipt } = useOrders();
   const [trackingTab, setTrackingTab] = useState("auto_wait");
   const [deselectedPendingIds, setDeselectedPendingIds] = useState([]);
   const [priceCheckingIds, setPriceCheckingIds] = useState([]);

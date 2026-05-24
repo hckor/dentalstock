@@ -4,6 +4,7 @@ import { T, font, CS, monoFont } from "../../constants/colors";
 import { dateKey, todayKey } from "../../utils/helpers";
 import { Card } from "../shared/Card";
 import { Divider } from "../shared/Divider";
+import { useInventory } from "../../contexts/InventoryContext";
 
 const twoLineText = {
   display: "-webkit-box",
@@ -92,7 +93,8 @@ function formatTime(created_at) {
   return `${h}:${m}`;
 }
 
-export function InOutScreen({items, txs, openModal}) {
+export function InOutScreen({openModal}) {
+  const { items, txs } = useInventory();
   const [typeFilter, setTypeFilter] = useState("all");
 
   const filtered = useMemo(() => {
