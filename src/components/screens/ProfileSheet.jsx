@@ -7,8 +7,8 @@ export function ProfileSheet({currentUser, onClose, onLogout}) {
   const m = ROLE_META[currentUser.role];
 
   return (
-    <div style={{position:"absolute", inset:0, background:"rgba(2,9,19,0.4)", zIndex:200, display:"flex", justifyContent:"center", alignItems:"flex-end"}} onClick={onClose}>
-      <div style={{background:T.white, borderRadius:"16px 16px 0 0", width:"100%", paddingBottom:32, boxShadow:"0px -4px 12px rgba(0,0,0,0.08)"}} onClick={e=>e.stopPropagation()}>
+    <div style={{position:"absolute", inset:0, background:T.overlaySoft, zIndex:200, display:"flex", justifyContent:"center", alignItems:"flex-end"}} onClick={onClose}>
+      <div style={{background:T.surface, borderRadius:"16px 16px 0 0", width:"100%", paddingBottom:32, boxShadow:T.shadowSheet}} onClick={e=>e.stopPropagation()}>
         {/* 핸들 */}
         <div style={{display:"flex", justifyContent:"center", padding:"12px 0 0"}}>
           <div style={{width:36, height:4, borderRadius:9999, background:T.grey200}}/>

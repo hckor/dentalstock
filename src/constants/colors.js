@@ -1,7 +1,7 @@
 // ─── TOSS TOKENS ──────────────────────────────────────
 
 const lightTokens = {
-  // ── Accent: Blue (primary) & Red (danger) ──
+  // ── Primitive palette ───────────────────────
   blue500:"#2563eb",   blue600:"#2272eb",   blue50:"#e8f3ff",
   white:"#ffffff",
 
@@ -19,6 +19,35 @@ const lightTokens = {
   yellow500:"#ffc342", yellow50:"#fff8df",
   purple500:"#a234c7", purple50:"#f7eafd",
   teal500:"#18a5a5",   teal50:"#e5f7f7",
+
+  // ── Semantic palette ────────────────────────
+  // 화면에서는 가능한 한 아래 역할 토큰을 우선 사용한다.
+  textStrong:"#191f28", text:"#333d4b", textMuted:"#6b7684", textSubtle:"#8b95a1",
+  surface:"#ffffff", surfaceSubtle:"#f9fafb", surfaceMuted:"#f2f4f6",
+  line:"#e5e8eb", lineStrong:"#d1d6db",
+  inputBg:"rgba(0,23,51,0.02)", inputBorder:"rgba(2,32,71,0.05)",
+  overlay:"rgba(2,9,19,0.5)", overlaySoft:"rgba(2,9,19,0.4)",
+
+  primary:"#2563eb", primaryBg:"#e8f3ff",
+  danger:"#f04452", dangerBg:"#ffeef0",
+  success:"#03b26c", successBg:"#e6f8f0",
+  warning:"#fe9800", warningBg:"#fff3df",
+  hold:"#a234c7", holdBg:"#f7eafd",
+  info:"#18a5a5", infoBg:"#e5f7f7",
+
+  successLine:"#b7eed6",
+  warningLine:"#ffd580",
+  dangerLine:"#f9c0c5",
+  holdLine:"#e9c7f4",
+  infoLine:"#99dede",
+
+  shadowCard:"0px 2px 8px rgba(0,0,0,0.08)",
+  shadowSelected:"0px 2px 4px rgba(0,0,0,0.06)",
+  shadowControl:"0px 1px 3px rgba(0,0,0,0.1)",
+  shadowFloating:"0px 8px 24px rgba(0,0,0,0.16)",
+  shadowToast:"0px 4px 12px rgba(0,0,0,0.12)",
+  shadowSheet:"0px -4px 12px rgba(0,0,0,0.08)",
+  surfaceFadeRight:"linear-gradient(90deg, rgba(255,255,255,0), #ffffff 72%)",
 };
 
 // 다크모드 토큰: 명도 반전 + 채도 약간 조정
@@ -34,6 +63,33 @@ const darkTokens = {
   yellow500:"#facc15", yellow50:"#3a3416",
   purple500:"#a78bfa", purple50:"#241a3a",
   teal500:"#2dd4bf",   teal50:"#103030",
+
+  textStrong:"#f4f6f8", text:"#e4e7eb", textMuted:"#9aa5b1", textSubtle:"#7b8794",
+  surface:"#15181c", surfaceSubtle:"#161a20", surfaceMuted:"#1a1f27",
+  line:"#1f2937", lineStrong:"#374151",
+  inputBg:"rgba(255,255,255,0.04)", inputBorder:"rgba(255,255,255,0.08)",
+  overlay:"rgba(2,9,19,0.72)", overlaySoft:"rgba(2,9,19,0.56)",
+
+  primary:"#4d8cff", primaryBg:"#15243d",
+  danger:"#ff5b6a", dangerBg:"#3a1a1f",
+  success:"#34d399", successBg:"#12321f",
+  warning:"#fbbf24", warningBg:"#3a2a10",
+  hold:"#a78bfa", holdBg:"#241a3a",
+  info:"#2dd4bf", infoBg:"#103030",
+
+  successLine:"#145c3a",
+  warningLine:"#6b4b12",
+  dangerLine:"#6b222b",
+  holdLine:"#4d2f73",
+  infoLine:"#155e5e",
+
+  shadowCard:"0px 2px 8px rgba(0,0,0,0.32)",
+  shadowSelected:"0px 2px 4px rgba(0,0,0,0.24)",
+  shadowControl:"0px 1px 3px rgba(0,0,0,0.32)",
+  shadowFloating:"0px 8px 24px rgba(0,0,0,0.42)",
+  shadowToast:"0px 4px 12px rgba(0,0,0,0.42)",
+  shadowSheet:"0px -4px 12px rgba(0,0,0,0.42)",
+  surfaceFadeRight:"linear-gradient(90deg, rgba(21,24,28,0), #15181c 72%)",
 };
 
 export const themeTokens = { light: lightTokens, dark: darkTokens };
@@ -44,4 +100,4 @@ export const T = lightTokens;
 export const font = `"Toss Product Sans","Tossface","SF Pro KR","SF Pro Display",-apple-system,BlinkMacSystemFont,"Basier Square","Apple SD Gothic Neo",Roboto,"Noto Sans KR",sans-serif`;
 export const monoFont = `"SF Mono",SFMono-Regular,Menlo,Consolas,monospace`;
 
-export const CS = "0px 2px 8px rgba(0,0,0,0.08)";
+export const CS = lightTokens.shadowCard;
