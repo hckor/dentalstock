@@ -1,4 +1,5 @@
 import { AlertTriangle, CalendarDays, CheckCircle2, ClipboardList } from "lucide-react";
+import { ORDER_ST } from "../../../constants/orderStates";
 import { T } from "../../../constants/colors";
 import { formatMoney as money } from "../../../utils/money";
 import { ActionQueue } from "./ActionQueue";
@@ -12,6 +13,7 @@ export function OwnerHome(props) {
   const highCost = dashboard.surgery.highCost[0];
   const ownerReviewCount = dashboard.orders.ownerReview.length;
   const ownerReviewHoldCount = dashboard.orders.ownerReview.filter(order => order.status === "hold").length;
+  const holdTone = ORDER_ST.hold;
   const costNeedsReview = dashboard.cost.monthDelta > 0 || dashboard.cost.wasteRiskAmount > 0 || dashboard.cost.fastUsageItems.length > 0;
   const ownerRiskCount = [ownerReviewCount > 0, costNeedsReview, prepPending > 0].filter(Boolean).length;
   const summary = ownerReviewCount > 0
@@ -20,8 +22,8 @@ export function OwnerHome(props) {
         title: `원장 승인 요청 ${ownerReviewCount}건 먼저 확인`,
         sub: "매니저가 보류로 넘겼거나 원장 승인 기준에 걸린 발주입니다",
         badge: "결재",
-        color: T.grey700,
-        bg: T.grey50,
+        color: holdTone.text,
+        bg: holdTone.bg,
       }
     : ownerRiskCount > 0
     ? {
@@ -48,8 +50,8 @@ export function OwnerHome(props) {
       sub: `검토 금액 ${money(dashboard.orders.ownerReviewAmount)}${ownerReviewHoldCount > 0 ? ` · 보류 ${ownerReviewHoldCount}건` : ""}`,
       value: countText(ownerReviewCount),
       actionLabel: "승인 검토",
-      color: T.blue500,
-      iconBg: T.blue50,
+      color: holdTone.text,
+      iconBg: holdTone.bg,
       bg: T.white,
       urgent: true,
       onClick: () => setTab(ownerReviewHoldCount > 0 ? "shipping:hold" : "shipping"),
