@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, CheckCircle2, ClipboardList, Users } from "lucide-react";
+import { AlertTriangle, CalendarDays, CheckCircle2, ClipboardList } from "lucide-react";
 import { T } from "../../../constants/colors";
 import { formatMoney as money } from "../../../utils/money";
 import { ActionQueue } from "./ActionQueue";
@@ -7,10 +7,9 @@ import { TodaySurgerySection } from "./TodaySurgerySection";
 import { countText } from "./homeStyles";
 
 export function OwnerHome(props) {
-  const { dashboard, setTab, users = [] } = props;
+  const { dashboard, setTab } = props;
   const prepPending = dashboard.surgery.prepPending.length;
   const highCost = dashboard.surgery.highCost[0];
-  const activeUsers = users.filter(user => user.active !== false).length;
   const ownerReviewCount = dashboard.orders.ownerReview.length;
   const ownerReviewHoldCount = dashboard.orders.ownerReview.filter(order => order.status === "hold").length;
   const costNeedsReview = dashboard.cost.monthDelta > 0 || dashboard.cost.wasteRiskAmount > 0 || dashboard.cost.fastUsageItems.length > 0;
@@ -65,17 +64,6 @@ export function OwnerHome(props) {
       iconBg: prepPending ? T.orange50 : T.blue50,
       urgent: prepPending > 0,
       onClick: () => setTab("admin:surgery"),
-    },
-    {
-      key: "staff",
-      Icon: Users,
-      title: `직원 관리 ${activeUsers}명`,
-      sub: "초대, 권한 변경, 활성 상태를 바로 확인합니다",
-      value: countText(activeUsers, "명"),
-      actionLabel: "직원 관리",
-      color: T.blue500,
-      iconBg: T.blue50,
-      onClick: () => setTab("admin:staff"),
     },
   ].filter(Boolean);
 
