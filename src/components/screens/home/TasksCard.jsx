@@ -30,6 +30,8 @@ export function TasksCard({
   items,
   setTab,
   defaultExpanded = false,
+  showSurgeryTasks = true,
+  showExpiryTasks = true,
 }) {
   const { tokens: T } = useTheme();
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -51,6 +53,7 @@ export function TasksCard({
         subtitle: `발주 승인 대기 · ${priceLabel}`,
         actionLabel: "검토하기",
         actionBg: T.blue500,
+        targetTab: "shipping",
       };
     }) : [];
 
@@ -72,11 +75,12 @@ export function TasksCard({
         subtitle: isDelivered ? `배송완료 · 입고 수량 확인 필요` : needsTracking ? `송장 미등록 · ${carrier}` : `입고 대기 · ${carrier}${trackingNumber}`,
         actionLabel: isDelivered ? "입고확인" : needsTracking ? "송장등록" : "확인하기",
         actionBg: T.blue500,
+        targetTab: "shipping",
       };
     });
 
     const today = todayKey();
-    const surgeryTasks = surgeries
+    const surgeryTasks = showSurgeryTasks ? surgeries
       .filter(surgery => surgery.scheduled_date === today && (!surgery.prep_confirmed || (surgery.prep_confirmed && !surgery.usage_confirmed)))
       .map(surgery => {
         if (surgery.prep_confirmed && !surgery.usage_confirmed) {
@@ -91,6 +95,7 @@ export function TasksCard({
             subtitle: "수술 후 실사용량 확인 필요",
             actionLabel: "확인하기",
             actionBg: T.blue500,
+            targetTab: "home",
           };
         }
         const shortageCount = (surgery.required_items || []).filter(required => {
@@ -109,12 +114,13 @@ export function TasksCard({
           subtitle: `수술 준비 부족 · ${shortageCount}개 품목 확인`,
           actionLabel: "준비하기",
           actionBg: T.blue500,
+          targetTab: "home",
         };
       })
-      .filter(Boolean);
+      .filter(Boolean) : [];
 
     const now = new Date(`${today}T00:00:00`);
-    const expiryTasks = items
+    const expiryTasks = showExpiryTasks ? items
       .filter(item => item.expiry)
       .map(item => {
         const expiryDate = new Date(`${item.expiry}T00:00:00`);
@@ -135,10 +141,11 @@ export function TasksCard({
         subtitle: `유통기한 ${daysLeft}일 남음 · ${item.expiry}`,
         actionLabel: "확인하기",
         actionBg: T.blue500,
-      }));
+        targetTab: "inventory",
+      })) : [];
 
     return [...approvals, ...shippings, ...surgeryTasks, ...expiryTasks].sort((a, b) => (a.priority || 70) - (b.priority || 70));
-  }, [T, approvalOrders, canApprove, items, shippingOrders, surgeries]);
+  }, [T, approvalOrders, canApprove, items, shippingOrders, showExpiryTasks, showSurgeryTasks, surgeries]);
 
   if (workItems.length === 0) return null;
 
@@ -227,7 +234,7 @@ export function TasksCard({
             <div key={task.id}>
               {i > 0 && <Divider />}
               <button
-                onClick={() => setTab("shipping")}
+                onClick={() => setTab(task.targetTab || "shipping")}
                 style={{
                   width: "100%",
                   display: "flex",

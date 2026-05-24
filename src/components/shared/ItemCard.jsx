@@ -11,7 +11,7 @@ const twoLineText = {
   wordBreak: "keep-all",
 };
 
-export function ItemCard({ item, isOrdered, ao, onCardClick }) {
+export function ItemCard({ item, isOrdered, ao, insights = [], onCardClick }) {
   const st   = getStatus(item);
   const days = daysUntil(item.expiry);
   const isOk = st === "ok";
@@ -48,6 +48,11 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
           {isOrdered && (
             <span style={{ flexShrink: 0, fontSize: 13, lineHeight: "20px", fontWeight: 700, color: T.blue500, background: T.blue50, padding: "3px 7px", borderRadius: 12 }}>
               입고대기
+            </span>
+          )}
+          {item.is_temporary && item.temporary_status !== "resolved" && (
+            <span style={{ flexShrink: 0, fontSize: 13, lineHeight: "20px", fontWeight: 700, color: T.orange500, background: T.orange50, padding: "3px 7px", borderRadius: 12 }}>
+              정리필요
             </span>
           )}
           {!ao && !isOk && (
@@ -92,6 +97,31 @@ export function ItemCard({ item, isOrdered, ao, onCardClick }) {
             <span style={{ fontSize: 12, color: days <= 7 ? T.red500 : T.orange500, fontWeight: 600 }}>
               유통기한 {days <= 0 ? "만료" : `${days}일 후`} ({item.expiry})
             </span>
+          </div>
+        )}
+
+        {insights.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+            {insights.map(insight => (
+              <span
+                key={insight.label}
+                style={{
+                  maxWidth: "100%",
+                  borderRadius: 9999,
+                  background: insight.bg || T.grey100,
+                  color: insight.color || T.grey600,
+                  padding: "5px 8px",
+                  fontSize: 12,
+                  lineHeight: "16px",
+                  fontWeight: 700,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {insight.label}
+              </span>
+            ))}
           </div>
         )}
       </div>

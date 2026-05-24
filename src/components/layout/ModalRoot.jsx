@@ -17,6 +17,8 @@ export function ModalRoot({
   canApprove,
   editItemsState, setEditItemsState, openModal,
 }) {
+  const bulkOrderContext = selItem?.type === "bulk_order_context" ? selItem : null;
+
   return (
     <>
       {modal && (
@@ -31,7 +33,16 @@ export function ModalRoot({
             <OrderRequestSheet item={selItem} currentUser={currentUser} onSubmit={submitOrder} onClose={()=>setModal(null)}/>
           )}
           {modal==="bulk_order" && (
-            <BulkOrderRequestSheet items={items} orders={orders} onSubmit={submitBulkOrders} onClose={()=>setModal(null)}/>
+            <BulkOrderRequestSheet
+              items={items}
+              orders={orders}
+              onSubmit={submitBulkOrders}
+              onClose={()=>setModal(null)}
+              initialRows={bulkOrderContext?.rows}
+              initialNote={bulkOrderContext?.note}
+              title={bulkOrderContext?.title}
+              description={bulkOrderContext?.description}
+            />
           )}
           {modal==="confirm_receipt" && selItem && canApprove && (
             <ReceiptConfirmSheet item={selItem} orders={orders} onConfirm={confirmReceipt} onClose={()=>setModal(null)}/>
@@ -40,7 +51,7 @@ export function ModalRoot({
             <BulkReceiptConfirmSheet orders={selItem.orders} items={items} onConfirm={confirmReceipts} onClose={()=>setModal(null)}/>
           )}
           {modal==="add_item" && (
-            <AddItemModal setItems={setItems} onClose={()=>setModal(null)} showToast={showToast}/>
+            <AddItemModal items={items} setItems={setItems} currentUser={currentUser} onClose={()=>setModal(null)} showToast={showToast}/>
           )}
           {modal==="edit_item" && selItem && (
             <EditItemModal item={selItem} setItems={setItems} onClose={()=>setModal(null)} showToast={showToast}/>
