@@ -29,7 +29,7 @@ export function LoginSelect({users, onSelect}) {
           );
         })}
       </div>
-      <p style={{textAlign:"center", fontSize: 16, color:T.grey400, padding:"0 0 28px"}}>데모 PIN: 원장 1234 · 매니저 1111 · 위생사 0000</p>
+      <p style={{textAlign:"center", fontSize: 16, color:T.grey400, padding:"0 0 28px"}}>데모 PIN: 원장 1234 · 매니저 1111 · 위생사 0000 · 스태프 2222</p>
     </div>
   );
 }
