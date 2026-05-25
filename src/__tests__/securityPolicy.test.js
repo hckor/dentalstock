@@ -31,7 +31,7 @@ describe('security policy', () => {
 
 describe('supabase security migrations', () => {
   const initialMigration = readFileSync('supabase/migrations/20260520_initial_dentalstock_schema.sql', 'utf8');
-  const hardeningMigration = readFileSync('supabase/migrations/20260521_security_hardening.sql', 'utf8');
+  const hardeningMigration = readFileSync('supabase/migrations/20260523_security_hardening.sql', 'utf8');
   const createPolicies = initialMigration.match(/create policy[\s\S]*?;/gi) || [];
 
   function policiesFor(tableName) {

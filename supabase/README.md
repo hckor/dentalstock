@@ -15,8 +15,9 @@ Then run all later migration files in filename order.
 Current required order:
 
 1. `20260520_initial_dentalstock_schema.sql`
-2. `20260521_security_hardening.sql`
+2. `20260521_app_dental_material_catalog.sql`
 3. `20260522_dental_material_catalog.sql`
+4. `20260523_security_hardening.sql`
 
 `20260520_initial_dentalstock_schema.sql` is the consolidated baseline. Older
 20260520 split files are archived in `supabase/migrations_archive/20260520/`
