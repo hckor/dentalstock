@@ -4,6 +4,7 @@ export function buildFallbackVendorSnapshot(order) {
     vendor_name: order.vendor_name || "거래처 미정",
     vendor_price: order.vendor_price || null,
     vendor_sku: order.vendor_sku || "",
+    vendor_url: order.vendor_url || "",
     vendor_selection: order.vendor_selection || "unassigned",
   };
 }

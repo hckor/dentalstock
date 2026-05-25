@@ -101,6 +101,7 @@ export function resolveOrderVendorForQty(item, settings, orderQty = 1) {
       vendor_name: "거래처 미정",
       vendor_price: null,
       vendor_sku: "",
+      vendor_url: "",
       vendor_selection: "unassigned",
     };
   }
@@ -110,6 +111,7 @@ export function resolveOrderVendorForQty(item, settings, orderQty = 1) {
     vendor_name: fallbackVendor.name,
     vendor_price: Number(item?.price) || null,
     vendor_sku: "",
+    vendor_url: "",
     vendor_selection: "fallback",
   };
 }

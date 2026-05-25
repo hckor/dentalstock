@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { can } from "../../constants/permissions";
 import { useInventory } from "../../contexts/InventoryContext";
 import { useOrders } from "../../contexts/OrderContext";
+import { buildVendorProductLinkGroups, getVendorProductLinkUrls } from "../../utils/vendorProductLinks";
 import {
   getMonthlyProjectedAmounts,
   getOrderApprovalGate,
@@ -12,6 +13,7 @@ import { PendingDecisionSummary } from "./ShippingTrackingScreen/ShippingTrackin
 import { ShippingTrackingEmptyState } from "./ShippingTrackingScreen/ShippingTrackingEmptyState";
 import { ShippingTrackingOrderList } from "./ShippingTrackingScreen/ShippingTrackingOrderList";
 import { ShippingTrackingTabs } from "./ShippingTrackingScreen/ShippingTrackingTabs";
+import { VendorProductLinksCard } from "./ShippingTrackingScreen/VendorProductLinksCard";
 import {
   groupCompletedOrdersByDate,
   groupInTransitOrders,
@@ -52,6 +54,10 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
   const rejectedTab = tabDefs.find(tab => tab.id === "rejected");
 
   const currentOrders = groupedOrders[trackingTab];
+  const vendorProductLinkGroups = useMemo(
+    () => trackingTab === "in_transit" ? buildVendorProductLinkGroups(currentOrders, allItems) : [],
+    [allItems, currentOrders, trackingTab]
+  );
   const currentShipmentGroups = useMemo(
     () => trackingTab === "in_transit" ? groupInTransitOrders(currentOrders) : [],
     [currentOrders, trackingTab]
@@ -111,6 +117,18 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
     approveOrders(selectedPendingIds, "일괄 승인");
     setDeselectedPendingIds([]);
     setTrackingTab("in_transit");
+  };
+
+  const handleOpenVendorProductLinkGroup = (group) => {
+    const urls = getVendorProductLinkUrls(group);
+    if (!urls.length) {
+      showToast("품목 편집에서 상품 URL을 먼저 등록해 주세요");
+      return;
+    }
+    urls.forEach(url => {
+      window.open(url, "_blank", "noopener,noreferrer");
+    });
+    showToast(`${group.vendorName} 상품 페이지 ${urls.length}개를 열었습니다.`);
   };
 
   const handlePriceCheck = async (order) => {
@@ -237,6 +255,10 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
           onToggleAll={toggleAllPending}
           onApprove={handleBulkApprove}
         />
+      )}
+
+      {trackingTab === "in_transit" && canApprove && currentOrders.length > 0 && (
+        <VendorProductLinksCard groups={vendorProductLinkGroups} onOpenGroup={handleOpenVendorProductLinkGroup} />
       )}
 
       {/* ── 주문 목록 ── */}
