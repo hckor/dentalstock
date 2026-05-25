@@ -4,8 +4,10 @@ import { useInventory } from "../../contexts/InventoryContext";
 import { useOrders } from "../../contexts/OrderContext";
 import { buildVendorProductLinkGroups, getVendorProductLinkUrls } from "../../utils/vendorProductLinks";
 import {
+  getOrderActionAvailability,
+} from "../../utils/orderApproval";
+import {
   getMonthlyProjectedAmounts,
-  getOrderApprovalGate,
   getOrderDuplicateInfo,
 } from "../../utils/orderReview";
 import { BulkApprovalCard } from "./ShippingTrackingScreen/BulkApprovalCard";
@@ -50,21 +52,24 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
     {id: "rejected", label: "반려", count: groupedOrders.rejected.length},
   ];
   const primaryTabDefs = tabDefs.filter(tab => !["hold", "rejected"].includes(tab.id));
-  const holdTab = tabDefs.find(tab => tab.id === "hold");
-  const rejectedTab = tabDefs.find(tab => tab.id === "rejected");
+  const holdTab = tabDefs.find(tab => tab.id === "hold" && tab.count > 0);
+  const rejectedTab = tabDefs.find(tab => tab.id === "rejected" && tab.count > 0);
+  const activeTrackingTab = ["hold", "rejected"].includes(trackingTab) && groupedOrders[trackingTab].length === 0
+    ? "auto_wait"
+    : trackingTab;
 
-  const currentOrders = groupedOrders[trackingTab];
+  const currentOrders = groupedOrders[activeTrackingTab];
   const vendorProductLinkGroups = useMemo(
-    () => trackingTab === "in_transit" ? buildVendorProductLinkGroups(currentOrders, allItems) : [],
-    [allItems, currentOrders, trackingTab]
+    () => activeTrackingTab === "in_transit" ? buildVendorProductLinkGroups(currentOrders, allItems) : [],
+    [activeTrackingTab, allItems, currentOrders]
   );
   const currentShipmentGroups = useMemo(
-    () => trackingTab === "in_transit" ? groupInTransitOrders(currentOrders) : [],
-    [currentOrders, trackingTab]
+    () => activeTrackingTab === "in_transit" ? groupInTransitOrders(currentOrders) : [],
+    [activeTrackingTab, currentOrders]
   );
   const completedDateGroups = useMemo(
-    () => trackingTab === "completed" ? groupCompletedOrdersByDate(currentOrders) : [],
-    [currentOrders, trackingTab]
+    () => activeTrackingTab === "completed" ? groupCompletedOrdersByDate(currentOrders) : [],
+    [activeTrackingTab, currentOrders]
   );
   const duplicateInfoByOrderId = useMemo(() => {
     return Object.fromEntries(orders.map(order => [order.id, getOrderDuplicateInfo(order, orders)]));
@@ -73,15 +78,23 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
     () => getMonthlyProjectedAmounts(visibleOrders, allItems),
     [allItems, visibleOrders]
   );
-  const approvalGateByOrderId = useMemo(() => {
+  const orderActionAvailabilityByOrderId = useMemo(() => {
     return Object.fromEntries(visibleOrders.map(order => {
       const item = allItems.find(target => target.id === order.item_id);
-      const gate = item
-        ? getOrderApprovalGate(order, item, duplicateInfoByOrderId[order.id], monthlyProjectedAmountByOrderId[order.id])
-        : { requiresOwnerApproval: false, reasons: [] };
-      return [order.id, gate];
+      return [order.id, getOrderActionAvailability({
+        order,
+        item,
+        orders: visibleOrders,
+        items: allItems,
+        currentUser,
+        duplicateInfo: duplicateInfoByOrderId[order.id],
+        monthlyProjectedAmount: monthlyProjectedAmountByOrderId[order.id],
+      })];
     }));
-  }, [allItems, duplicateInfoByOrderId, monthlyProjectedAmountByOrderId, visibleOrders]);
+  }, [allItems, currentUser, duplicateInfoByOrderId, monthlyProjectedAmountByOrderId, visibleOrders]);
+  const approvalGateByOrderId = useMemo(() => {
+    return Object.fromEntries(Object.entries(orderActionAvailabilityByOrderId).map(([orderId, availability]) => [orderId, availability.gate]));
+  }, [orderActionAvailabilityByOrderId]);
   const pendingIds = useMemo(() => groupedOrders.auto_wait.map(order => order.id), [groupedOrders.auto_wait]);
   const selectedPendingIds = useMemo(
     () => pendingIds.filter(id => !deselectedPendingIds.includes(id)),
@@ -109,9 +122,9 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
       showToast("승인할 발주 요청을 선택해 주세요");
       return;
     }
-    const ownerReviewCount = selectedPendingIds.filter(id => approvalGateByOrderId[id]?.requiresOwnerApproval).length;
-    if (!can(currentUser.role, "orders_approve_owner_review") && ownerReviewCount > 0) {
-      showToast(`${ownerReviewCount}건은 원장 승인 필요입니다. 보류로 넘겨주세요`);
+    const blockedCount = selectedPendingIds.filter(id => !orderActionAvailabilityByOrderId[id]?.approve?.allowed).length;
+    if (blockedCount > 0) {
+      showToast(`${blockedCount}건은 원장 승인 또는 추가 권한이 필요합니다. 보류로 넘겨주세요`);
       return;
     }
     approveOrders(selectedPendingIds, "일괄 승인");
@@ -161,12 +174,9 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
 
   const handleActionClick = (order, actionType) => {
     if (actionType === "approve") {
-      if (!can(currentUser.role, "orders_approve_standard")) {
-        showToast("승인 권한이 없습니다");
-        return;
-      }
-      if (!can(currentUser.role, "orders_approve_owner_review") && approvalGateByOrderId[order.id]?.requiresOwnerApproval) {
-        showToast("원장 승인 필요 건입니다. 보류로 넘겨주세요");
+      const availability = orderActionAvailabilityByOrderId[order.id];
+      if (!availability?.approve?.allowed) {
+        showToast(availability?.approve?.requiresOwnerApproval ? "원장 승인 필요 건입니다. 보류로 넘겨주세요" : "승인 권한이 없습니다");
         return;
       }
       approveOrder(order.id, "");
@@ -240,15 +250,15 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
         primaryTabs={primaryTabDefs}
         holdTab={holdTab}
         rejectedTab={rejectedTab}
-        activeTab={trackingTab}
+        activeTab={activeTrackingTab}
         onChange={setTrackingTab}
       />
 
-      {trackingTab === "auto_wait" && canApprove && currentOrders.length > 0 && (
+      {activeTrackingTab === "auto_wait" && canApprove && currentOrders.length > 0 && (
         <PendingDecisionSummary orders={currentOrders} allItems={allItems} duplicateInfoByOrderId={duplicateInfoByOrderId} />
       )}
 
-      {trackingTab === "auto_wait" && canApprove && currentOrders.length > 0 && (
+      {activeTrackingTab === "auto_wait" && canApprove && currentOrders.length > 0 && (
         <BulkApprovalCard
           selectedCount={selectedPendingCount}
           totalCount={pendingIds.length}
@@ -257,16 +267,12 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
         />
       )}
 
-      {trackingTab === "in_transit" && canApprove && currentOrders.length > 0 && (
-        <VendorProductLinksCard groups={vendorProductLinkGroups} onOpenGroup={handleOpenVendorProductLinkGroup} />
-      )}
-
       {/* ── 주문 목록 ── */}
       {currentOrders.length === 0 ? (
-        <ShippingTrackingEmptyState trackingTab={trackingTab} canApprove={canApprove} />
+        <ShippingTrackingEmptyState trackingTab={activeTrackingTab} canApprove={canApprove} />
       ) : (
         <ShippingTrackingOrderList
-          trackingTab={trackingTab}
+          trackingTab={activeTrackingTab}
           currentOrders={currentOrders}
           completedDateGroups={completedDateGroups}
           currentShipmentGroups={currentShipmentGroups}
@@ -276,12 +282,17 @@ export function ShippingTrackingScreen({currentUser, canApprove, initialTab = "a
           priceCheckingIds={priceCheckingIds}
           duplicateInfoByOrderId={duplicateInfoByOrderId}
           monthlyProjectedAmountByOrderId={monthlyProjectedAmountByOrderId}
+          orderActionAvailabilityByOrderId={orderActionAvailabilityByOrderId}
           currentUser={currentUser}
           onActionClick={handleActionClick}
           onShipmentGroupActionClick={handleShipmentGroupActionClick}
           onSelectChange={togglePendingSelection}
           onPriceCheck={handlePriceCheck}
         />
+      )}
+
+      {activeTrackingTab === "in_transit" && canApprove && currentOrders.length > 0 && (
+        <VendorProductLinksCard groups={vendorProductLinkGroups} onOpenGroup={handleOpenVendorProductLinkGroup} />
       )}
     </div>
   );

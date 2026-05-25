@@ -63,6 +63,16 @@ export const supabaseStaffApi = {
     return mapSupabaseProfile(data);
   },
 
+  async deleteStaff(profileId) {
+    const { data, error } = await getSupabaseClient()
+      .rpc("delete_staff_profile", {
+        p_profile_id: profileId,
+      });
+
+    if (error) throw error;
+    return data;
+  },
+
   async inviteStaff({ email, name, role }) {
     const { data, error } = await getSupabaseClient()
       .functions

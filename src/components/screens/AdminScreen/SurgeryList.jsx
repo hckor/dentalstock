@@ -5,7 +5,6 @@ import { Card } from "../../shared/Card";
 import { Chip } from "../../shared/Chip";
 import { Divider } from "../../shared/Divider";
 import { SecTitle } from "../../shared/SecTitle";
-import { buildSurgeryGuidance } from "./SurgeryAdminTab.utils";
 
 export function SurgeryList({ sortedSurgeries, surgeryInsights, openItemsEditor, updateSurgeryItems, onRemoveSurgery }) {
   return (
@@ -30,7 +29,6 @@ export function SurgeryList({ sortedSurgeries, surgeryInsights, openItemsEditor,
 
 function SurgeryRow({ surgery, summary, openItemsEditor, updateSurgeryItems, onRemoveSurgery }) {
   const statusTone = summary.shortageCount ? T.red500 : summary.statusColor;
-  const guidance = buildSurgeryGuidance(summary);
   const usageText = summary.hasActual
     ? `실사용 ${formatMoney(summary.actualCost)} · ${summary.deltaCost === 0 ? "예상 동일" : `${summary.deltaCost > 0 ? "초과" : "절감"} ${formatMoney(Math.abs(summary.deltaCost))}`}`
     : summary.shortageCount
@@ -38,36 +36,45 @@ function SurgeryRow({ surgery, summary, openItemsEditor, updateSurgeryItems, onR
       : "준비 리스크 없음";
 
   return (
-    <div style={{display:"flex",alignItems:"center",gap:12,padding:"18px 20px"}}>
-      <div style={{width:36,height:36,borderRadius:10,background:surgery.prep_confirmed?T.green50:T.blue50,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-        {surgery.usage_confirmed?<PackageCheck size={20} color={T.green500}/>:surgery.prep_confirmed?<ClipboardCheck size={20} color={T.orange500}/>:<CalendarDays size={20} color={T.blue500}/>}
+    <div style={{padding:"16px 16px"}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+        <div style={{width:36,height:36,borderRadius:10,background:surgery.prep_confirmed?T.green50:T.blue50,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          {surgery.usage_confirmed?<PackageCheck size={20} color={T.green500}/>:surgery.prep_confirmed?<ClipboardCheck size={20} color={T.orange500}/>:<CalendarDays size={20} color={T.blue500}/>}
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <p style={{margin:0,fontSize:16,lineHeight:"22px",fontWeight:800,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{surgery.title}</p>
+          <p style={{margin:"3px 0 0",fontSize:13,lineHeight:"18px",color:T.grey500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            {surgery.scheduled_date} {surgery.scheduled_time}{surgery.patient ? ` · ${surgery.patient}` : ""}
+          </p>
+          <p style={{margin:"5px 0 0",fontSize:13,lineHeight:"18px",fontWeight:800,color:statusTone,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            품목 {surgery.required_items.length}개 · 예상 {formatMoney(summary.expectedCost)}
+          </p>
+          {(summary.shortageCount > 0 || summary.hasActual || summary.unpricedCount > 0) && (
+            <p style={{margin:"2px 0 0",fontSize:12,lineHeight:"17px",fontWeight:700,color:statusTone,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {usageText}{summary.unpricedCount ? ` · 가격 미등록 ${summary.unpricedCount}종` : ""}
+            </p>
+          )}
+        </div>
       </div>
-      <div style={{flex:1,minWidth:0}}>
-        <p style={{margin:0,fontSize: 16,fontWeight:600,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{surgery.title}</p>
-        <p style={{margin:"2px 0 0",fontSize: 16,color:T.grey500}}>{surgery.scheduled_date} {surgery.scheduled_time} · {surgery.patient} · 품목 {surgery.required_items.length}개</p>
-        <p style={{margin:"4px 0 0",fontSize: 13,lineHeight:"18px",fontWeight:700,color:statusTone,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-          예상 {formatMoney(summary.expectedCost)} · {usageText}{summary.unpricedCount ? ` · 가격 미등록 ${summary.unpricedCount}종` : ""}
-        </p>
-        <p style={{margin:"3px 0 0",fontSize: 13,lineHeight:"18px",fontWeight:700,color:guidance.tone,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-          {guidance.prefix}: {guidance.reason} · 다음: {guidance.action}
-        </p>
-      </div>
-      <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginTop:11,paddingLeft:46}}>
         <Chip label={summary.statusLabel} color={summary.statusColor} bg={summary.statusBg} border={T.grey200}/>
-        {!surgery.prep_confirmed&&(
+        <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+          {!surgery.prep_confirmed&&(
+            <button
+              aria-label={`${surgery.title} 품목 편집`}
+              onClick={()=>openItemsEditor(surgery.required_items, (newItems)=>updateSurgeryItems(surgery.id, newItems), `${surgery.scheduled_date} ${surgery.scheduled_time} · ${surgery.title}`)}
+              title="품목 편집"
+              style={{border:"none",background:T.grey100,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
+            ><Edit2 size={18} color={T.grey700}/></button>
+          )}
           <button
-            aria-label={`${surgery.title} 품목 편집`}
-            onClick={()=>openItemsEditor(surgery.required_items, (newItems)=>updateSurgeryItems(surgery.id, newItems), `${surgery.scheduled_date} ${surgery.scheduled_time} · ${surgery.title}`)}
-            title="품목 편집"
-            style={{border:"none",background:T.grey100,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
-          ><Edit2 size={18} color={T.grey700}/></button>
-        )}
-        <button
-          aria-label={`${surgery.title} 삭제`}
-          onClick={()=>onRemoveSurgery(surgery)}
-          title="수술 삭제"
-          style={{border:"none",background:T.red50,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
-        ><Trash2 size={16} color={T.red500}/></button>
+            aria-label={`${surgery.title} 삭제`}
+            onClick={()=>onRemoveSurgery(surgery)}
+            title="수술 삭제"
+            style={{border:"none",background:T.red50,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
+          ><Trash2 size={16} color={T.red500}/></button>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronRight, Coins, FileText, Navigation, Package, RefreshCw, TrendingDown } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronRight, Coins, FileText, Navigation, Package, RefreshCw } from "lucide-react";
 import { Card } from "../../shared/Card";
-import { T, font, monoFont } from "../../../constants/colors";
+import { T, font } from "../../../constants/colors";
 import { compactMoney as formatCompactCurrency } from "../../../utils/money";
 import {
   getDuplicatePendingCount,
@@ -65,29 +65,35 @@ function getShippingDelaySignal(order) {
 export function PendingDecisionSummary({ orders, allItems, duplicateInfoByOrderId }) {
   const summary = getPendingSummary(orders, allItems);
   const duplicateCount = getDuplicatePendingCount(orders, duplicateInfoByOrderId);
-  const cards = [
-    { label: "승인 대기 총액", value: formatCompactCurrency(summary.amount), sub: `${orders.length}건 검토`, Icon: Coins, color: T.grey900, bg: T.white },
-    { label: "재고 위험", value: `${summary.stockRisk}건`, sub: "최소수량 미만", Icon: AlertTriangle, color: summary.stockRisk ? T.red500 : T.green500, bg: summary.stockRisk ? T.red50 : T.green50 },
-    { label: "중복 검토", value: `${duplicateCount}건`, sub: "진행중/대기 중복", Icon: AlertTriangle, color: duplicateCount ? T.orange500 : T.green500, bg: duplicateCount ? T.orange50 : T.green50 },
-    { label: "절감 가능", value: formatCompactCurrency(summary.savings), sub: "후보가 기준", Icon: TrendingDown, color: T.green500, bg: T.green50 },
-  ];
+  const signals = [
+    summary.stockRisk > 0 && { label: `재고 위험 ${summary.stockRisk}건`, color: T.red500, bg: T.red50 },
+    duplicateCount > 0 && { label: `중복 검토 ${duplicateCount}건`, color: T.orange500, bg: T.orange50 },
+    summary.stockRisk === 0 && duplicateCount === 0 && { label: "즉시 검토 가능", color: T.green500, bg: T.green50 },
+  ].filter(Boolean);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))", gap: 8, marginBottom: 12 }}>
-      {cards.map(card => {
-        const Icon = card.Icon;
-        return (
-          <Card key={card.label} style={{ padding: "12px 10px", background: card.bg }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 6 }}>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: T.grey500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.label}</p>
-              <Icon size={15} color={card.color} style={{ flexShrink: 0 }} />
-            </div>
-            <p style={{ margin: 0, fontSize: 20, lineHeight: "25px", fontWeight: 800, color: card.color, fontFamily: monoFont, fontVariantNumeric: "tabular-nums", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.value}</p>
-            <p style={{ margin: "3px 0 0", fontSize: 11, lineHeight: "15px", color: T.grey500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.sub}</p>
-          </Card>
-        );
-      })}
-    </div>
+    <Card style={{ padding: 14, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ width: 38, height: 38, borderRadius: 12, background: T.primaryBg, color: T.primary, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Coins size={19} />
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: "22px", fontWeight: 900, color: T.grey900 }}>
+            승인 판단 {orders.length}건
+          </p>
+          <p style={{ margin: "3px 0 0", fontSize: 13, lineHeight: "18px", color: T.grey500 }}>
+            총 {formatCompactCurrency(summary.amount)} · 상세 근거는 각 요청에서 확인
+          </p>
+        </div>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+        {signals.map(signal => (
+          <span key={signal.label} style={{ borderRadius: 9999, padding: "6px 9px", background: signal.bg, color: signal.color, fontSize: 12, lineHeight: "16px", fontWeight: 900 }}>
+            {signal.label}
+          </span>
+        ))}
+      </div>
+    </Card>
   );
 }
 

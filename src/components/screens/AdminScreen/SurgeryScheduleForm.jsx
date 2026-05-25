@@ -4,7 +4,6 @@ import { SURGERY_PRESETS } from "../../../constants/surgeryPresets";
 import { Card } from "../../shared/Card";
 import { Inp } from "../../shared/Inp";
 import { SecTitle } from "../../shared/SecTitle";
-import { TemplateChecklistGroup } from "./SurgeryAdminTab.components";
 
 const compactDateTimeInputStyle = {
   height: 46,
@@ -45,15 +44,15 @@ export function SurgeryScheduleForm({
             <button key={id} onClick={()=>{setType(id); setTitle(p.label);}} style={{padding:"14px 0",borderRadius:9999,border:"none",background:type===id?T.blue500:T.grey100,color:type===id?T.white:T.grey700,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font}}>{p.label}</button>
           ))}
         </div>
-        <div style={{border:`1px solid ${T.grey100}`,borderRadius:14,padding:14,marginBottom:14,background:T.white}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:11}}>
-            <ListChecks size={18} color={T.blue500}/>
-            <p style={{margin:0,fontSize:15,lineHeight:"21px",fontWeight:800,color:T.grey900}}>{preset.label} 준비 체크리스트 템플릿</p>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(142px, 1fr))",gap:8}}>
-            {templateGroups.map(group => <TemplateChecklistGroup key={group.label} group={group}/>)}
-          </div>
-        </div>
+        <TemplateSummaryPanel
+          preset={preset}
+          templateGroups={templateGroups}
+          draftCustomized={draftCustomized}
+          draftItems={draftItems}
+          items={items}
+          onEditDraft={onEditDraft}
+          onResetDraft={onResetDraft}
+        />
         <SurgeryTextField label="수술명" value={title} onChange={setTitle} placeholder="예: 오전 임플란트 수술"/>
         <SurgeryTextField label="환자명" value={patient} onChange={setPatient} placeholder="예: 홍길동"/>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(132px, 1fr))",gap:10,marginBottom:10}}>
@@ -67,10 +66,71 @@ export function SurgeryScheduleForm({
           </div>
         </div>
         <SurgeryTextField label="메모" value={note} onChange={setNote} placeholder="예: 픽스처 사이즈 확인" bottom={14}/>
-        <DraftItemsPanel draftCustomized={draftCustomized} draftItems={draftItems} items={items} onEditDraft={onEditDraft} onResetDraft={onResetDraft}/>
         <button onClick={onSubmit} style={{width:"100%",padding:"18px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font}}>수술 일정 등록</button>
       </Card>
     </>
+  );
+}
+
+function TemplateSummaryPanel({ preset, templateGroups, draftCustomized, draftItems, items, onEditDraft, onResetDraft }) {
+  const groupCount = templateGroups.length;
+  const itemCount = draftItems.length;
+  const itemMap = new Map(items.map(item => [item.id, item]));
+  const templateItemMap = new Map(templateGroups.flatMap(group => group.items.map(item => [item.id, item])));
+  const draftRows = draftItems.map(req => {
+    const item = itemMap.get(req.item_id);
+    const templateItem = templateItemMap.get(req.item_id);
+    const requiredQty = Number(req.qty) || 0;
+    const currentQty = Number(item?.current_qty) || 0;
+    const missing = !item;
+    const shortage = Boolean(item) && currentQty < requiredQty;
+    const name = item?.name || templateItem?.name || `품목 ${req.item_id}`;
+    return {
+      item,
+      missing,
+      shortage,
+      name,
+      statusName: missing ? `${name}(삭제/매칭 실패)` : name,
+    };
+  });
+  const issueRows = draftRows.filter(row => row.missing || row.shortage);
+  const missingCount = issueRows.filter(row => row.missing).length;
+  const previewItems = (issueRows.length > 0 ? issueRows : draftRows).slice(0, 2).map(row => row.statusName).filter(Boolean);
+  const previewMoreCount = Math.max(0, (issueRows.length > 0 ? issueRows.length : draftRows.length) - previewItems.length);
+  const hasIssues = issueRows.length > 0;
+  const badgeText = hasIssues ? missingCount > 0 ? `확인 ${issueRows.length}` : `부족 ${issueRows.length}` : "재고 OK";
+  const badgeBg = hasIssues ? missingCount > 0 ? T.red50 : T.orange50 : T.white;
+  const badgeColor = hasIssues ? missingCount > 0 ? T.red500 : T.orange500 : T.grey600;
+  const badgeBorder = hasIssues ? missingCount > 0 ? T.dangerLine : T.warningLine : T.grey200;
+
+  return (
+    <div style={{border:`1px solid ${T.grey100}`,borderRadius:14,padding:"12px 13px",marginBottom:14,background:T.grey50}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{width:36,height:36,borderRadius:12,background:T.blue50,color:T.blue500,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <ListChecks size={18} color="currentColor"/>
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <p style={{margin:0,fontSize:15,lineHeight:"21px",fontWeight:900,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            {preset.label} 템플릿 적용
+          </p>
+          <p style={{margin:"2px 0 0",fontSize:13,lineHeight:"18px",color:hasIssues?badgeColor:T.grey500,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden",wordBreak:"keep-all"}}>
+            {groupCount}묶음 · {itemCount}품목{previewItems.length ? ` · ${hasIssues ? "확인 " : ""}${previewItems.join(", ")}${previewMoreCount > 0 ? ` 외 ${previewMoreCount}종` : ""}` : ""}
+          </p>
+        </div>
+        <span style={{flexShrink:0,borderRadius:9999,padding:"5px 8px",background:badgeBg,color:badgeColor,fontSize:12,lineHeight:"16px",fontWeight:800,border:`1px solid ${badgeBorder}`}}>
+          {badgeText}
+        </span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginTop:10}}>
+        <p style={{margin:0,fontSize:12,lineHeight:"17px",color:T.grey500}}>
+          {draftCustomized ? "사용자 편집된 준비 품목입니다." : "기본 템플릿을 사용합니다."}
+        </p>
+        <div style={{display:"flex",gap:8,flexShrink:0}}>
+          {draftCustomized&&<button type="button" onClick={onResetDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:T.grey500,fontFamily:font,fontWeight:800,padding:"4px 0"}}>기본값</button>}
+          <button type="button" onClick={onEditDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:T.blue500,fontFamily:font,fontWeight:900,display:"flex",alignItems:"center",gap:3,padding:"4px 0"}}><Edit2 size={14}/>품목 편집</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -80,31 +140,5 @@ function SurgeryTextField({ label, value, onChange, placeholder, bottom = 10 }) 
       <p style={{margin:"0 0 6px",fontSize: 16,fontWeight:600,color:T.grey700}}>{label}</p>
       <Inp value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{marginBottom:bottom}}/>
     </>
-  );
-}
-
-function DraftItemsPanel({ draftCustomized, draftItems, items, onEditDraft, onResetDraft }) {
-  return (
-    <div style={{background:T.grey50,borderRadius:12,padding:"14px 16px",marginBottom:14}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,gap:8}}>
-        <p style={{margin:0,fontSize: 16,fontWeight:700,color:T.grey700}}>예상 준비 품목{draftCustomized&&<span style={{marginLeft:6,fontSize: 16,fontWeight:600,color:T.blue500}}>· 사용자 편집</span>}</p>
-        <div style={{display:"flex",gap:8}}>
-          {draftCustomized&&<button onClick={onResetDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize: 16,color:T.grey500,fontFamily:font,fontWeight:600}}>기본값</button>}
-          <button onClick={onEditDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize: 16,color:T.blue500,fontFamily:font,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><Edit2 size={16}/>편집</button>
-        </div>
-      </div>
-      {draftItems.length===0 ? (
-        <p style={{margin:0,padding:"6px 0",fontSize: 16,color:T.grey500}}>품목이 비어 있어요. "편집"으로 추가하세요.</p>
-      ) : draftItems.map((req,i)=>{
-        const item = items.find(it=>it.id===req.item_id);
-        const enough = item && item.current_qty>=req.qty;
-        return (
-          <div key={req.item_id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,padding:i===0?"0 0 7px":i===draftItems.length-1?"7px 0 0":"7px 0",borderTop:i===0?"none":`1px solid ${T.grey100}`}}>
-            <span style={{fontSize: 16,color:T.grey700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item?.name||"삭제된 품목"}</span>
-            <span style={{fontSize: 16,fontWeight:700,color:enough?T.green500:T.red500,whiteSpace:"nowrap"}}>{req.qty}{item?.unit||""}</span>
-          </div>
-        );
-      })}
-    </div>
   );
 }

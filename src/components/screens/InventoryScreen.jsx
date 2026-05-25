@@ -3,8 +3,7 @@ import { T } from "../../constants/colors";
 import { ORDER_ST } from "../../constants/orderStates";
 import { useInventory } from "../../contexts/InventoryContext";
 import { useOrders } from "../../contexts/OrderContext";
-import { getActiveOrder, getStatus, todayKey } from "../../utils/helpers";
-import { ItemCard } from "../shared/ItemCard";
+import { catName, daysUntil, getActiveOrder, getStatus, todayKey } from "../../utils/helpers";
 import { InventoryFilters } from "./InventoryScreen/InventoryFilters";
 import { InventoryList } from "./InventoryScreen/InventoryList";
 import { InventoryOwnerSummary } from "./InventoryScreen/InventoryOwnerSummary";
@@ -12,7 +11,6 @@ import { InventoryStaffSummary } from "./InventoryScreen/InventoryStaffSummary";
 import {
   buildIncomingByItem,
   buildInventoryRiskRows,
-  buildItemInsights,
   buildOwnerCostSummary,
   inventoryTone,
   loadSavedRisk,
@@ -83,17 +81,19 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
     () => buildOwnerCostSummary({ riskRows, orderedOrders, itemMap }),
     [itemMap, orderedOrders, riskRows]
   );
-  const ownerTopRows = useMemo(() => riskRows
-    .filter(row => row.low || row.expirySoon || row.overstock || row.incoming)
-    .sort((a, b) => b.businessRiskAmount - a.businessRiskAmount || b.priority - a.priority || String(a.item.name).localeCompare(String(b.item.name), "ko-KR"))
-    .slice(0, 5), [riskRows]);
   const alertItems = useMemo(
-    () => filteredItems.filter(i => getStatus(i) !== "ok" || riskById.get(i.id)?.expirySoon),
+    () => filteredItems.filter(i => {
+      const row = riskById.get(i.id);
+      return getStatus(i) !== "ok" || row?.expirySoon || row?.overstock || row?.incoming;
+    }),
     [filteredItems, riskById]
   );
   const shortageItems = useMemo(() => filteredItems.filter(i => getStatus(i) !== "ok"), [filteredItems]);
   const okItems = useMemo(
-    () => filteredItems.filter(i => getStatus(i) === "ok" && !riskById.get(i.id)?.expirySoon),
+    () => filteredItems.filter(i => {
+      const row = riskById.get(i.id);
+      return getStatus(i) === "ok" && !row?.expirySoon && !row?.overstock && !row?.incoming;
+    }),
     [filteredItems, riskById]
   );
   const bulkableCount = useMemo(
@@ -111,17 +111,107 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
     }
   }, [currentUser?.role, risk]);
 
-  const renderItem = (item) => {
+  const getItemListMeta = (item) => {
     const ao = getActiveOrder(orders, item.id);
+    const row = riskById.get(item.id);
+    const status = getStatus(item);
+    const days = daysUntil(item.expiry);
+    const statusMeta = status === "danger"
+      ? { label: "소진", color: T.red500, bg: T.grey100 }
+      : status === "warning"
+        ? { label: "부족", color: T.orange500, bg: T.grey100 }
+        : row?.expirySoon
+          ? { label: "만료", color: T.red500, bg: T.grey100 }
+          : row?.incoming || ao?.status === "ordered"
+            ? { label: "입고대기", color: T.teal500, bg: T.grey100 }
+            : row?.overstock
+              ? { label: "과잉", color: T.purple500, bg: T.grey100 }
+              : { label: "정상", color: T.grey600, bg: T.grey50 };
+    const subText = row?.expirySoon && days !== null
+      ? `만료 ${days <= 0 ? "지남" : `${days}일 전`} · ${item.location || catName(item.category_id)}`
+      : `${catName(item.category_id)} · ${item.location || "위치 미등록"}`;
+
+    return { statusMeta, subText };
+  };
+
+  const renderCompactItem = (item, index, total) => {
+    const { statusMeta, subText } = getItemListMeta(item);
+
     return (
-      <ItemCard
+      <button
         key={item.id}
-        item={item}
-        isOrdered={ao?.status === "ordered"}
-        ao={ao}
-        insights={buildItemInsights({ item, activeOrder: ao, row: riskById.get(item.id), tone })}
-        onCardClick={onItemClick}
-      />
+        type="button"
+        onClick={() => onItemClick?.(item)}
+        style={{
+          width: "100%",
+          minHeight: 54,
+          border: "none",
+          borderBottom: index < total - 1 ? `1px solid ${T.grey100}` : "none",
+          background: T.white,
+          padding: "9px 12px",
+          textAlign: "left",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          cursor: "pointer",
+          fontFamily: "inherit",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: "22px", fontWeight: 700, color: T.grey900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
+          <p style={{ margin: "2px 0 0", fontSize: 12, lineHeight: "17px", color: T.grey500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subText}</p>
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0, width: 52 }}>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: "21px", fontWeight: 800, color: T.grey900, fontVariantNumeric: "tabular-nums" }}>
+            {item.current_qty}<span style={{ marginLeft: 1, fontSize: 11, color: T.grey500, fontWeight: 700 }}>{item.unit}</span>
+          </p>
+        </div>
+        <div style={{ flexShrink: 0, width: 50, display: "flex", justifyContent: "flex-end" }}>
+          <span style={{ display: "inline-flex", borderRadius: 9999, background: statusMeta.bg, color: statusMeta.color, padding: "3px 7px", fontSize: 11, lineHeight: "15px", fontWeight: 700 }}>
+            {statusMeta.label}
+          </span>
+        </div>
+      </button>
+    );
+  };
+
+  const renderGridItem = (item) => {
+    const { statusMeta, subText } = getItemListMeta(item);
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => onItemClick?.(item)}
+        style={{
+          minWidth: 0,
+          minHeight: 100,
+          border: `1px solid ${T.grey100}`,
+          borderRadius: 12,
+          background: T.white,
+          padding: "12px 12px",
+          textAlign: "left",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          gap: 8,
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: "22px", fontWeight: 700, color: T.grey900, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", wordBreak: "keep-all" }}>{item.name}</p>
+          <p style={{ margin: "4px 0 0", fontSize: 12, lineHeight: "17px", color: T.grey500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subText}</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: "21px", fontWeight: 800, color: T.grey900, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+            {item.current_qty}<span style={{ marginLeft: 1, fontSize: 11, color: T.grey500, fontWeight: 700 }}>{item.unit}</span>
+          </p>
+          <span style={{ flexShrink: 0, borderRadius: 9999, background: statusMeta.bg, color: statusMeta.color, padding: "3px 7px", fontSize: 11, lineHeight: "15px", fontWeight: 700, whiteSpace: "nowrap" }}>
+            {statusMeta.label}
+          </span>
+        </div>
+      </button>
     );
   };
 
@@ -132,13 +222,10 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
           <InventoryOwnerSummary
             attentionCount={attentionCount}
             ownerCostSummary={ownerCostSummary}
-            ownerTopRows={ownerTopRows}
             inventoryTone={tone}
-            onItemClick={onItemClick}
           />
         ) : (
           <InventoryStaffSummary
-            items={items}
             attentionCount={attentionCount}
             orderedOrders={orderedOrders}
             priorityRows={priorityRows}
@@ -170,7 +257,8 @@ export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, o
         blockedShortageCount={blockedShortageCount}
         inventoryTone={tone}
         onBulkOrderClick={onBulkOrderClick}
-        renderItem={renderItem}
+        renderCompactItem={renderCompactItem}
+        renderGridItem={renderGridItem}
       />
     </div>
   );

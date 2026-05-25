@@ -1,6 +1,6 @@
 import { T } from "../../../constants/colors";
 import { CATEGORIES } from "../../../constants/categories";
-import { compactMoney, itemUnitPrice, orderAmount, toNumber } from "../../../utils/money";
+import { itemUnitPrice, orderAmount, toNumber } from "../../../utils/money";
 
 export const ALL_CATS = [{ id: 0, name: "전체", color: T.grey700 }, ...CATEGORIES];
 
@@ -109,68 +109,4 @@ export function buildOwnerCostSummary({ riskRows, orderedOrders, itemMap }) {
   const overstockAmount = riskRows.reduce((sum, row) => sum + row.overstockAmount, 0);
   const incomingAmount = orderedOrders.reduce((sum, order) => sum + orderAmount(order, itemMap.get(order.item_id)), 0);
   return { shortageAmount, expiryRiskAmount, overstockAmount, incomingAmount };
-}
-
-export function buildItemInsights({ item, activeOrder, row, tone }) {
-  if (!row) return [];
-  const currentQty = Number(item.current_qty) || 0;
-  const minQty = Number(item.min_qty) || 0;
-  const unitPrice = row.unitPrice;
-  const insights = [];
-
-  if (row.low) {
-    const shortageQty = Math.max(1, minQty - currentQty);
-    insights.push({
-      label: unitPrice ? `보충 예상 ${compactMoney(shortageQty * unitPrice)}` : "보충 비용 미확인",
-      color: tone.low.color,
-      bg: tone.low.bg,
-    });
-  }
-  if (row.expirySoon) {
-    insights.push({
-      label: unitPrice ? `낭비 위험 ${compactMoney(currentQty * unitPrice)}` : "유통기한 비용 미확인",
-      color: tone.expiry.color,
-      bg: tone.expiry.bg,
-    });
-  }
-  if (row.overstock) {
-    const overQty = Math.max(0, currentQty - minQty);
-    insights.push({
-      label: unitPrice ? `과잉 묶인 금액 ${compactMoney(overQty * unitPrice)}` : "과잉 비용 미확인",
-      color: tone.overstock.color,
-      bg: tone.overstock.bg,
-    });
-  }
-  if (activeOrder) {
-    insights.push({
-      label: `${activeOrder.qty}${item.unit} 발주 진행 중`,
-      color: tone.incoming.color,
-      bg: tone.incoming.bg,
-    });
-  }
-  if (!row.low && !row.expirySoon && !row.overstock && !activeOrder) {
-    insights.push({
-      label: "현재 조치 필요 없음",
-      color: tone.ok.color,
-      bg: tone.ok.bg,
-    });
-  }
-  return insights.slice(0, 3);
-}
-
-export function renderOwnerTopReason(row) {
-  const reasons = [];
-  if (row.low) reasons.push(`보충 ${compactMoney(row.shortageAmount)}`);
-  if (row.expirySoon) reasons.push(`손실위험 ${compactMoney(row.expiryRiskAmount)}`);
-  if (row.overstock) reasons.push(`과잉 ${compactMoney(row.overstockAmount)}`);
-  if (row.incoming) reasons.push(`입고대기 ${compactMoney(row.incomingAmount)}`);
-  return reasons.filter(Boolean).slice(0, 2).join(" · ") || row.statusText;
-}
-
-export function ownerRiskTone(row, tone) {
-  if (row.expirySoon) return tone.expiry.color;
-  if (row.low) return tone.low.color;
-  if (row.overstock) return tone.overstock.color;
-  if (row.incoming) return tone.incoming.color;
-  return T.grey700;
 }

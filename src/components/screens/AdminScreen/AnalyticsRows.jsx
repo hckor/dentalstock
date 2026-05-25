@@ -108,24 +108,43 @@ export function TopCauseRows({ rows }) {
   );
 }
 
-export function CategoryCostRows({ rows, maxAmount }) {
-  if (!rows.length) return null;
+export function CategoryCostRows({ rows, maxAmount, emptyText = "카테고리별 비용 데이터가 없어요." }) {
+  if (!rows.length) {
+    return (
+      <Card>
+        <p style={{ margin: 0, padding: "24px 16px", fontSize: 15, color: T.grey500, textAlign: "center" }}>{emptyText}</p>
+      </Card>
+    );
+  }
   return (
     <Card style={{ marginBottom: 16, padding: 16 }}>
-      {rows.map((category, index) => (
-        <div key={category.id} style={{ marginTop: index === 0 ? 0 : 13 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 7 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 9999, background: category.color, flexShrink: 0 }} />
-              <span style={{ fontSize: 15, fontWeight: 700, color: T.grey800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{category.name}</span>
+      {rows.map((category, index) => {
+        const deltaColor = category.deltaAmount > 0 ? T.warning : category.deltaAmount < 0 ? T.success : T.grey500;
+        const deltaText = category.deltaAmount > 0
+          ? `+${formatMoney(category.deltaAmount)}`
+          : category.deltaAmount < 0
+            ? `-${formatMoney(Math.abs(category.deltaAmount))}`
+            : "변화 없음";
+        return (
+          <div key={category.id} style={{ marginTop: index === 0 ? 0 : 15 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <span style={{ width: 9, height: 9, borderRadius: 9999, background: category.color, flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <span style={{ display:"block", fontSize: 15, lineHeight:"20px", fontWeight: 800, color: T.grey800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{category.name}</span>
+                  <span style={{ display:"block", marginTop:2, fontSize: 12, lineHeight:"17px", fontWeight: 700, color: deltaColor }}>
+                    이전 기간 대비 {deltaText}
+                  </span>
+                </div>
+              </div>
+              <span style={{ flexShrink:0, fontSize: 15, lineHeight:"20px", fontWeight: 800, color: T.grey900, fontFamily: monoFont }}>{formatMoney(category.amount)}</span>
             </div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: T.grey900, fontFamily: monoFont }}>{formatMoney(category.amount)}</span>
+            <div style={{ height: 7, borderRadius: 9999, background: T.grey100, overflow: "hidden" }}>
+              <div style={{ width: `${pct(category.amount, maxAmount)}%`, height: "100%", borderRadius: 9999, background: category.color }} />
+            </div>
           </div>
-          <div style={{ height: 7, borderRadius: 9999, background: T.grey100, overflow: "hidden" }}>
-            <div style={{ width: `${pct(category.amount, maxAmount)}%`, height: "100%", borderRadius: 9999, background: category.color }} />
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </Card>
   );
 }

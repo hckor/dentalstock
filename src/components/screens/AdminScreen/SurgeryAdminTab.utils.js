@@ -69,48 +69,6 @@ export function usageDeltaText(summary) {
   return `실사용이 예상보다 ${formatMoney(Math.abs(summary.deltaCost))} ${direction}`;
 }
 
-export function buildSurgeryGuidance(summary) {
-  const reasons = [];
-  const actions = [];
-  const hasShortage = summary.shortageCount > 0;
-  const hasUnpriced = summary.unpricedCount > 0;
-  const hasUsageGap = summary.hasActual && summary.deltaCost !== 0;
-
-  if (hasShortage) {
-    reasons.push(shortageReason(summary));
-    actions.push("보충 또는 준비 품목 조정");
-  }
-  if (hasUnpriced) {
-    reasons.push(`단가 없는 품목 ${summary.unpricedCount}종이 예상 비용에서 빠짐`);
-    actions.push("품목 단가 등록");
-  }
-  if (hasUsageGap) {
-    reasons.push(usageDeltaText(summary));
-    actions.push(summary.deltaCost > 0 ? "추가 사용 원인 확인" : "절감 사유 기록");
-  }
-  if (summary.hasActual && summary.deltaCost === 0) {
-    reasons.push("실사용이 예상과 일치");
-  }
-
-  if (reasons.length === 0) {
-    if (summary.surgery?.usage_confirmed) reasons.push("사용량 확정까지 완료됨");
-    else if (summary.surgery?.prep_confirmed) reasons.push("준비 확인 완료, 사용량 입력만 남음");
-    else reasons.push("필요 재고와 단가가 확인됨");
-  }
-  if (actions.length === 0) {
-    if (summary.surgery?.usage_confirmed) actions.push("기록 유지");
-    else if (summary.surgery?.prep_confirmed) actions.push("수술 후 사용량 확인");
-    else actions.push("예정 시간 전 최종 준비 확인");
-  }
-
-  return {
-    prefix: hasShortage || hasUnpriced || hasUsageGap ? "이유" : "안심",
-    reason: reasons.filter(Boolean).join(" · "),
-    action: [...new Set(actions)].join(" / "),
-    tone: hasShortage ? T.red500 : hasUnpriced || hasUsageGap ? T.orange500 : T.green500,
-  };
-}
-
 const TEMPLATE_GUIDE = {
   implant: [
     { label: "핵심 품목", tone: "primary", itemIds: ["27", "29", "30", "11"] },

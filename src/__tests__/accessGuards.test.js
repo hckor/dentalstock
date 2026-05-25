@@ -53,7 +53,11 @@ describe("security access guards", () => {
       ERR.CAPABILITY_DENIED
     );
 
-    expect(canWriteClinicResource(manager, C.MANAGE_STAFF, { clinic_id: "clinic-a" })).toBe(true);
+    expect(canWriteClinicResource(manager, C.MANAGE_STAFF, { clinic_id: "clinic-a" })).toBe(false);
+    expectDenied(
+      () => requireClinicWriteCapability(manager, C.MANAGE_STAFF, { clinic_id: "clinic-a" }),
+      ERR.CAPABILITY_DENIED
+    );
   });
 
   it("rejects cross-clinic writes even for powerful roles", () => {

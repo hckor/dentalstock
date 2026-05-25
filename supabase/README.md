@@ -18,6 +18,7 @@ Current required order:
 2. `20260521_app_dental_material_catalog.sql`
 3. `20260522_dental_material_catalog.sql`
 4. `20260523_security_hardening.sql`
+5. `20260526_staff_delete_profile.sql`
 
 `20260520_initial_dentalstock_schema.sql` is the consolidated baseline. Older
 20260520 split files are archived in `supabase/migrations_archive/20260520/`
@@ -102,7 +103,13 @@ After running `20260520_staff_management.sql`, staff active state and role chang
 - `set_profile_role(profile_id, role)`
 - `update_my_profile(name)`
 
-Only an active `owner` can change another staff member's active state or role. The database also prevents removing the last active owner.
+After running `20260526_staff_delete_profile.sql`, staff profile removal must go through:
+
+- `delete_staff_profile(profile_id)`
+
+Only an active `owner` can invite staff, change another staff member's active state or role, or remove a staff profile from the clinic list. Managers may view staff operations/list data, but they cannot invite staff, change roles, deactivate profiles, or remove profiles. The database also prevents removing the last active owner.
+
+`delete_staff_profile` deletes only the row in `public.profiles`. It does not hard-delete the Supabase Auth user from `auth.users`; handle Auth user deletion separately with a service-role-only backend process if that becomes a product requirement.
 
 ## 5. Vercel variables
 

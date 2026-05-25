@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   buildProjectedStockRows,
   buildSurgeryBulkShortageRows,
-  buildSurgeryGuidance,
   buildTemplateGroups,
   isWithinNextDays,
   summarizeSurgery,
@@ -12,7 +11,7 @@ import {
 const itemMapFrom = (items) => new Map(items.map(item => [item.id, item]));
 
 describe("SurgeryAdminTab pure utilities", () => {
-  it("수술 필요/실사용 비용과 부족 품목을 계산하고 안내 문구를 만든다", () => {
+  it("수술 필요/실사용 비용과 부족 품목을 계산한다", () => {
     const itemMap = itemMapFrom([
       { id: "fixture", name: "임플란트 픽스처", current_qty: 1, unit: "개", price: 10000 },
       { id: "missing-price", name: "단가 미등록", current_qty: 10, unit: "개", price: 0 },
@@ -42,11 +41,6 @@ describe("SurgeryAdminTab pure utilities", () => {
     expect(summary.statusLabel).toBe("부족 1종");
     expect(usageDeltaText(summary)).toBe("실사용이 예상보다 10,000원 초과");
 
-    expect(buildSurgeryGuidance(summary)).toMatchObject({
-      prefix: "이유",
-      reason: "임플란트 픽스처 필요 3개, 현재 1개라서 2개 부족 · 단가 없는 품목 1종이 예상 비용에서 빠짐 · 실사용이 예상보다 10,000원 초과",
-      action: "보충 또는 준비 품목 조정 / 품목 단가 등록 / 추가 사용 원인 확인",
-    });
   });
 
   it("준비 또는 사용 확인된 수술은 부족 경고를 비활성화한다", () => {
@@ -65,11 +59,6 @@ describe("SurgeryAdminTab pure utilities", () => {
     expect(summary.shortageRows).toEqual([]);
     expect(summary.shortageCount).toBe(0);
     expect(summary.statusLabel).toBe("사용량 대기");
-    expect(buildSurgeryGuidance(summary)).toMatchObject({
-      prefix: "안심",
-      reason: "준비 확인 완료, 사용량 입력만 남음",
-      action: "수술 후 사용량 확인",
-    });
   });
 
   it("여러 수술의 부족 품목을 품목별로 합산하고 수술명 중복을 제거한다", () => {

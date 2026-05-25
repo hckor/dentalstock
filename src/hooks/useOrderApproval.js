@@ -10,6 +10,7 @@ import {
   buildBulkApprovalPlan,
   buildBulkOrderApprovedNotification,
   buildOrderApprovedNotification,
+  getOrderActionAvailability,
 } from "../utils/orderApproval";
 import {
   buildReviewAuditMetadata,
@@ -48,6 +49,11 @@ export function useOrderApprovalActions({
       showToast("발주 품목을 찾을 수 없습니다.");
       return;
     }
+    const availability = getOrderActionAvailability({ order, item, orders, items, currentUser });
+    if (!availability.approve.allowed) {
+      showToast(availability.approve.requiresOwnerApproval ? "원장 승인 필요 건입니다. 보류로 넘겨주세요" : "승인 권한이 없습니다");
+      return;
+    }
 
     const reviewedAt = new Date().toISOString();
     const vendorSnapshot = buildVendorSnapshot(item, order.qty);
@@ -62,6 +68,7 @@ export function useOrderApprovalActions({
     const approvedNotification = buildOrderApprovedNotification({ item, order, vendorSnapshot, createdAt: reviewedAt });
 
     if (shouldUseSupabaseOrders(currentUser)) {
+      // TODO(security): mirror this owner-review guard in a Supabase RPC/RLS policy so direct clients cannot bypass it.
       void supabaseOrdersApi.updateOrder(order, nextOrder, currentUser)
         .then(savedOrder => {
           setOrders(prev => prev.map(candidate => candidate.id === orderId ? savedOrder : candidate));
@@ -112,6 +119,16 @@ export function useOrderApprovalActions({
       showToast("승인할 발주 요청이 없습니다");
       return;
     }
+    const blockedOrder = targetOrders
+      .map(order => {
+        const item = items.find(candidate => candidate.id === order.item_id);
+        return { order, availability: getOrderActionAvailability({ order, item, orders, items, currentUser }) };
+      })
+      .find(entry => !entry.availability.approve.allowed);
+    if (blockedOrder) {
+      showToast(blockedOrder.availability.approve.requiresOwnerApproval ? "원장 승인 필요 건이 포함되어 있습니다. 보류로 넘겨주세요" : "승인 권한이 없습니다");
+      return;
+    }
 
     const reviewedAt = new Date().toISOString();
     const approvalPlan = buildBulkApprovalPlan({
@@ -125,6 +142,7 @@ export function useOrderApprovalActions({
     const { nextOrders, vendorGroups, auditMetadata } = approvalPlan;
 
     if (shouldUseSupabaseOrders(currentUser)) {
+      // TODO(security): mirror this owner-review guard in a Supabase RPC/RLS policy so direct clients cannot bypass it.
       void Promise.all(nextOrders.map(order => supabaseOrdersApi.updateOrder(order, order, currentUser)))
         .then(savedOrders => {
           const savedById = new Map(savedOrders.map(order => [order.id, order]));

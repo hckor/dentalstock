@@ -28,6 +28,7 @@ export function OverlayRoot({
                 item={liveItem}
                 txs={txs}
                 orders={orders}
+                currentUser={currentUser}
                 onClose={onCloseDetail}
                 onIn={()=>openModal("in", liveItem)}
                 onOut={()=>openModal("out", liveItem)}

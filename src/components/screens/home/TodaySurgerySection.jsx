@@ -2,11 +2,11 @@ import { SecTitle } from "../../shared/SecTitle";
 import { TodaySurgeryCard } from "./TodaySurgeryCard";
 import { pagePad } from "./homeStyles";
 
-export function TodaySurgerySection({ title = "오늘 수술 준비", dashboard, items, canManageSurgery, canConfirmSurgery, confirmSurgeryPrep, confirmSurgeryUsage, openItemsEditor, updateSurgeryItems }) {
+export function TodaySurgerySection({ title = "오늘 수술 준비", anchorId, dashboard, items, canManageSurgery, canConfirmSurgery, confirmSurgeryPrep, confirmSurgeryUsage, openItemsEditor, updateSurgeryItems }) {
   if (dashboard.surgery.today.length === 0) return null;
 
   return (
-    <div style={pagePad}>
+    <div id={anchorId} style={pagePad}>
       <SecTitle>{title}</SecTitle>
       {dashboard.surgery.today.map(surgery => (
         <TodaySurgeryCard
@@ -19,6 +19,7 @@ export function TodaySurgerySection({ title = "오늘 수술 준비", dashboard,
           updateSurgeryItems={updateSurgeryItems}
           canManage={canManageSurgery}
           canConfirm={canConfirmSurgery}
+          canEditItems={canManageSurgery || canConfirmSurgery}
         />
       ))}
     </div>

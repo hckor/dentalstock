@@ -32,6 +32,7 @@ describe('security policy', () => {
 describe('supabase security migrations', () => {
   const initialMigration = readFileSync('supabase/migrations/20260520_initial_dentalstock_schema.sql', 'utf8');
   const hardeningMigration = readFileSync('supabase/migrations/20260523_security_hardening.sql', 'utf8');
+  const staffDeleteMigration = readFileSync('supabase/migrations/20260526_staff_delete_profile.sql', 'utf8');
   const createPolicies = initialMigration.match(/create policy[\s\S]*?;/gi) || [];
 
   function policiesFor(tableName) {
@@ -119,5 +120,16 @@ describe('supabase security migrations', () => {
     expect(hardeningMigration).toContain('revoke insert, update, delete on public.notifs from authenticated;');
     expect(hardeningMigration).toContain("then vendor - 'username' - 'password' - 'connected' - 'token' - 'secret'");
     expect(hardeningMigration).toContain("actor_profile.role not in ('owner', 'manager')");
+  });
+
+  it('직원 삭제는 owner 전용 RPC와 감사 로그를 사용한다', () => {
+    expect(staffDeleteMigration).toContain('create or replace function public.delete_staff_profile');
+    expect(staffDeleteMigration).toMatch(/role = 'owner'/i);
+    expect(staffDeleteMigration).not.toMatch(/role\s+in\s+\('owner',\s*'manager'\)/i);
+    expect(staffDeleteMigration).toContain('Only an active owner can delete staff profiles');
+    expect(staffDeleteMigration).toContain('Owners cannot delete their own profile');
+    expect(staffDeleteMigration).toContain('Cannot delete the last active owner');
+    expect(staffDeleteMigration).toContain("'staff.deleted'");
+    expect(staffDeleteMigration).toContain('grant execute on function public.delete_staff_profile(uuid) to authenticated;');
   });
 });

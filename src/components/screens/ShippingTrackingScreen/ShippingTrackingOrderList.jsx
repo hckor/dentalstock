@@ -1,6 +1,8 @@
 import { T } from "../../../constants/colors";
 import { ShippingOrderCard } from "../../shared/ShippingOrderCard";
+import { PendingApprovalCard } from "./PendingApprovalCard";
 import { ReceivedGroupCard, ShipmentGroupCard } from "./ShippingTrackingGroups";
+import { ShippingWorkPriorityCard } from "./ShippingWorkPriorityCard";
 
 function StandaloneOrderCard({
   order,
@@ -11,12 +13,34 @@ function StandaloneOrderCard({
   priceCheckingIds,
   duplicateInfoByOrderId,
   monthlyProjectedAmountByOrderId,
+  orderActionAvailabilityByOrderId = {},
   currentUser,
   onActionClick,
   onSelectChange,
   onPriceCheck,
 }) {
   const item = allItems.find(it => it.id === order.item_id);
+  if (!item) return null;
+
+  if (trackingTab === "auto_wait") {
+    return (
+      <PendingApprovalCard
+        order={order}
+        item={item}
+        canApprove={canApprove}
+        selected={selectedPendingIds.includes(order.id)}
+        onSelectChange={() => onSelectChange(order.id)}
+        priceChecking={priceCheckingIds.includes(order.id)}
+        onPriceCheck={() => onPriceCheck(order)}
+        duplicateInfo={duplicateInfoByOrderId[order.id]}
+        monthlyProjectedAmount={monthlyProjectedAmountByOrderId[order.id]}
+        actionAvailability={orderActionAvailabilityByOrderId[order.id]}
+        currentUser={currentUser}
+        onActionClick={(actionType) => onActionClick(order, actionType)}
+      />
+    );
+  }
+
   return (
     <ShippingOrderCard
       key={order.id}
@@ -32,6 +56,7 @@ function StandaloneOrderCard({
       onPriceCheck={() => onPriceCheck(order)}
       duplicateInfo={duplicateInfoByOrderId[order.id]}
       monthlyProjectedAmount={monthlyProjectedAmountByOrderId[order.id]}
+      actionAvailability={orderActionAvailabilityByOrderId[order.id]}
       currentUser={currentUser}
     />
   );
@@ -48,6 +73,7 @@ export function ShippingTrackingOrderList({
   priceCheckingIds,
   duplicateInfoByOrderId,
   monthlyProjectedAmountByOrderId,
+  orderActionAvailabilityByOrderId = {},
   currentUser,
   onActionClick,
   onShipmentGroupActionClick,
@@ -66,36 +92,42 @@ export function ShippingTrackingOrderList({
             <ReceivedGroupCard key={group.id} group={group} allItems={allItems} />
           ))}
         </div>
-      )) : trackingTab === "in_transit" ? currentShipmentGroups.map(group => {
-        if (group.orders.length > 1) {
-          return (
-            <ShipmentGroupCard
-              key={group.id}
-              group={group}
-              allItems={allItems}
-              canApprove={canApprove}
-              onActionClick={(actionType) => onShipmentGroupActionClick(group, actionType)}
-            />
-          );
-        }
-        return (
-          <StandaloneOrderCard
-            key={group.orders[0].id}
-            order={group.orders[0]}
-            allItems={allItems}
-            trackingTab={trackingTab}
-            canApprove={canApprove}
-            selectedPendingIds={selectedPendingIds}
-            priceCheckingIds={priceCheckingIds}
-            duplicateInfoByOrderId={duplicateInfoByOrderId}
-            monthlyProjectedAmountByOrderId={monthlyProjectedAmountByOrderId}
-            currentUser={currentUser}
-            onActionClick={onActionClick}
-            onSelectChange={onSelectChange}
-            onPriceCheck={onPriceCheck}
-          />
-        );
-      }) : currentOrders.map(order => (
+      )) : trackingTab === "in_transit" ? (
+        <>
+          <ShippingWorkPriorityCard groups={currentShipmentGroups} />
+          {currentShipmentGroups.map(group => {
+            if (group.orders.length > 1) {
+              return (
+                <ShipmentGroupCard
+                  key={group.id}
+                  group={group}
+                  allItems={allItems}
+                  canApprove={canApprove}
+                  onActionClick={(actionType) => onShipmentGroupActionClick(group, actionType)}
+                />
+              );
+            }
+            return (
+              <StandaloneOrderCard
+                key={group.orders[0].id}
+                order={group.orders[0]}
+                allItems={allItems}
+                trackingTab={trackingTab}
+                canApprove={canApprove}
+                selectedPendingIds={selectedPendingIds}
+                priceCheckingIds={priceCheckingIds}
+                duplicateInfoByOrderId={duplicateInfoByOrderId}
+                monthlyProjectedAmountByOrderId={monthlyProjectedAmountByOrderId}
+                orderActionAvailabilityByOrderId={orderActionAvailabilityByOrderId}
+                currentUser={currentUser}
+                onActionClick={onActionClick}
+                onSelectChange={onSelectChange}
+                onPriceCheck={onPriceCheck}
+              />
+            );
+          })}
+        </>
+      ) : currentOrders.map(order => (
         <StandaloneOrderCard
           key={order.id}
           order={order}
@@ -106,6 +138,7 @@ export function ShippingTrackingOrderList({
           priceCheckingIds={priceCheckingIds}
           duplicateInfoByOrderId={duplicateInfoByOrderId}
           monthlyProjectedAmountByOrderId={monthlyProjectedAmountByOrderId}
+          orderActionAvailabilityByOrderId={orderActionAvailabilityByOrderId}
           currentUser={currentUser}
           onActionClick={onActionClick}
           onSelectChange={onSelectChange}

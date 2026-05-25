@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ORDER_STATUS } from "../constants/orderStates";
 import {
   getMonthlyProjectedAmounts,
   getOrderApprovalGate,
@@ -7,6 +8,7 @@ import {
   getOrderUnitPrice,
   getPendingSummary,
 } from "../utils/orderReview";
+import { canRoleTransitionOrderStatus } from "../utils/orderStateMachine";
 
 const item = {
   id: "i1",
@@ -67,6 +69,15 @@ describe("order review utilities", () => {
     );
 
     expect(gate.reasons).toContain("가격 후보 없음");
+  });
+
+  it("원장 승인 사유가 있는 발주는 매니저 승인에서 막고 원장만 ordered 전환할 수 있다", () => {
+    const order = { id: "o-high", item_id: "i1", qty: 2, status: ORDER_STATUS.pending };
+    const gate = getOrderApprovalGate(order, item, { hasDuplicate: false }, 0);
+
+    expect(gate.requiresOwnerApproval).toBe(true);
+    expect(canRoleTransitionOrderStatus("manager", ORDER_STATUS.pending, ORDER_STATUS.ordered, gate)).toBe(false);
+    expect(canRoleTransitionOrderStatus("owner", ORDER_STATUS.pending, ORDER_STATUS.ordered, gate)).toBe(true);
   });
 
   it("월별 예상 금액과 대기 요약을 계산한다", () => {

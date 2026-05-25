@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react
 import { CalendarDays, Coins, Home, Package, ArrowDownToLine, ShoppingCart, Users } from "lucide-react";
 import { T } from "../constants/colors";
 import { useTheme } from "../contexts/ThemeContext";
-import { can } from "../constants/permissions";
+import { ROLE_CAPABILITIES, can } from "../constants/permissions";
 import { supabaseItemsApi } from "../api/supabaseItemsApi";
 import { supabasePriceMonitorApi } from "../api/supabasePriceMonitorApi";
 import { supabaseStaffApi } from "../api/supabaseStaffApi";
 import { useToast } from "../hooks/useToast";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { useOverlayHistory } from "../hooks/useOverlayHistory";
+import { getDeleteStaffErrorMessage } from "../utils/supabaseRpcErrors";
 import { InventoryProvider } from "../contexts/InventoryContext";
 import { OrderProvider } from "../contexts/OrderContext";
 import { SurgeryProvider } from "../contexts/SurgeryContext";
@@ -54,6 +55,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
 
   const role       = currentUser.role;
   const canApprove = can(role, "orders_approve");
+  const canManageStaff = can(role, ROLE_CAPABILITIES.MANAGE_STAFF);
 
   const { firePush, requestPushPermission, firedRemindersRef } = usePushNotifications();
 
@@ -63,6 +65,11 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
   const openItemsEditor = useCallback((initialItems, onSave, title) => setEditItemsState({initialItems, onSave, title}), []);
 
   const updateStaffActive = useCallback(async (staff, nextActive) => {
+    if (!canManageStaff) {
+      showToast("원장 계정만 직원 상태를 변경할 수 있습니다");
+      return;
+    }
+
     if (staff.id === currentUser.id && nextActive === false) {
       showToast("본인 계정은 비활성화할 수 없습니다");
       return;
@@ -79,9 +86,14 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     } catch (error) {
       showToast(error?.message?.includes("last active owner") ? "마지막 원장은 비활성화할 수 없습니다" : "직원 상태를 변경하지 못했습니다");
     }
-  }, [currentUser, setUsers, showToast]);
+  }, [canManageStaff, currentUser, setUsers, showToast]);
 
   const updateStaffRole = useCallback(async (staff, nextRole) => {
+    if (!canManageStaff) {
+      showToast("원장 계정만 직원 권한을 변경할 수 있습니다");
+      return;
+    }
+
     if (staff.role === nextRole) return;
 
     try {
@@ -95,10 +107,40 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     } catch (error) {
       showToast(error?.message?.includes("last active owner") ? "마지막 원장 권한은 낮출 수 없습니다" : "직원 권한을 변경하지 못했습니다");
     }
-  }, [currentUser, setUsers, showToast]);
+  }, [canManageStaff, currentUser, setUsers, showToast]);
+
+  const deleteStaff = useCallback(async (staff) => {
+    if (!canManageStaff) {
+      showToast("원장 계정만 직원을 목록에서 제거할 수 있습니다");
+      return;
+    }
+
+    if (staff.id === currentUser.id) {
+      showToast("본인 계정은 삭제할 수 없습니다");
+      return;
+    }
+
+    const ok = window.confirm(`${staff.name} 직원을 목록에서 제거할까요?\n프로필만 제거되며 Supabase Auth 로그인 계정은 삭제되지 않습니다.`);
+    if (!ok) return;
+
+    try {
+      if (supabaseStaffApi.isEnabled() && currentUser?.clinicId) {
+        await supabaseStaffApi.deleteStaff(staff.supabaseUserId || staff.id);
+      }
+      setUsers(prev => prev.filter(user => user.id !== staff.id));
+      showToast("직원을 목록에서 제거했습니다");
+    } catch (error) {
+      showToast(getDeleteStaffErrorMessage(error));
+    }
+  }, [canManageStaff, currentUser, setUsers, showToast]);
 
   const inviteStaff = useCallback(async ({ email, name, role: nextRole }) => {
     try {
+      if (!canManageStaff) {
+        showToast("원장 계정만 직원을 초대할 수 있습니다");
+        return false;
+      }
+
       if (!supabaseStaffApi.isEnabled() || !currentUser?.clinicId) {
         showToast("Supabase 모드에서만 직원 초대를 보낼 수 있습니다");
         return false;
@@ -130,7 +172,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
       showToast(message);
       return false;
     }
-  }, [currentUser, setUsers, showToast]);
+  }, [canManageStaff, currentUser, setUsers, showToast]);
 
   const runPriceMonitor = useCallback(async (item = null) => {
     try {
@@ -216,7 +258,7 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
           {tab==="inout"     && <InOutScreen openModal={openModal}/>}
           {(tab==="shipping" || shippingSection) && <ShippingTrackingScreen key={shippingInitialTab} currentUser={currentUser} canApprove={canApprove} initialTab={shippingInitialTab} openModal={openModal} showToast={showToast} onRunPriceMonitor={runPriceMonitor}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
-          {(tab==="admin" || adminSection) && canApprove && <AdminScreen key={adminInitialTab} initialTab={adminInitialTab} standalone={Boolean(adminSection)} managementOnly={tab === "admin"} users={users} currentUser={currentUser} onLogout={onLogout} openItemsEditor={openItemsEditor} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole} onOpenShipping={()=>setTab("shipping")}/>}
+          {(tab==="admin" || adminSection) && canApprove && <AdminScreen key={adminInitialTab} initialTab={adminInitialTab} standalone={Boolean(adminSection)} managementOnly={tab === "admin"} users={users} currentUser={currentUser} onLogout={onLogout} openItemsEditor={openItemsEditor} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole} onStaffDelete={deleteStaff} onOpenShipping={()=>setTab("shipping")}/>}
         </Suspense>
       </div>
 

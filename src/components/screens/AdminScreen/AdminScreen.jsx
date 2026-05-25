@@ -3,7 +3,7 @@ import { History, Store, Tags, Truck, UsersRound } from "lucide-react";
 import { supabaseItemsApi } from "../../../api/supabaseItemsApi";
 import { T } from "../../../constants/colors";
 import { ORDER_ST } from "../../../constants/orderStates";
-import { can } from "../../../constants/permissions";
+import { ROLE_CAPABILITIES, can } from "../../../constants/permissions";
 import { getItemIdentityKey } from "../../../utils/itemIdentity";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { SurgeryAdminTab } from "./SurgeryAdminTab";
@@ -20,9 +20,8 @@ import { ItemsAdminPanel } from "./ItemsAdminPanel";
 import { ManagementHomePanel } from "./ManagementHomePanel";
 import { ManagementSectionHeader } from "./ManagementSectionHeader";
 import { StaffAdminPanel } from "./StaffAdminPanel";
-import { useStaffSummaries } from "./adminUtils";
 
-export function AdminScreen({initialTab = "surgery", standalone = false, managementOnly = false, users, currentUser, onLogout, openItemsEditor, openModal, showToast, onInviteStaff, onRunPriceMonitor, onStaffActiveChange, onStaffRoleChange, onOpenShipping}) {
+export function AdminScreen({initialTab = "surgery", standalone = false, managementOnly = false, users, currentUser, onLogout, openItemsEditor, openModal, showToast, onInviteStaff, onRunPriceMonitor, onStaffActiveChange, onStaffRoleChange, onStaffDelete, onOpenShipping}) {
   const { items, setItems, txs, setTxs } = useInventory();
   const { orders } = useOrders();
   const { surgeries, addSurgery, deleteSurgery, updateSurgeryItems } = useSurgery();
@@ -33,7 +32,7 @@ export function AdminScreen({initialTab = "surgery", standalone = false, managem
   const [inviteForm, setInviteForm] = useState({email:"", name:"", role:"hygienist"});
   const [inviteBusy, setInviteBusy] = useState(false);
 
-  const canManageStaff = can(currentUser.role, "staff");
+  const canManageStaff = can(currentUser.role, ROLE_CAPABILITIES.MANAGE_STAFF);
   const temporaryItems = items.filter(item => item.is_temporary && item.temporary_status !== "resolved");
   const activeStaffCount = users.filter(user => user.active).length;
   const inactiveStaffCount = users.length - activeStaffCount;
@@ -42,7 +41,6 @@ export function AdminScreen({initialTab = "surgery", standalone = false, managem
   const pendingOrderPolicyCount = orders.filter(order => order.status === "pending").length;
   const activeShippingCount = orders.filter(order => ["pending", "hold", "ordered"].includes(order.status)).length;
   const holdOrderCount = orders.filter(order => order.status === "hold").length;
-  const { staffSummaryById, todayStaffTotals } = useStaffSummaries({ users, items, txs, orders, surgeries });
 
   const handleInitialInventorySave = async (payload) => {
     const quantities = payload?.quantities || payload || {};
@@ -119,11 +117,11 @@ export function AdminScreen({initialTab = "surgery", standalone = false, managem
     : allTabs;
   const shippingTone = ORDER_ST.ordered;
   const managementSections = [
-    {id:"shipping", label:"배송 현황", detail:activeShippingCount ? `진행 ${activeShippingCount}건` : "정상", description:`승인대기, 보류${holdOrderCount ? ` ${holdOrderCount}건` : ""}, 배송중, 입고완료 상태를 확인합니다.`, Icon:Truck, color:shippingTone.text, onClick:onOpenShipping},
-    {id:"staff", label:"직원 관리", detail:`활성 ${activeStaffCount}명`, description:"직원 초대, 권한 변경, 활성/비활성 상태를 관리합니다.", Icon:UsersRound, color:T.primary},
-    {id:"items", label:"품목 관리", detail:`기준 ${baselineReadyCount}/${items.length}`, description:"품목 추가, 기준값 입력, 재고실사와 초기 데이터를 정리합니다.", Icon:Tags, color:T.success},
-    {id:"vendor", label:"도매 설정", detail:`연동 ${vendorLinkedCount}개`, description:"거래처 계정, 자동발주 조건, 가격 감시 정책을 설정합니다.", Icon:Store, color:T.warning},
-    {id:"activity", label:"활동 로그", detail:"변경 이력", description:"입출고, 발주, 수술 준비, 보안 관련 기록을 확인합니다.", Icon:History, color:T.grey700},
+    {id:"shipping", label:"배송 현황", detail:activeShippingCount ? `진행 ${activeShippingCount}건` : "정상", description:`보류${holdOrderCount ? ` ${holdOrderCount}` : ""} · 배송 · 입고`, Icon:Truck, color:shippingTone.text, onClick:onOpenShipping},
+    {id:"staff", label:"직원 관리", detail:`활성 ${activeStaffCount}명`, description:canManageStaff ? "초대 · 권한 · 활성" : "직원 운영 현황", Icon:UsersRound, color:T.primary},
+    {id:"items", label:"품목 관리", detail:`기준 ${baselineReadyCount}/${items.length}`, description:"품목 · 실사 · 초기값", Icon:Tags, color:T.success},
+    {id:"vendor", label:"도매 설정", detail:`연동 ${vendorLinkedCount}개`, description:"거래처 · 가격 감시", Icon:Store, color:T.warning},
+    {id:"activity", label:"활동 로그", detail:"변경 이력", description:"입출고 · 발주 · 보안", Icon:History, color:T.grey700},
   ];
   const selectedManagementSection = managementSections.find(section => section.id === adminTab);
   const openManagementSection = (id) => {
@@ -175,10 +173,9 @@ export function AdminScreen({initialTab = "surgery", standalone = false, managem
                 setInviteForm={setInviteForm}
                 inviteBusy={inviteBusy}
                 submitInvite={submitInvite}
-                todayStaffTotals={todayStaffTotals}
-                staffSummaryById={staffSummaryById}
                 onStaffActiveChange={onStaffActiveChange}
                 onStaffRoleChange={onStaffRoleChange}
+                onStaffDelete={onStaffDelete}
                 onLogout={onLogout}
               />
             )}

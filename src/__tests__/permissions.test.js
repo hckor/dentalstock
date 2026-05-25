@@ -25,7 +25,7 @@ describe("role permissions", () => {
       [C.APPROVE_ORDER]: true,
       [C.MANAGE_INVENTORY]: true,
       [C.MANAGE_ORDER]: true,
-      [C.MANAGE_STAFF]: true,
+      [C.MANAGE_STAFF]: false,
       [C.MANAGE_SURGERY_PREP]: true,
     });
 
@@ -53,15 +53,15 @@ describe("role permissions", () => {
     expect(can("owner", C.MANAGE_STAFF)).toBe(true);
   });
 
-  it("매니저는 승인과 재고/직원 운영은 가능하지만 원장 비용/최종검토는 제한된다", () => {
+  it("매니저는 직원 목록을 볼 수 있지만 직원 초대/권한/비활성/삭제는 제한된다", () => {
     expect(can("manager", "orders_approve_standard")).toBe(true);
     expect(can("manager", "orders_hold")).toBe(true);
     expect(can("manager", "items")).toBe(true);
-    expect(can("manager", "staff")).toBe(true);
+    expect(can("manager", "staff")).toBe(false);
     expect(can("manager", C.MANAGE_INVENTORY)).toBe(true);
     expect(can("manager", C.MANAGE_ORDER)).toBe(true);
     expect(can("manager", C.VIEW_STAFF)).toBe(true);
-    expect(can("manager", C.MANAGE_STAFF)).toBe(true);
+    expect(can("manager", C.MANAGE_STAFF)).toBe(false);
     expect(can("manager", "cost_view")).toBe(false);
     expect(can("manager", "orders_approve_owner_review")).toBe(false);
   });

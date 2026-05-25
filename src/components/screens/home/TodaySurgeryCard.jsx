@@ -21,9 +21,11 @@ export function TodaySurgeryCard({
   updateSurgeryItems,
   canManage = true,
   canConfirm = true,
+  canEditItems = canManage,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [usageNote, setUsageNote] = useState("");
+  const [showUsageNote, setShowUsageNote] = useState(false);
   const [usageExceptionIds, setUsageExceptionIds] = useState([]);
   const typeLabel = surgery.type && SURGERY_PRESETS[surgery.type]?.label;
   const requiredItems = Array.isArray(surgery.required_items) ? surgery.required_items : [];
@@ -35,13 +37,14 @@ export function TodaySurgeryCard({
   const canEditUsage = canConfirm && !surgery.usage_confirmed;
   const allOk    = reqItems.every(r => r.ok);
   const shortage = reqItems.filter(r => !r.ok).length;
+  const prepIssueRows = reqItems.filter(r => !r.ok);
   const summaryText = surgery.prep_confirmed
     ? surgery.usage_confirmed
-      ? `사용량 확인 완료 · 품목 ${surgery.actual_items?.filter(row => row.qty > 0).length || 0}개`
-      : `준비 확인 완료 · 사용량 확인 필요`
+      ? `완료 · ${surgery.actual_items?.filter(row => row.qty > 0).length || 0}개`
+      : "사용량 확인 필요"
     : allOk
       ? `준비 가능 · 품목 ${reqItems.length}개`
-      : `부족 ${shortage}종 · 품목 ${reqItems.length}개`;
+      : `부족 ${shortage}종`;
   const [usageRows, setUsageRows] = useState(() => requiredItems.map(req => ({ item_id: req.item_id, qty: req.qty })));
   const actualRows = useMemo(
     () => (surgery.actual_items || usageRows).map(row => {
@@ -78,11 +81,16 @@ export function TodaySurgeryCard({
     ? actualRows
     : usageRows.map(row => ({ ...row, item: items.find(target => target.id === row.item_id) }));
 
+  const canEditSurgeryItems = Boolean(canEditItems && openItemsEditor && updateSurgeryItems && !surgery.usage_confirmed);
   const openEditor = () => openItemsEditor(
     requiredItems,
     (newItems) => updateSurgeryItems(surgery.id, newItems),
     `${surgery.scheduled_time} · ${surgery.title}`
   );
+  const useEditAsPrepPrimary = !allOk && canEditSurgeryItems;
+  const useConfirmAsPrepPrimary = canConfirm && !useEditAsPrepPrimary;
+  const showPrepEditSecondary = useConfirmAsPrepPrimary && canEditSurgeryItems;
+  const showPrepConfirmSecondary = useEditAsPrepPrimary && canConfirm;
 
   return (
     <div style={{background:T.white, borderRadius:12, boxShadow:CS, marginBottom:10, overflow:"hidden"}}>
@@ -139,9 +147,9 @@ export function TodaySurgeryCard({
 
         {expanded && (
           <>
-            {!surgery.prep_confirmed && (
+            {!surgery.prep_confirmed && prepIssueRows.length > 0 && (
               <div style={{background:T.grey50, borderRadius:12, overflow:"hidden", marginTop:12}}>
-                {reqItems.map(({req, item, ok}, i) => (
+                {prepIssueRows.map(({req, item}, i) => (
                   <div key={req.item_id}>
                     <div style={{display:"flex", alignItems:"flex-start", padding:"11px 14px", gap:10}}>
                       <div style={{flex:1, minWidth:0}}>
@@ -153,13 +161,13 @@ export function TodaySurgeryCard({
                         </p>
                       </div>
                       <span style={{flexShrink:0, minWidth:42, boxSizing:"border-box", textAlign:"center", fontSize: 13, lineHeight:"20px", fontWeight:700,
-	                        color: ok ? T.success : T.danger,
-	                        background: ok ? T.successBg : T.dangerBg,
+	                        color: T.danger,
+	                        background: T.dangerBg,
                         padding:"3px 7px", borderRadius:12}}>
-                        {ok ? "가능" : "부족"}
+                        부족
                       </span>
                     </div>
-                    {i < reqItems.length - 1 && <div style={{height:1, background:T.grey100, marginLeft:14}}/>}
+                    {i < prepIssueRows.length - 1 && <div style={{height:1, background:T.grey100, marginLeft:14}}/>}
                   </div>
                 ))}
               </div>
@@ -176,15 +184,12 @@ export function TodaySurgeryCard({
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, padding:"12px 14px", borderBottom:`1px solid ${T.grey100}`}}>
                   <div>
                     <p style={{margin:0, fontSize: 15, fontWeight:700, color:T.grey800}}>
-                      {surgery.usage_confirmed ? "확정된 실사용량" : "실사용량 확인"}
+                      {surgery.usage_confirmed ? "실사용량" : "사용량"}
                     </p>
-                    {canEditUsage && (
-                      <p style={{margin:"3px 0 0", fontSize:12, color:T.grey500}}>예상과 다른 품목만 수량을 눌러 수정하세요</p>
-                    )}
                   </div>
-                  {canEditUsage && (
+                  {canEditUsage && usageExceptionIds.length > 0 && (
 	                    <button type="button" onClick={resetUsageRows} style={{border:"none", background:"none", color:T.primary, fontSize:13, fontWeight:700, fontFamily:font, cursor:"pointer"}}>
-                      모두 예상량 사용
+                      예상량 복원
                     </button>
                   )}
                 </div>
@@ -234,36 +239,54 @@ export function TodaySurgeryCard({
         )}
       </div>
 
-      {expanded && !surgery.prep_confirmed && (canManage || canConfirm) ? (
-        <div style={{borderTop:`1px solid ${T.grey100}`, padding:"10px 12px 12px", display:"flex", gap:8}}>
-          {canManage && <button onClick={openEditor}
-            style={{flex:1, padding:"16px 0", borderRadius:9999, border:`1.5px solid ${T.grey200}`, background:T.white, color:T.grey700, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", justifyContent:"center", gap:6}}>
-            <Edit2 size={18}/> 품목 편집
-          </button>}
-          {canConfirm && <button onClick={() => confirmSurgeryPrep(surgery.id)}
-	            style={{flex:2, padding:"16px 0", borderRadius:9999, border:"none", background:T.primary, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font}}>
-            준비 확인 완료
-          </button>}
+      {expanded && !surgery.prep_confirmed && (canEditSurgeryItems || canConfirm) ? (
+        <div style={{borderTop:`1px solid ${T.grey100}`, padding:"10px 12px 12px", display:"flex", flexDirection:"column", gap:8}}>
+          <button
+            type="button"
+            onClick={useConfirmAsPrepPrimary ? () => confirmSurgeryPrep(surgery.id) : openEditor}
+            style={{width:"100%", padding:"16px 0", borderRadius:9999, border:"none", background:T.primary, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font}}
+          >
+            {useEditAsPrepPrimary ? "부족 품목 조정" : useConfirmAsPrepPrimary ? "준비 확인" : "품목 편집"}
+          </button>
+          {(showPrepEditSecondary || showPrepConfirmSecondary) && (
+            <button
+              type="button"
+              onClick={showPrepEditSecondary ? openEditor : () => confirmSurgeryPrep(surgery.id)}
+              style={{border:"none", background:"none", color:T.grey600, fontSize: 14, fontWeight:700, cursor:"pointer", fontFamily:font, padding:"4px 0"}}
+            >
+              {showPrepEditSecondary ? "품목 편집" : "그대로 준비 확인"}
+            </button>
+          )}
         </div>
       ) : expanded && !surgery.usage_confirmed && canConfirm ? (
         <div style={{borderTop:`1px solid ${T.grey100}`, padding:"10px 12px 12px", display:"flex", flexDirection:"column", gap:8}}>
-          <input
-            value={usageNote}
-            onChange={event => setUsageNote(event.target.value)}
-            placeholder="특이사항 (선택)"
-            style={{width:"100%", boxSizing:"border-box", border:`1px solid ${T.grey200}`, borderRadius:12, background:T.grey50, padding:"13px 14px", fontSize:15, fontFamily:font, color:T.grey800, outline:"none"}}
-          />
+          {showUsageNote ? (
+            <input
+              value={usageNote}
+              onChange={event => setUsageNote(event.target.value)}
+              placeholder="특이사항"
+              style={{width:"100%", boxSizing:"border-box", border:`1px solid ${T.grey200}`, borderRadius:12, background:T.grey50, padding:"13px 14px", fontSize:15, fontFamily:font, color:T.grey800, outline:"none"}}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowUsageNote(true)}
+              style={{alignSelf:"center", border:"none", background:"none", color:T.grey600, fontSize:14, fontWeight:700, fontFamily:font, cursor:"pointer", padding:"4px 0"}}
+            >
+              특이사항 추가
+            </button>
+          )}
           <button onClick={() => confirmSurgeryUsage(surgery.id, usageRows, usageNote)}
-	            style={{width:"100%", padding:"16px 0", borderRadius:9999, border:"none", background:T.primary, color:T.white, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font}}>
-            실사용량 확인 후 출고
+	            style={{width:"100%", padding:"16px 0", borderRadius:9999, border:"none", background:T.primary, color:T.white, fontSize: 16, fontWeight:700, cursor:"pointer", fontFamily:font}}>
+            출고 확인
           </button>
         </div>
       ) : expanded && surgery.usage_confirmed && (
-        <div style={{borderTop:`1px solid ${T.grey100}`, padding:"18px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-	          <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.success}}>✓ 사용량 확인 완료</p>
+        <div style={{borderTop:`1px solid ${T.grey100}`, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10}}>
+	          <p style={{margin:0, fontSize: 16, fontWeight:700, color:T.success}}>사용량 확인 완료</p>
           {canManage && <button onClick={openEditor}
-            style={{padding:"7px 14px", borderRadius:9999, border:`1px solid ${T.grey200}`, background:T.white, color:T.grey600, fontSize: 16, fontWeight:600, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5}}>
-            <Edit2 size={16}/> 편집
+            style={{border:"none", background:"none", color:T.grey600, fontSize: 14, fontWeight:700, cursor:"pointer", fontFamily:font, display:"flex", alignItems:"center", gap:5, padding:"4px 0"}}>
+            <Edit2 size={15}/> 수정
           </button>}
         </div>
       )}

@@ -13,6 +13,7 @@ import {
   localRepository,
 } from "./localRepository";
 import { getRepositoryAdapter } from "./repositoryAdapter";
+import { todayKey } from "../utils/helpers";
 
 function writeInitialData() {
   appRepository.users.save(INITIAL_USERS);
@@ -31,6 +32,28 @@ function appendMissingDemoUsers() {
   appRepository.users.save([...users, ...missingUsers]);
 }
 
+function refreshDemoSurgeryDates() {
+  const today = todayKey();
+  const demoById = new Map(INIT_SURGERIES.map(surgery => [surgery.id, surgery]));
+  const surgeries = appRepository.surgeries.list();
+  let changed = false;
+  const nextSurgeries = surgeries.map(surgery => {
+    const demo = demoById.get(surgery.id);
+    if (!demo || !surgery.scheduled_date || surgery.scheduled_date >= today) return surgery;
+    changed = true;
+    return {
+      ...surgery,
+      scheduled_date: demo.scheduled_date,
+      scheduled_time: demo.scheduled_time,
+      prep_confirmed: demo.prep_confirmed,
+      prepared_by: demo.prepared_by,
+      prepared_at: demo.prepared_at,
+      usage_confirmed: demo.usage_confirmed,
+    };
+  });
+  if (changed) appRepository.surgeries.save(nextSurgeries);
+}
+
 export const appRepository = {
   adapter: getRepositoryAdapter(),
   users: createCollectionRepository(STORAGE_KEYS.users, INITIAL_USERS),
@@ -46,6 +69,7 @@ export const appRepository = {
 
   seedIfEmpty() {
     localRepository.ensureVersion(writeInitialData);
+    refreshDemoSurgeryDates();
   },
 
   ensureDemoProfiles() {

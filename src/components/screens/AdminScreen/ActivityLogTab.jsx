@@ -32,6 +32,7 @@ const actionMeta = {
   "surgery.usage_confirmed": { label: "수술 사용확인", color: T.success, bg: T.successBg },
   "surgery.items_updated": { label: "수술 품목수정", color: T.grey700, bg: T.grey100 },
   "surgery.deleted": { label: "수술 삭제", color: T.danger, bg: T.dangerBg },
+  "staff.deleted": { label: "직원 삭제", color: T.danger, bg: T.dangerBg },
 };
 
 function getCategory(action) {
@@ -68,6 +69,9 @@ function metadataLine(metadata = {}) {
   if (metadata.scheduled_date) pieces.push(metadata.scheduled_date);
   if (metadata.note) pieces.push(metadata.note);
   if (metadata.review_note) pieces.push(metadata.review_note);
+  if (metadata.name) pieces.push(metadata.name);
+  if (metadata.email) pieces.push(metadata.email);
+  if (metadata.role) pieces.push(metadata.role);
   return pieces.join(" · ") || "세부 정보 없음";
 }
 

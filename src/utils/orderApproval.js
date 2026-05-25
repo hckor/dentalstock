@@ -1,3 +1,15 @@
+import { ORDER_STATUS } from "../constants/orderStates";
+import {
+  canRoleTransitionOrderStatus,
+  getOrderTransitionPermissions,
+  isOrderTransitionAllowed,
+} from "./orderStateMachine";
+import {
+  getMonthlyProjectedAmounts,
+  getOrderApprovalGate,
+  getOrderDuplicateInfo,
+} from "./orderReview";
+
 export function buildFallbackVendorSnapshot(order) {
   return {
     vendor_id: order.vendor_id || "",
@@ -6,6 +18,57 @@ export function buildFallbackVendorSnapshot(order) {
     vendor_sku: order.vendor_sku || "",
     vendor_url: order.vendor_url || "",
     vendor_selection: order.vendor_selection || "unassigned",
+  };
+}
+
+function buildActionAvailability({ role, order, targetStatus, requiresOwnerApproval = false, gateReasons = [] }) {
+  const transitionAllowed = Boolean(order) && isOrderTransitionAllowed(order.status, targetStatus, { allowNoop: false });
+  const permissions = transitionAllowed
+    ? getOrderTransitionPermissions(order.status, targetStatus, { requiresOwnerApproval })
+    : [];
+  const allowed = transitionAllowed && canRoleTransitionOrderStatus(role, order.status, targetStatus, { requiresOwnerApproval });
+
+  return {
+    allowed,
+    transitionAllowed,
+    permissions,
+    missingPermissions: allowed ? [] : permissions,
+    requiresOwnerApproval: targetStatus === ORDER_STATUS.ordered ? requiresOwnerApproval : false,
+    reasons: targetStatus === ORDER_STATUS.ordered ? gateReasons : [],
+  };
+}
+
+export function getOrderActionAvailability({
+  order,
+  item,
+  orders = [],
+  items = [],
+  currentUser = null,
+  role = currentUser?.role,
+  duplicateInfo = null,
+  monthlyProjectedAmount = null,
+} = {}) {
+  const allOrders = orders.length ? orders : (order ? [order] : []);
+  const allItems = items.length ? items : (item ? [item] : []);
+  const resolvedDuplicateInfo = duplicateInfo ?? (order ? getOrderDuplicateInfo(order, allOrders) : null);
+  const projectedAmount = monthlyProjectedAmount ?? (
+    order ? getMonthlyProjectedAmounts(allOrders, allItems)[order.id] || 0 : 0
+  );
+  const gate = order && item
+    ? getOrderApprovalGate(order, item, resolvedDuplicateInfo, projectedAmount)
+    : { requiresOwnerApproval: false, reasons: [] };
+
+  return {
+    gate,
+    approve: buildActionAvailability({
+      role,
+      order: order && item ? order : null,
+      targetStatus: ORDER_STATUS.ordered,
+      requiresOwnerApproval: gate.requiresOwnerApproval,
+      gateReasons: gate.reasons,
+    }),
+    hold: buildActionAvailability({ role, order, targetStatus: ORDER_STATUS.hold }),
+    reject: buildActionAvailability({ role, order, targetStatus: ORDER_STATUS.rejected }),
   };
 }
 

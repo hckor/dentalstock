@@ -16,8 +16,8 @@ describe('useOrderActions', () => {
     mockSetModal = vi.fn();
 
     items = [
-      { id: '1', name: '거즈', unit: '박스', current_qty: 10, min_qty: 5 },
-      { id: '2', name: '면봉', unit: '상자', current_qty: 20, min_qty: 10 }
+      { id: '1', name: '거즈', unit: '박스', current_qty: 10, min_qty: 5, vendor_options: [{ vendor_id: 1, vendor_name: '덴올', price: 1000 }] },
+      { id: '2', name: '면봉', unit: '상자', current_qty: 20, min_qty: 10, vendor_options: [{ vendor_id: 1, vendor_name: '덴올', price: 1000 }] }
     ];
 
     orders = [

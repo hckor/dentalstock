@@ -31,8 +31,8 @@ export const ROLE_CAPABILITY_MATRIX = {
   manager: {
     [C.VIEW_COST]:false, [C.VIEW_APPROVAL]:true, [C.VIEW_STAFF]:true, [C.VIEW_ALL_STATUS]:true, [C.VIEW_INVENTORY]:true,
     [C.APPROVE_ORDER]:true, [C.APPROVE_OWNER_REVIEW_ORDER]:false,
-    [C.MANAGE_INVENTORY]:true, [C.MANAGE_ORDER]:true, [C.MANAGE_STAFF]:true, [C.MANAGE_SURGERY_PREP]:true, [C.CONFIRM_SURGERY_PREP]:true,
-    items:true, staff:true, orders_approve:true, stats:true,
+    [C.MANAGE_INVENTORY]:true, [C.MANAGE_ORDER]:true, [C.MANAGE_STAFF]:false, [C.MANAGE_SURGERY_PREP]:true, [C.CONFIRM_SURGERY_PREP]:true,
+    items:true, staff:false, orders_approve:true, stats:true,
     orders_approve_standard:true, orders_approve_owner_review:false, orders_hold:true, orders_reject:true, orders_price_check:true,
     cost_view:false, home_cost:false, home_operations:true, home_stock_work:true,
     surgery_view_all:true, surgery_manage:true, surgery_confirm:true,

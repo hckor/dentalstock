@@ -1,7 +1,6 @@
 import { ChevronLeft, Pencil, ShoppingCart } from "lucide-react";
 import { T, font, CS, monoFont } from "../../../constants/colors";
 import { Chip } from "../../shared/Chip";
-import { Divider } from "../../shared/Divider";
 
 export function ItemDetailHeader({ item, sc, ao, activeOrderMeta, onClose, onEdit }) {
   return (
@@ -30,33 +29,44 @@ export function ItemDetailHeader({ item, sc, ao, activeOrderMeta, onClose, onEdi
   );
 }
 
-export function CurrentStockCard({ item, sc }) {
+export function CurrentStockCard({ item, sc, infoRows = [], recentOut7 = 0, ao, activeOrderMeta }) {
   return (
-    <div style={{background:T.white, borderRadius:12, boxShadow:CS, padding:"20px", marginBottom:12, display:"flex", alignItems:"baseline", justifyContent:"space-between"}}>
-      <div>
-        <p style={{margin:"0 0 4px", fontSize: 14, lineHeight:"22px", color:T.grey500}}>현재 재고</p>
-        <p style={{margin:0, fontSize: 34, fontWeight:700, color:sc.text, fontFamily:monoFont, fontVariantNumeric:"tabular-nums", lineHeight:1}}>
-          {item.current_qty}
-          <span style={{fontSize: 20, fontWeight:400, color:T.grey500, marginLeft:6, fontFamily:font}}>{item.unit}</span>
-        </p>
-      </div>
-      <p style={{margin:0, fontSize: 16, color:T.grey400}}>최소 {item.min_qty}{item.unit}</p>
-    </div>
-  );
-}
-
-export function InfoRowsCard({ rows }) {
-  return (
-    <div style={{background:T.white, borderRadius:12, boxShadow:CS, marginBottom:12, overflow:"hidden"}}>
-      {rows.map((row, i) => (
-        <div key={row.label}>
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"18px 20px"}}>
-            <p style={{margin:0, fontSize: 16, color:T.grey500}}>{row.label}</p>
-            <p style={{margin:0, fontSize: 16, fontWeight:600, color:T.grey900}}>{row.value}</p>
-          </div>
-          {i < rows.length-1 && <Divider/>}
+    <div style={{background:T.white, borderRadius:12, boxShadow:CS, padding:"16px", marginBottom:12}}>
+      <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12, marginBottom:14}}>
+        <div>
+          <p style={{margin:"0 0 4px", fontSize: 14, lineHeight:"20px", color:T.grey500}}>현재 재고</p>
+          <p style={{margin:0, fontSize: 34, fontWeight:700, color:sc.text, fontFamily:monoFont, fontVariantNumeric:"tabular-nums", lineHeight:1}}>
+            {item.current_qty}
+            <span style={{fontSize: 20, fontWeight:400, color:T.grey500, marginLeft:6, fontFamily:font}}>{item.unit}</span>
+          </p>
         </div>
-      ))}
+        <div style={{textAlign:"right", flexShrink:0}}>
+          <p style={{margin:0, fontSize: 13, lineHeight:"18px", color:T.grey500}}>최소</p>
+          <p style={{margin:"2px 0 0", fontSize: 17, lineHeight:"22px", fontWeight:800, color:T.grey800, fontFamily:monoFont}}>{item.min_qty}{item.unit}</p>
+        </div>
+      </div>
+
+      <div style={{display:"grid", gridTemplateColumns:"repeat(2, minmax(0, 1fr))", gap:8}}>
+        {infoRows.map(row => (
+          <div key={row.label} style={{minWidth:0, border:`1px solid ${T.grey100}`, borderRadius:10, padding:"9px 10px", background:T.grey50}}>
+            <p style={{margin:0, fontSize:11, lineHeight:"15px", fontWeight:800, color:T.grey500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{row.label}</p>
+            <p style={{margin:"3px 0 0", fontSize:13, lineHeight:"18px", fontWeight:800, color:T.grey800, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{row.value}</p>
+          </div>
+        ))}
+        <div style={{minWidth:0, border:`1px solid ${T.grey100}`, borderRadius:10, padding:"9px 10px", background:T.grey50}}>
+          <p style={{margin:0, fontSize:11, lineHeight:"15px", fontWeight:800, color:T.grey500}}>최근 7일 출고</p>
+          <p style={{margin:"3px 0 0", fontSize:13, lineHeight:"18px", fontWeight:800, color:T.grey800, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{recentOut7}{item.unit}</p>
+        </div>
+      </div>
+
+      {ao && activeOrderMeta && (
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, marginTop:10, borderRadius:10, background:activeOrderMeta.bg, padding:"10px 11px"}}>
+          <p style={{margin:0, fontSize:13, lineHeight:"18px", fontWeight:800, color:T.grey800, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+            진행 중 발주 {ao.qty}{item.unit}
+          </p>
+          <span style={{flexShrink:0, fontSize:12, lineHeight:"17px", fontWeight:900, color:activeOrderMeta.text}}>{activeOrderMeta.label}</span>
+        </div>
+      )}
     </div>
   );
 }

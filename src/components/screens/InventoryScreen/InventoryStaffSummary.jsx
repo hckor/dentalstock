@@ -2,13 +2,12 @@ import { T, font, monoFont } from "../../../constants/colors";
 import { getActiveOrder } from "../../../utils/helpers";
 import { Card } from "../../shared/Card";
 
-export function InventoryStaffSummary({ items, attentionCount, orderedOrders, priorityRows, orders, inventoryTone, onItemClick }) {
+export function InventoryStaffSummary({ attentionCount, orderedOrders, priorityRows, orders, inventoryTone, onItemClick }) {
   return (
     <>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
         {[
-          { label: "전체 재고", value: items.length, color: T.primary },
-          { label: "확인 필요", value: attentionCount, color: inventoryTone.low.color },
+          { label: "확인 필요", value: attentionCount, color: attentionCount > 0 ? inventoryTone.low.color : inventoryTone.ok.color },
           { label: "입고 대기", value: orderedOrders.length, color: inventoryTone.incoming.color },
         ].map(summary => (
           <Card key={summary.label} style={{ padding: "12px 10px" }}>
@@ -22,8 +21,7 @@ export function InventoryStaffSummary({ items, attentionCount, orderedOrders, pr
         <Card style={{ padding: 14, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
             <div>
-              <p style={{ margin: 0, fontSize: 15, lineHeight: "20px", fontWeight: 800, color: T.grey900 }}>재고 리스크 우선순위</p>
-              <p style={{ margin: "2px 0 0", fontSize: 12, lineHeight: "17px", color: T.grey500 }}>부족, 유통기한, 입고대기를 먼저 봅니다.</p>
+              <p style={{ margin: 0, fontSize: 15, lineHeight: "20px", fontWeight: 800, color: T.grey900 }}>먼저 볼 재고</p>
             </div>
             <span style={{ flexShrink: 0, borderRadius: 9999, background: inventoryTone.low.bg, color: inventoryTone.low.color, padding: "5px 9px", fontSize: 12, fontWeight: 800 }}>
               {priorityRows.length}건

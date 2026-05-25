@@ -1,4 +1,11 @@
 import { SURGERY_PRESETS } from "../constants/surgeryPresets";
+import { dateKey, todayKey } from "../utils/helpers";
+
+function demoDate(offsetDays = 0) {
+  const date = new Date(`${todayKey()}T00:00:00`);
+  date.setDate(date.getDate() + offsetDays);
+  return dateKey(date);
+}
 
 export const INITIAL_USERS = [
   { id:"u1", name:"김원장",   role:"owner",     pin:"1234", active:true },
@@ -134,9 +141,9 @@ export const INIT_ORDERS = [
 ];
 
 export const INIT_SURGERIES = [
-  { id:"s1", title:"오전 임플란트 수술", patient:"홍길동", type:"implant",   scheduled_date:"2026-05-20", scheduled_time:"10:30", note:"4.0mm 픽스처 확인",    required_items:SURGERY_PRESETS.implant.items,   created_by:"김원장",  prep_confirmed:false, prepared_by:null, prepared_at:null },
-  { id:"s2", title:"오후 보철 세팅",     patient:"이지은", type:"prostho",   scheduled_date:"2026-05-21", scheduled_time:"15:00", note:"인상재 및 임시 시멘트 확인", required_items:SURGERY_PRESETS.prostho.items, created_by:"이매니저", prep_confirmed:false, prepared_by:null, prepared_at:null },
-  { id:"s3", title:"발치 예정",          patient:"김민수", type:"extraction", scheduled_date:"2026-05-22", scheduled_time:"11:00", note:"하악 대구치",          required_items:SURGERY_PRESETS.extraction.items, created_by:"김원장",  prep_confirmed:false, prepared_by:null, prepared_at:null },
+  { id:"s1", title:"오전 임플란트 수술", patient:"홍길동", type:"implant",   scheduled_date:demoDate(0), scheduled_time:"10:30", note:"4.0mm 픽스처 확인",    required_items:SURGERY_PRESETS.implant.items,   created_by:"김원장",  prep_confirmed:false, prepared_by:null, prepared_at:null },
+  { id:"s2", title:"오후 보철 세팅",     patient:"이지은", type:"prostho",   scheduled_date:demoDate(0), scheduled_time:"15:00", note:"인상재 및 임시 시멘트 확인", required_items:SURGERY_PRESETS.prostho.items, created_by:"이매니저", prep_confirmed:true, prepared_by:"박위생사", prepared_at:`${demoDate(0)}T09:30:00`, usage_confirmed:false },
+  { id:"s3", title:"발치 예정",          patient:"김민수", type:"extraction", scheduled_date:demoDate(1), scheduled_time:"11:00", note:"하악 대구치",          required_items:SURGERY_PRESETS.extraction.items, created_by:"김원장",  prep_confirmed:false, prepared_by:null, prepared_at:null },
 ];
 
 export const INIT_NOTIFS = [

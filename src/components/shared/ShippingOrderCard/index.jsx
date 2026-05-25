@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, ChevronRight, FileText, Navigation, Refres
 import { T } from "../../../constants/colors";
 import { ORDER_ST } from "../../../constants/orderStates";
 import { can } from "../../../constants/permissions";
+import { getOrderActionAvailability } from "../../../utils/orderApproval";
 import { getShippingEvents } from "../../../utils/shippingEvents";
 import { getVendorLabel } from "../../../utils/vendorSelection";
 import { Card } from "../Card";
@@ -18,7 +19,7 @@ import {
   stackedActionStyle,
   trackingNumberStyle,
 } from "./shippingOrderCard.styles";
-import { getApprovalDecision, getShippingDelaySignal } from "./shippingOrderCard.utils";
+import { getShippingDelaySignal } from "./shippingOrderCard.utils";
 import {
   ActionButton,
   ApprovalActionNotices,
@@ -29,22 +30,22 @@ import {
   StatusHeader,
 } from "./shippingOrderCard.parts";
 
-export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, stage, canApprove, onActionClick, selectable = false, selected = false, onSelectChange, priceChecking = false, onPriceCheck, duplicateInfo = null, monthlyProjectedAmount = 0, currentUser = null }) {
+export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, stage, canApprove, onActionClick, selectable = false, selected = false, onSelectChange, priceChecking = false, onPriceCheck, duplicateInfo = null, monthlyProjectedAmount = 0, currentUser = null, actionAvailability = null }) {
   const os = ORDER_ST[order.status] || holdStatusMeta;
   const vendorLabel = getVendorLabel(order);
 
   if (!item) return null;
+  const resolvedActionAvailability = actionAvailability || getOrderActionAvailability({ order, item, currentUser, duplicateInfo, monthlyProjectedAmount });
+  const canViewPriceData = can(currentUser?.role, "cost_view") || can(currentUser?.role, "orders_price_check");
 
   const renderStageContent = () => {
     switch (stage) {
       case "hold":
       case "auto_wait": {
-        const decision = getApprovalDecision(order, item, duplicateInfo, monthlyProjectedAmount);
-        const canStandardApprove = canApprove && can(currentUser?.role, "orders_approve_standard");
-        const canOwnerReviewApprove = canApprove && can(currentUser?.role, "orders_approve_owner_review");
-        const canHold = canApprove && can(currentUser?.role, "orders_hold");
-        const canReject = canApprove && can(currentUser?.role, "orders_reject");
-        const approvalBlocked = decision.requiresOwnerApproval && !canOwnerReviewApprove;
+        const canApproveAction = canApprove && resolvedActionAvailability.approve.allowed;
+        const canHold = canApprove && resolvedActionAvailability.hold.allowed;
+        const canReject = canApprove && resolvedActionAvailability.reject.allowed;
+        const approvalBlocked = resolvedActionAvailability.approve.requiresOwnerApproval && !resolvedActionAvailability.approve.allowed;
         const isOnHold = stage === "hold";
         return (
           <div style={bodyStyle}>
@@ -65,15 +66,19 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
               </div>
             </div>
 
-            <PriceCandidatePanel
-              item={item}
-              order={order}
-              canApprove={canApprove}
-              checking={priceChecking}
-              onPriceCheck={onPriceCheck}
-            />
+            {canViewPriceData && (
+              <PriceCandidatePanel
+                item={item}
+                order={order}
+                canApprove={canApprove}
+                checking={priceChecking}
+                onPriceCheck={onPriceCheck}
+              />
+            )}
 
-            <ApprovalDecisionPanel order={order} item={item} duplicateInfo={duplicateInfo} monthlyProjectedAmount={monthlyProjectedAmount} />
+            {canViewPriceData && (
+              <ApprovalDecisionPanel order={order} item={item} duplicateInfo={duplicateInfo} monthlyProjectedAmount={monthlyProjectedAmount} />
+            )}
 
             {canApprove ? (
               <>
@@ -87,9 +92,9 @@ export const ShippingOrderCard = memo(function ShippingOrderCard({ order, item, 
                     <AlertTriangle size={18} style={iconStyle} />
                     보류
                   </ActionButton>
-                  <ActionButton onClick={() => onActionClick("approve")} disabled={!canStandardApprove || approvalBlocked}>
+                  <ActionButton onClick={() => onActionClick("approve")} disabled={!canApproveAction}>
                     <CheckCircle2 size={18} style={iconStyle} />
-                    {!canStandardApprove ? "권한 없음" : approvalBlocked ? "원장 필요" : "승인"}
+                    {approvalBlocked ? "원장 필요" : canApproveAction ? "승인" : "권한 없음"}
                   </ActionButton>
                 </div>
               </>
