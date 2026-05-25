@@ -9,14 +9,20 @@ import { AddItemModal } from "../modals/AddItemModal";
 import { EditItemModal } from "../modals/EditItemModal";
 import { EditSurgeryItemsSheet } from "../modals/EditSurgeryItemsSheet";
 import { ShippingDetailModal } from "../modals/ShippingDetailModal";
+import { useInventory } from "../../contexts/InventoryContext";
+import { useOrders } from "../../contexts/OrderContext";
 
 export function ModalRoot({
   modal, setModal, selItem, setSelItem, form, setForm,
-  items, setItems, orders, currentUser,
-  commit, submitOrder, submitBulkOrders, confirmReceipt, confirmReceipts, showToast,
+  currentUser,
+  showToast,
   canApprove,
   editItemsState, setEditItemsState, openModal,
 }) {
+  const { items, setItems, commit } = useInventory();
+  const { orders, submitOrder, submitBulkOrders, confirmReceipt, confirmReceipts } = useOrders();
+  const bulkOrderContext = selItem?.type === "bulk_order_context" ? selItem : null;
+
   return (
     <>
       {modal && (
@@ -31,7 +37,16 @@ export function ModalRoot({
             <OrderRequestSheet item={selItem} currentUser={currentUser} onSubmit={submitOrder} onClose={()=>setModal(null)}/>
           )}
           {modal==="bulk_order" && (
-            <BulkOrderRequestSheet items={items} orders={orders} onSubmit={submitBulkOrders} onClose={()=>setModal(null)}/>
+            <BulkOrderRequestSheet
+              items={items}
+              orders={orders}
+              onSubmit={submitBulkOrders}
+              onClose={()=>setModal(null)}
+              initialRows={bulkOrderContext?.rows}
+              initialNote={bulkOrderContext?.note}
+              title={bulkOrderContext?.title}
+              description={bulkOrderContext?.description}
+            />
           )}
           {modal==="confirm_receipt" && selItem && canApprove && (
             <ReceiptConfirmSheet item={selItem} orders={orders} onConfirm={confirmReceipt} onClose={()=>setModal(null)}/>
@@ -40,7 +55,7 @@ export function ModalRoot({
             <BulkReceiptConfirmSheet orders={selItem.orders} items={items} onConfirm={confirmReceipts} onClose={()=>setModal(null)}/>
           )}
           {modal==="add_item" && (
-            <AddItemModal setItems={setItems} onClose={()=>setModal(null)} showToast={showToast}/>
+            <AddItemModal items={items} setItems={setItems} currentUser={currentUser} onClose={()=>setModal(null)} showToast={showToast}/>
           )}
           {modal==="edit_item" && selItem && (
             <EditItemModal item={selItem} setItems={setItems} onClose={()=>setModal(null)} showToast={showToast}/>

@@ -6,6 +6,10 @@ import { ROLE_META } from "../../constants/permissions";
 const TAB_TITLES = {
   home: "대시보드", inventory: "재고 목록", inout: "입출고",
   shipping: "발주/배송", alerts: "알림", admin: "관리",
+  "shipping:hold": "원장 승인",
+  "admin:analytics": "비용 분석",
+  "admin:surgery": "수술 관리",
+  "admin:staff": "직원 관리",
 };
 
 export function AppHeader({ tab, currentUser, unread, setTab, onOpenProfile }) {

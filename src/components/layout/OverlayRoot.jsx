@@ -1,5 +1,7 @@
 import { lazy, Suspense } from "react";
 import { T } from "../../constants/colors";
+import { useInventory } from "../../contexts/InventoryContext";
+import { useOrders } from "../../contexts/OrderContext";
 
 const ItemDetailScreen       = lazy(() => import("../screens/ItemDetailScreen").then(m => ({ default: m.ItemDetailScreen })));
 const ExpiryManagementScreen = lazy(() => import("../screens/ExpiryManagementScreen").then(m => ({ default: m.ExpiryManagementScreen })));
@@ -9,10 +11,12 @@ const overlayStyle = {position:"absolute", inset:0, zIndex:100, background:T.whi
 
 export function OverlayRoot({
   detailItem, showExpiry, showProfile,
-  items, txs, orders, currentUser, canEdit,
+  currentUser, canEdit,
   onCloseDetail, onCloseExpiry, onCloseProfile,
   openModal, onLogout,
 }) {
+  const { items, txs } = useInventory();
+  const { orders } = useOrders();
   return (
     <>
       {detailItem && (() => {

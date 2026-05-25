@@ -1,15 +1,20 @@
-import { useState, useEffect } from "react";
-import { Edit2, CalendarDays, ClipboardCheck, Trash2 } from "lucide-react";
-import { T, font } from "../../../constants/colors";
+import { useState, useEffect, useMemo } from "react";
 import { SURGERY_PRESETS } from "../../../constants/surgeryPresets";
 import { todayKey } from "../../../utils/helpers";
-import { Card } from "../../shared/Card";
-import { Divider } from "../../shared/Divider";
-import { Chip } from "../../shared/Chip";
-import { SecTitle } from "../../shared/SecTitle";
-import { Inp } from "../../shared/Inp";
+import { SurgeryBulkOrderCard } from "./SurgeryBulkOrderCard";
+import { SurgeryList } from "./SurgeryList";
+import { SurgeryOperationsSummary } from "./SurgeryOperationsSummary";
+import { SurgeryScheduleForm } from "./SurgeryScheduleForm";
+import {
+  WEEK_WINDOW_DAYS,
+  buildProjectedStockRows,
+  buildSurgeryBulkShortageRows,
+  buildTemplateGroups,
+  isWithinNextDays,
+  summarizeSurgery,
+} from "./SurgeryAdminTab.utils";
 
-export function SurgeryAdminTab({items, surgeries, addSurgery, deleteSurgery, openItemsEditor, updateSurgeryItems}) {
+export function SurgeryAdminTab({items = [], surgeries = [], addSurgery, deleteSurgery, openItemsEditor, updateSurgeryItems, openModal}) {
   const [type, setType] = useState("implant");
   const [title, setTitle] = useState("오전 임플란트 수술");
   const [patient, setPatient] = useState("");
@@ -19,7 +24,64 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, deleteSurgery, op
   const preset = SURGERY_PRESETS[type];
   const [draftItems, setDraftItems] = useState(preset.items.map(r=>({...r})));
   const [draftCustomized, setDraftCustomized] = useState(false);
-  const sortedSurgeries = [...surgeries].sort((a,b)=>`${a.scheduled_date} ${a.scheduled_time}`.localeCompare(`${b.scheduled_date} ${b.scheduled_time}`));
+  const templateGroups = useMemo(() => buildTemplateGroups(type, items), [type, items]);
+  const sortedSurgeries = useMemo(
+    () => [...surgeries].sort((a,b)=>`${a.scheduled_date} ${a.scheduled_time}`.localeCompare(`${b.scheduled_date} ${b.scheduled_time}`)),
+    [surgeries],
+  );
+  const surgeryInsights = useMemo(() => {
+    const itemMap = new Map(items.map(item => [item.id, item]));
+    const summaries = sortedSurgeries.map(surgery => summarizeSurgery(surgery, itemMap));
+    const today = todayKey();
+    const upcoming = summaries.filter(summary => summary.surgery.scheduled_date >= today);
+    const weeklyPrepRows = summaries.filter(summary =>
+      !summary.surgery.prep_confirmed &&
+      !summary.surgery.usage_confirmed &&
+      isWithinNextDays(summary.surgery.scheduled_date, today, WEEK_WINDOW_DAYS)
+    );
+    const todayPlannedRows = summaries.filter(summary =>
+      !summary.surgery.usage_confirmed &&
+      summary.surgery.scheduled_date === today
+    );
+    const weeklyPlannedRows = summaries.filter(summary =>
+      !summary.surgery.usage_confirmed &&
+      isWithinNextDays(summary.surgery.scheduled_date, today, WEEK_WINDOW_DAYS)
+    );
+    const focusRows = upcoming.length ? upcoming : summaries;
+    const expectedTotal = focusRows.reduce((sum, summary) => sum + summary.expectedCost, 0);
+    const actualRows = summaries.filter(summary => summary.hasActual);
+    const usageDelta = actualRows.reduce((sum, summary) => sum + summary.deltaCost, 0);
+    const riskRows = focusRows
+      .filter(summary => summary.shortageCount > 0)
+      .sort((a, b) => b.shortageCount - a.shortageCount || b.expectedCost - a.expectedCost);
+    const highCostRows = focusRows
+      .filter(summary => summary.expectedCost > 0)
+      .sort((a, b) => b.expectedCost - a.expectedCost)
+      .slice(0, 3);
+    const usageRows = actualRows
+      .sort((a, b) => Math.abs(b.deltaCost) - Math.abs(a.deltaCost))
+      .slice(0, 3);
+
+    return {
+      summaries,
+      focusRows,
+      totalLabel: upcoming.length ? "예정" : "전체",
+      expectedTotal,
+      usageDelta,
+      hasUsageData: actualRows.length > 0,
+      riskRows: riskRows.slice(0, 3),
+      riskCount: riskRows.length,
+      highCostRows,
+      usageRows,
+      unpricedCount: focusRows.reduce((sum, summary) => sum + summary.unpricedCount, 0),
+      weeklyPrepCount: weeklyPrepRows.length,
+      bulkShortageRows: buildSurgeryBulkShortageRows(weeklyPrepRows, itemMap),
+      todayPlannedCount: todayPlannedRows.length,
+      weeklyPlannedCount: weeklyPlannedRows.length,
+      todayProjectedStockRows: buildProjectedStockRows(todayPlannedRows, itemMap),
+      weeklyProjectedStockRows: buildProjectedStockRows(weeklyPlannedRows, itemMap),
+    };
+  }, [items, sortedSurgeries]);
 
   // 수술 유형 변경 시 사용자 편집이 없었다면 프리셋으로 동기화
   useEffect(() => {
@@ -46,88 +108,55 @@ export function SurgeryAdminTab({items, surgeries, addSurgery, deleteSurgery, op
   const removeSurgery = (surgery) => {
     if (window.confirm(`${surgery.title} 수술 일정을 삭제할까요?`)) deleteSurgery(surgery.id);
   };
+  const openSurgeryBulkOrder = () => {
+    if (!openModal) return;
+    openModal("bulk_order", {
+      type: "bulk_order_context",
+      title: "수술 부족 품목 발주",
+      description: "이번 주 준비 전 수술에서 부족한 품목만 모았습니다.",
+      note: "수술 준비 부족 품목 일괄 발주",
+      rows: surgeryInsights.bulkShortageRows.map(row => ({
+        item_id: row.id,
+        qty: row.shortageQty,
+        sourceLabel: "수술 준비",
+        reason: `${row.surgeryTitles.slice(0, 2).join(", ")}${row.surgeryTitles.length > 2 ? ` 외 ${row.surgeryTitles.length - 2}건` : ""} · 필요 ${row.requiredQty}${row.unit} / 현재 ${row.currentQty}${row.unit}`,
+      })),
+    });
+  };
 
   return (
     <>
-      <SecTitle>수술 일정 등록</SecTitle>
-      <Card style={{padding:16, marginBottom:16}}>
-        <p style={{margin:"0 0 8px",fontSize: 16,fontWeight:600,color:T.grey700}}>수술 유형</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
-          {Object.entries(SURGERY_PRESETS).map(([id,p])=>(
-            <button key={id} onClick={()=>{setType(id); setTitle(p.label);}} style={{padding:"14px 0",borderRadius:9999,border:"none",background:type===id?T.blue500:T.grey100,color:type===id?T.white:T.grey700,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font}}>{p.label}</button>
-          ))}
-        </div>
-        <p style={{margin:"0 0 6px",fontSize: 16,fontWeight:600,color:T.grey700}}>수술명</p>
-        <Inp value={title} onChange={e=>setTitle(e.target.value)} placeholder="예: 오전 임플란트 수술" style={{marginBottom:10}}/>
-        <p style={{margin:"0 0 6px",fontSize: 16,fontWeight:600,color:T.grey700}}>환자명</p>
-        <Inp value={patient} onChange={e=>setPatient(e.target.value)} placeholder="예: 홍길동" style={{marginBottom:10}}/>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-          <div><p style={{margin:"0 0 6px",fontSize: 16,fontWeight:600,color:T.grey700}}>날짜</p><Inp value={date} onChange={e=>setDate(e.target.value)} type="date"/></div>
-          <div><p style={{margin:"0 0 6px",fontSize: 16,fontWeight:600,color:T.grey700}}>시간</p><Inp value={time} onChange={e=>setTime(e.target.value)} type="time"/></div>
-        </div>
-        <p style={{margin:"0 0 6px",fontSize: 16,fontWeight:600,color:T.grey700}}>메모</p>
-        <Inp value={note} onChange={e=>setNote(e.target.value)} placeholder="예: 픽스처 사이즈 확인" style={{marginBottom:14}}/>
-
-        <div style={{background:T.grey50,borderRadius:12,padding:"14px 16px",marginBottom:14}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,gap:8}}>
-            <p style={{margin:0,fontSize: 16,fontWeight:700,color:T.grey700}}>예상 준비 품목{draftCustomized&&<span style={{marginLeft:6,fontSize: 16,fontWeight:600,color:T.blue500}}>· 사용자 편집</span>}</p>
-            <div style={{display:"flex",gap:8}}>
-              {draftCustomized&&<button onClick={resetDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize: 16,color:T.grey500,fontFamily:font,fontWeight:600}}>기본값</button>}
-              <button onClick={editDraft} style={{background:"none",border:"none",cursor:"pointer",fontSize: 16,color:T.blue500,fontFamily:font,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><Edit2 size={16}/>편집</button>
-            </div>
-          </div>
-          {draftItems.length===0 ? (
-            <p style={{margin:0,padding:"6px 0",fontSize: 16,color:T.grey500}}>품목이 비어 있어요. "편집"으로 추가하세요.</p>
-          ) : draftItems.map((req,i)=>{
-            const item = items.find(it=>it.id===req.item_id);
-            const enough = item && item.current_qty>=req.qty;
-            return (
-              <div key={req.item_id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,padding:i===0?"0 0 7px":i===draftItems.length-1?"7px 0 0":"7px 0",borderTop:i===0?"none":`1px solid ${T.grey100}`}}>
-                <span style={{fontSize: 16,color:T.grey700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item?.name||"삭제된 품목"}</span>
-                <span style={{fontSize: 16,fontWeight:700,color:enough?T.green500:T.red500,whiteSpace:"nowrap"}}>{req.qty}{item?.unit||""}</span>
-              </div>
-            );
-          })}
-        </div>
-        <button onClick={submit} style={{width:"100%",padding:"18px 0",borderRadius:9999,border:"none",background:T.blue500,color:T.white,fontSize: 16,fontWeight:600,cursor:"pointer",fontFamily:font}}>수술 일정 등록</button>
-      </Card>
-
-      <SecTitle>예정 수술</SecTitle>
-      <Card>
-        {sortedSurgeries.length===0 ? (
-          <p style={{margin:0,padding:"28px 20px",fontSize: 16,color:T.grey500,textAlign:"center"}}>예정 수술이 없어요.</p>
-        ) : sortedSurgeries.map((s,i)=>(
-          <div key={s.id}>
-            <div style={{display:"flex",alignItems:"center",gap:12,padding:"18px 20px"}}>
-              <div style={{width:36,height:36,borderRadius:10,background:s.prep_confirmed?T.green50:T.blue50,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                {s.prep_confirmed?<ClipboardCheck size={20} color={s.usage_confirmed?T.green500:T.orange500}/>:<CalendarDays size={20} color={T.blue500}/>}
-              </div>
-              <div style={{flex:1,minWidth:0}}>
-                <p style={{margin:0,fontSize: 16,fontWeight:600,color:T.grey900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.title}</p>
-                <p style={{margin:"2px 0 0",fontSize: 16,color:T.grey500}}>{s.scheduled_date} {s.scheduled_time} · {s.patient} · 품목 {s.required_items.length}개</p>
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                <Chip label={s.usage_confirmed?"사용확인":s.prep_confirmed?"사용량 대기":"준비전"} color={s.usage_confirmed?T.green500:s.prep_confirmed?T.orange500:T.orange500} bg={s.usage_confirmed?T.green50:T.orange50} border={T.grey200}/>
-                {!s.prep_confirmed&&(
-                  <button
-                    aria-label={`${s.title} 품목 편집`}
-                    onClick={()=>openItemsEditor(s.required_items, (newItems)=>updateSurgeryItems(s.id, newItems), `${s.scheduled_date} ${s.scheduled_time} · ${s.title}`)}
-                    title="품목 편집"
-                    style={{border:"none",background:T.grey100,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
-                  ><Edit2 size={18} color={T.grey700}/></button>
-                )}
-                <button
-                  aria-label={`${s.title} 삭제`}
-                  onClick={()=>removeSurgery(s)}
-                  title="수술 삭제"
-                  style={{border:"none",background:T.red50,borderRadius:9999,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}
-                ><Trash2 size={16} color={T.red500}/></button>
-              </div>
-            </div>
-            {i<sortedSurgeries.length-1&&<Divider/>}
-          </div>
-        ))}
-      </Card>
+      <SurgeryOperationsSummary surgeryInsights={surgeryInsights}/>
+      <SurgeryBulkOrderCard surgeryInsights={surgeryInsights} openModal={openModal} onOpenBulkOrder={openSurgeryBulkOrder}/>
+      <SurgeryScheduleForm
+        type={type}
+        setType={setType}
+        title={title}
+        setTitle={setTitle}
+        patient={patient}
+        setPatient={setPatient}
+        date={date}
+        setDate={setDate}
+        time={time}
+        setTime={setTime}
+        note={note}
+        setNote={setNote}
+        preset={preset}
+        templateGroups={templateGroups}
+        draftCustomized={draftCustomized}
+        draftItems={draftItems}
+        items={items}
+        onEditDraft={editDraft}
+        onResetDraft={resetDraft}
+        onSubmit={submit}
+      />
+      <SurgeryList
+        sortedSurgeries={sortedSurgeries}
+        surgeryInsights={surgeryInsights}
+        openItemsEditor={openItemsEditor}
+        updateSurgeryItems={updateSurgeryItems}
+        onRemoveSurgery={removeSurgery}
+      />
     </>
   );
 }

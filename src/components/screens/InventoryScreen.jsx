@@ -1,19 +1,115 @@
-import { useMemo } from "react";
-import { Search, CalendarClock, ShoppingCart } from "lucide-react";
-import { T, font } from "../../constants/colors";
-import { CATEGORIES } from "../../constants/categories";
-import { getStatus, getActiveOrder } from "../../utils/helpers";
+import { useEffect, useMemo, useState } from "react";
+import { T } from "../../constants/colors";
+import { ORDER_ST } from "../../constants/orderStates";
+import { useInventory } from "../../contexts/InventoryContext";
+import { useOrders } from "../../contexts/OrderContext";
+import { getActiveOrder, getStatus, todayKey } from "../../utils/helpers";
 import { ItemCard } from "../shared/ItemCard";
+import { InventoryFilters } from "./InventoryScreen/InventoryFilters";
+import { InventoryList } from "./InventoryScreen/InventoryList";
+import { InventoryOwnerSummary } from "./InventoryScreen/InventoryOwnerSummary";
+import { InventoryStaffSummary } from "./InventoryScreen/InventoryStaffSummary";
+import {
+  buildIncomingByItem,
+  buildInventoryRiskRows,
+  buildItemInsights,
+  buildOwnerCostSummary,
+  inventoryTone,
+  loadSavedRisk,
+  storageKeyForRole,
+} from "./InventoryScreen/inventoryScreenUtils";
 
-const ALL_CATS = [{ id: 0, name: "전체", color: T.grey700 }, ...CATEGORIES];
+export function InventoryScreen({ search, setSearch, cat, setCat, currentUser, onItemClick, onExpiryClick, onBulkOrderClick }) {
+  const { items } = useInventory();
+  const { orders } = useOrders();
+  const [risk, setRisk] = useState(() => loadSavedRisk(currentUser?.role));
+  const isOwner = currentUser?.role === "owner";
+  const stockToday = todayKey();
+  const tone = {
+    ...inventoryTone,
+    incoming: { color: ORDER_ST.ordered.text, bg: ORDER_ST.ordered.bg },
+  };
 
-export function InventoryScreen({ items, search, setSearch, cat, setCat, orders, onItemClick, onExpiryClick, onBulkOrderClick }) {
-  const alertItems = useMemo(() => items.filter(i => getStatus(i) !== "ok"), [items]);
-  const okItems    = useMemo(() => items.filter(i => getStatus(i) === "ok"),  [items]);
-  const bulkableCount = useMemo(
-    () => alertItems.filter(item => !getActiveOrder(orders, item.id)).length,
-    [alertItems, orders]
+  const itemMap = useMemo(() => new Map(items.map(item => [item.id, item])), [items]);
+  const orderedOrders = useMemo(() => orders.filter(order => order.status === "ordered"), [orders]);
+  const orderedItemIds = useMemo(
+    () => new Set(orderedOrders.map(order => order.item_id)),
+    [orderedOrders]
   );
+  const incomingByItem = useMemo(
+    () => buildIncomingByItem({ orderedOrders, itemMap }),
+    [itemMap, orderedOrders]
+  );
+  const riskRows = useMemo(
+    () => buildInventoryRiskRows({ items, orderedItemIds, incomingByItem, stockToday }),
+    [incomingByItem, items, orderedItemIds, stockToday]
+  );
+  const riskById = useMemo(() => new Map(riskRows.map(row => [row.item.id, row])), [riskRows]);
+  const riskCounts = useMemo(() => ({
+    all: items.length,
+    low: riskRows.filter(row => row.low).length,
+    expiry: riskRows.filter(row => row.expirySoon).length,
+    overstock: riskRows.filter(row => row.overstock).length,
+    incoming: riskRows.filter(row => row.incoming).length,
+  }), [items.length, riskRows]);
+  const attentionCount = useMemo(() => riskRows.filter(row => row.low || row.expirySoon).length, [riskRows]);
+  const riskOptions = [
+    { id: "all", label: "전체", count: riskCounts.all, color: T.grey700 },
+    { id: "low", label: "부족", count: riskCounts.low, color: tone.low.color },
+    { id: "expiry", label: "유통기한", count: riskCounts.expiry, color: tone.expiry.color },
+    { id: "overstock", label: "과잉", count: riskCounts.overstock, color: tone.overstock.color },
+    { id: "incoming", label: "입고대기", count: riskCounts.incoming, color: tone.incoming.color },
+  ];
+  const filteredItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return items.filter(item => {
+      const row = riskById.get(item.id);
+      const matchesSearch = !query || item.name.toLowerCase().includes(query);
+      const matchesCategory = cat === 0 || item.category_id === cat;
+      const matchesRisk =
+        risk === "all" ||
+        (risk === "low" && row?.low) ||
+        (risk === "expiry" && row?.expirySoon) ||
+        (risk === "overstock" && row?.overstock) ||
+        (risk === "incoming" && row?.incoming);
+      return matchesSearch && matchesCategory && matchesRisk;
+    });
+  }, [cat, items, risk, riskById, search]);
+  const priorityRows = useMemo(() => riskRows
+    .filter(row => row.priority > 0 || row.incoming)
+    .sort((a, b) => b.priority - a.priority || String(a.item.name).localeCompare(String(b.item.name), "ko-KR"))
+    .slice(0, 3), [riskRows]);
+  const ownerCostSummary = useMemo(
+    () => buildOwnerCostSummary({ riskRows, orderedOrders, itemMap }),
+    [itemMap, orderedOrders, riskRows]
+  );
+  const ownerTopRows = useMemo(() => riskRows
+    .filter(row => row.low || row.expirySoon || row.overstock || row.incoming)
+    .sort((a, b) => b.businessRiskAmount - a.businessRiskAmount || b.priority - a.priority || String(a.item.name).localeCompare(String(b.item.name), "ko-KR"))
+    .slice(0, 5), [riskRows]);
+  const alertItems = useMemo(
+    () => filteredItems.filter(i => getStatus(i) !== "ok" || riskById.get(i.id)?.expirySoon),
+    [filteredItems, riskById]
+  );
+  const shortageItems = useMemo(() => filteredItems.filter(i => getStatus(i) !== "ok"), [filteredItems]);
+  const okItems = useMemo(
+    () => filteredItems.filter(i => getStatus(i) === "ok" && !riskById.get(i.id)?.expirySoon),
+    [filteredItems, riskById]
+  );
+  const bulkableCount = useMemo(
+    () => shortageItems.filter(item => !getActiveOrder(orders, item.id)).length,
+    [shortageItems, orders]
+  );
+  const blockedShortageCount = Math.max(0, shortageItems.length - bulkableCount);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(storageKeyForRole(currentUser?.role), risk);
+    } catch {
+      // 필터 저장 실패는 화면 동작을 막지 않습니다.
+    }
+  }, [currentUser?.role, risk]);
 
   const renderItem = (item) => {
     const ao = getActiveOrder(orders, item.id);
@@ -23,6 +119,7 @@ export function InventoryScreen({ items, search, setSearch, cat, setCat, orders,
         item={item}
         isOrdered={ao?.status === "ordered"}
         ao={ao}
+        insights={buildItemInsights({ item, activeOrder: ao, row: riskById.get(item.id), tone })}
         onCardClick={onItemClick}
       />
     );
@@ -30,110 +127,51 @@ export function InventoryScreen({ items, search, setSearch, cat, setCat, orders,
 
   return (
     <div>
-      {/* 검색 + 유통기한 */}
       <div style={{ padding: "12px 16px 0" }}>
-        <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "center" }}>
-          <div style={{ position: "relative", flex: 1 }}>
-            <div style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}>
-              <Search size={18} color={T.grey400} />
-            </div>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="품목명 검색"
-              style={{ width: "100%", height: 44, padding: "10px 16px 10px 40px", borderRadius: 12, border: `1px solid rgba(2,32,71,0.05)`, background: "rgba(0,23,51,0.02)", fontSize: 16, color: T.grey800, fontFamily: font, outline: "none", boxSizing: "border-box" }}
-            />
-          </div>
-          <button
-            onClick={onExpiryClick}
-            style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 5, height: 44, padding: "10px 14px", borderRadius: 12, border: `1px solid ${T.grey200}`, background: T.white, color: T.grey700, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: font, whiteSpace: "nowrap" }}
-          >
-            <CalendarClock size={18} color={T.grey600} /> 유통기한
-          </button>
-        </div>
-
-        {/* 카테고리 필터 */}
-        <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 10 }}>
-          {ALL_CATS.map(c => {
-            const active = cat === c.id;
-            return (
-              <button
-                key={c.id}
-                onClick={() => setCat(c.id)}
-                style={{
-                  flexShrink: 0,
-                  padding: "7px 14px",
-                  borderRadius: 12,
-                  border: active ? "none" : `1px solid ${T.grey200}`,
-                  background: active ? T.blue500 : T.white,
-                  color: active ? T.white : T.grey600,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: font,
-                  transition: "all 120ms",
-                }}
-              >
-                {c.name}
-              </button>
-            );
-          })}
-        </div>
+        {isOwner ? (
+          <InventoryOwnerSummary
+            attentionCount={attentionCount}
+            ownerCostSummary={ownerCostSummary}
+            ownerTopRows={ownerTopRows}
+            inventoryTone={tone}
+            onItemClick={onItemClick}
+          />
+        ) : (
+          <InventoryStaffSummary
+            items={items}
+            attentionCount={attentionCount}
+            orderedOrders={orderedOrders}
+            priorityRows={priorityRows}
+            orders={orders}
+            inventoryTone={tone}
+            onItemClick={onItemClick}
+          />
+        )}
+        <InventoryFilters
+          search={search}
+          setSearch={setSearch}
+          cat={cat}
+          setCat={setCat}
+          risk={risk}
+          setRisk={setRisk}
+          riskOptions={riskOptions}
+          onExpiryClick={onExpiryClick}
+        />
       </div>
 
-      <div style={{ padding: "4px 16px 24px" }}>
-        {/* 확인 필요 섹션 */}
-        {alertItems.length > 0 && (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-              <div style={{ width: 7, height: 7, borderRadius: 9999, background: T.red500, flexShrink: 0 }} />
-              <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey700, flex: 1 }}>확인 필요 {alertItems.length}</p>
-              <button
-                type="button"
-                onClick={onBulkOrderClick}
-                disabled={!bulkableCount}
-                style={{
-                  minHeight: 38,
-                  padding: "9px 13px",
-                  borderRadius: 9999,
-                  border: "none",
-                  background: bulkableCount ? T.blue500 : T.grey200,
-                  color: bulkableCount ? T.white : T.grey500,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: bulkableCount ? "pointer" : "default",
-                  fontFamily: font,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <ShoppingCart size={16} />
-                부족 품목 발주
-              </button>
-            </div>
-            {alertItems.map(renderItem)}
-            {okItems.length > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, marginTop: 6 }}>
-                <div style={{ width: 7, height: 7, borderRadius: 9999, background: T.green500 }} />
-                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.grey700 }}>정상</p>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* 정상 품목 */}
-        {okItems.map(renderItem)}
-
-        {items.length === 0 && (
-          <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <p style={{ margin: 0, fontSize: 16, color: T.grey400 }}>
-              {cat !== 0 ? `${ALL_CATS.find(c => c.id === cat)?.name} 품목이 없어요` : "품목이 없어요"}
-            </p>
-          </div>
-        )}
-      </div>
+      <InventoryList
+        alertItems={alertItems}
+        okItems={okItems}
+        filteredItems={filteredItems}
+        cat={cat}
+        risk={risk}
+        search={search}
+        bulkableCount={bulkableCount}
+        blockedShortageCount={blockedShortageCount}
+        inventoryTone={tone}
+        onBulkOrderClick={onBulkOrderClick}
+        renderItem={renderItem}
+      />
     </div>
   );
 }

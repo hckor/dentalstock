@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-import { Home, Package, ArrowDownToLine, ShoppingCart, Users } from "lucide-react";
+import { CalendarDays, Coins, Home, Package, ArrowDownToLine, ShoppingCart, Users } from "lucide-react";
 import { T } from "../constants/colors";
 import { useTheme } from "../contexts/ThemeContext";
 import { can } from "../constants/permissions";
@@ -8,10 +8,10 @@ import { supabasePriceMonitorApi } from "../api/supabasePriceMonitorApi";
 import { supabaseStaffApi } from "../api/supabaseStaffApi";
 import { useToast } from "../hooks/useToast";
 import { usePushNotifications } from "../hooks/usePushNotifications";
-import { useStockActions } from "../hooks/useStockActions";
-import { useOrderActions } from "../hooks/useOrderActions";
-import { useSurgeryActions } from "../hooks/useSurgeryActions";
 import { useOverlayHistory } from "../hooks/useOverlayHistory";
+import { InventoryProvider } from "../contexts/InventoryContext";
+import { OrderProvider } from "../contexts/OrderContext";
+import { SurgeryProvider } from "../contexts/SurgeryContext";
 import { AppHeader } from "./layout/AppHeader";
 import { BottomNav } from "./layout/BottomNav";
 import { ModalRoot } from "./layout/ModalRoot";
@@ -24,7 +24,7 @@ const AlertsScreen         = lazy(() => import("./screens/AlertsScreen").then(m 
 const ShippingTrackingScreen = lazy(() => import("./screens/ShippingTrackingScreen").then(m => ({ default: m.ShippingTrackingScreen })));
 const AdminScreen          = lazy(() => import("./screens/AdminScreen/AdminScreen").then(m => ({ default: m.AdminScreen })));
 
-export function MainApp({currentUser, users, setUsers, items, setItems, txs, setTxs, orders, setOrders, surgeries, setSurgeries, notifs, setNotifs, unread, pendingOrders, onLogout}) {
+export function MainApp({currentUser, users, setUsers, items, setItems, txs, setTxs, orders, setOrders, surgeries, setSurgeries, notifs, setNotifs, unread, onLogout}) {
   const [tab,     setTab]     = useState("home");
   const [modal,   setModal]   = useState(null);
   const [selItem, setSelItem] = useState(null);
@@ -54,12 +54,8 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
 
   const role       = currentUser.role;
   const canApprove = can(role, "orders_approve");
-  const adminBadge = canApprove ? pendingOrders : 0;
 
   const { firePush, requestPushPermission, firedRemindersRef } = usePushNotifications();
-  const { commit } = useStockActions({ items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
-  const { submitOrder, submitBulkOrders, approveOrder, approveOrders, rejectOrder, confirmReceipt, confirmReceipts, startTracking, refreshTracking } = useOrderActions({ orders, setOrders, items, setItems, setTxs, setNotifs, currentUser, showToast, setModal });
-  const { addSurgery, confirmSurgeryPrep, confirmSurgeryUsage, updateSurgeryItems, deleteSurgery } = useSurgeryActions({ surgeries, setSurgeries, items, setItems, setTxs, setNotifs, currentUser, showToast, firePush, firedRemindersRef });
 
   useEffect(() => { requestPushPermission(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -168,23 +164,36 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
     }
   }, [currentUser, setItems, showToast]);
 
-  const filteredItems = useMemo(
-    () => items.filter(i => i.name.includes(search) && (cat===0 || i.category_id===cat)),
-    [items, search, cat]
-  );
-
   const myOrders = orders.filter(o => o.requested_by === currentUser.name);
   const activeOrderCount = canApprove
     ? orders.filter(o => o.status === "pending" || o.status === "ordered").length
     : myOrders.filter(o => o.status === "pending" || o.status === "ordered").length;
 
-  const navItems = [
-    {id:"home",      Icon:Home,            label:"홈"},
-    {id:"inventory", Icon:Package,         label:"재고"},
-    {id:"inout",     Icon:ArrowDownToLine, label:"입출고"},
-    {id:"shipping",  Icon:ShoppingCart,    label:"발주/배송", badge:activeOrderCount},
-    ...(canApprove ? [{id:"admin", Icon:Users, label:"관리", badge:adminBadge}] : []),
-  ];
+  const adminSection = tab.startsWith("admin:") ? tab.slice("admin:".length) : null;
+  const shippingSection = tab.startsWith("shipping:") ? tab.slice("shipping:".length) : null;
+  const adminInitialTab = tab === "admin" ? "staff" : adminSection || "surgery";
+  const shippingInitialTab = shippingSection || "auto_wait";
+  const navItems = role === "owner"
+      ? [
+          {id:"home",            Icon:Home,         label:"홈"},
+          {id:"admin:analytics", Icon:Coins,        label:"비용"},
+          {id:"admin:surgery",   Icon:CalendarDays, label:"수술"},
+          {id:"inventory",       Icon:Package,      label:"재고"},
+          {id:"admin",           Icon:Users,        label:"관리"},
+        ]
+    : role === "manager"
+      ? [
+          {id:"home",        Icon:Home,         label:"홈"},
+          {id:"shipping",    Icon:ShoppingCart, label:"승인", badge:activeOrderCount},
+          {id:"inventory",   Icon:Package,      label:"재고"},
+          {id:"admin",       Icon:Users,        label:"관리"},
+        ]
+      : [
+          {id:"home",      Icon:CalendarDays,    label:"수술"},
+          {id:"inventory", Icon:Package,         label:"재고"},
+          {id:"inout",     Icon:ArrowDownToLine, label:"입출고"},
+          {id:"shipping",  Icon:ShoppingCart,    label:"발주", badge:activeOrderCount},
+        ];
 
   return (
     <>
@@ -196,14 +205,18 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         onOpenProfile={openProfile}
       />
 
+      <InventoryProvider items={items} setItems={setItems} txs={txs} setTxs={setTxs} setNotifs={setNotifs} currentUser={currentUser} showToast={showToast} setModal={setModal}>
+      <OrderProvider orders={orders} setOrders={setOrders} items={items} setItems={setItems} setTxs={setTxs} setNotifs={setNotifs} currentUser={currentUser} showToast={showToast} setModal={setModal}>
+      <SurgeryProvider surgeries={surgeries} setSurgeries={setSurgeries} items={items} setItems={setItems} setTxs={setTxs} setNotifs={setNotifs} currentUser={currentUser} showToast={showToast} firePush={firePush} firedRemindersRef={firedRemindersRef}>
+
       <div style={{flex:1, overflowY:"auto", background:dynamicT.grey50}}>
         <Suspense fallback={<div style={{padding:40, textAlign:"center", color:T.grey500, fontSize: 16}}>로딩 중...</div>}>
-          {tab==="home"      && <HomeScreen items={items} txs={txs} orders={orders} surgeries={surgeries} setTab={setTab} canApprove={canApprove} confirmSurgeryPrep={confirmSurgeryPrep} confirmSurgeryUsage={confirmSurgeryUsage} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems}/>}
-          {tab==="inventory" && <InventoryScreen items={filteredItems} search={search} setSearch={setSearch} cat={cat} setCat={setCat} orders={orders} onItemClick={openDetail} onExpiryClick={openExpiry} onBulkOrderClick={()=>setModal("bulk_order")}/>}
-          {tab==="inout"     && <InOutScreen items={items} txs={txs} openModal={openModal}/>}
-          {tab==="shipping"  && <ShippingTrackingScreen orders={orders} allItems={items} currentUser={currentUser} canApprove={canApprove} openModal={openModal} showToast={showToast} approveOrder={approveOrder} approveOrders={approveOrders} rejectOrder={rejectOrder} startTracking={startTracking} refreshTracking={refreshTracking} confirmReceipt={confirmReceipt} onRunPriceMonitor={runPriceMonitor}/>}
+          {tab==="home"      && <HomeScreen currentUser={currentUser} users={users} setTab={setTab} openModal={openModal} canApprove={canApprove} openItemsEditor={openItemsEditor}/>}
+          {tab==="inventory" && <InventoryScreen search={search} setSearch={setSearch} cat={cat} setCat={setCat} currentUser={currentUser} onItemClick={openDetail} onExpiryClick={openExpiry} onBulkOrderClick={()=>openModal("bulk_order")}/>}
+          {tab==="inout"     && <InOutScreen openModal={openModal}/>}
+          {(tab==="shipping" || shippingSection) && <ShippingTrackingScreen key={shippingInitialTab} currentUser={currentUser} canApprove={canApprove} initialTab={shippingInitialTab} openModal={openModal} showToast={showToast} onRunPriceMonitor={runPriceMonitor}/>}
           {tab==="alerts"    && <AlertsScreen notifs={notifs} setNotifs={setNotifs} setTab={setTab}/>}
-          {tab==="admin"     && canApprove && <AdminScreen users={users} currentUser={currentUser} orders={orders} items={items} setItems={setItems} txs={txs} surgeries={surgeries} addSurgery={addSurgery} deleteSurgery={deleteSurgery} onLogout={onLogout} openItemsEditor={openItemsEditor} updateSurgeryItems={updateSurgeryItems} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole}/>}
+          {(tab==="admin" || adminSection) && canApprove && <AdminScreen key={adminInitialTab} initialTab={adminInitialTab} standalone={Boolean(adminSection)} managementOnly={tab === "admin"} users={users} currentUser={currentUser} onLogout={onLogout} openItemsEditor={openItemsEditor} openModal={openModal} showToast={showToast} onInviteStaff={inviteStaff} onRunPriceMonitor={runPriceMonitor} onStaffActiveChange={updateStaffActive} onStaffRoleChange={updateStaffRole} onOpenShipping={()=>setTab("shipping")}/>}
         </Suspense>
       </div>
 
@@ -213,9 +226,6 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         detailItem={detailItem}
         showExpiry={showExpiry}
         showProfile={showProfile}
-        items={items}
-        txs={txs}
-        orders={orders}
         currentUser={currentUser}
         canEdit={canApprove}
         onCloseDetail={()=>closeOverlay(()=>setDetailItem(null))}
@@ -229,17 +239,19 @@ export function MainApp({currentUser, users, setUsers, items, setItems, txs, set
         modal={modal} setModal={setModal}
         selItem={selItem} setSelItem={setSelItem}
         form={form} setForm={setForm}
-        items={items} setItems={setItems}
-        orders={orders} currentUser={currentUser}
-        commit={commit} submitOrder={submitOrder} submitBulkOrders={submitBulkOrders} confirmReceipt={confirmReceipt} confirmReceipts={confirmReceipts}
+        currentUser={currentUser}
         showToast={showToast}
         canApprove={canApprove}
         editItemsState={editItemsState} setEditItemsState={setEditItemsState}
         openModal={openModal}
       />
 
+      </SurgeryProvider>
+      </OrderProvider>
+      </InventoryProvider>
+
       {toast && (
-        <div style={{position:"absolute", bottom:86, left:20, right:20, background:T.grey900, color:T.white, padding:"12px 16px", borderRadius:12, fontSize: 14, fontWeight:500, zIndex:999, boxShadow:"0px 4px 12px rgba(0,0,0,0.12)", animation:"fadeUp 150ms"}}>
+        <div style={{position:"absolute", bottom:86, left:20, right:20, background:T.grey900, color:T.white, padding:"12px 16px", borderRadius:12, fontSize: 14, fontWeight:500, zIndex:999, boxShadow:T.shadowToast, animation:"fadeUp 150ms"}}>
           {toast}
         </div>
       )}

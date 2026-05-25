@@ -6,6 +6,31 @@ const SOURCE_LABELS = {
   jdent: "제이덴트",
 };
 
+let preparedCatalogPromise = null;
+
+export async function loadPreparedDentalMaterialCatalog() {
+  if (!preparedCatalogPromise) {
+    preparedCatalogPromise = import("../data/dentalMaterialCatalogPrepared.js")
+      .then(async (preparedCatalog) => {
+        const { materials, groups } = await preparedCatalog.loadDentalMaterialCatalogPreparedData();
+        return {
+          summary: preparedCatalog.DENTAL_MATERIAL_CATALOG_SUMMARY,
+          categoryOptions: preparedCatalog.DENTAL_MATERIAL_CATALOG_CATEGORY_OPTIONS,
+          typeOptionsByCategory: preparedCatalog.DENTAL_MATERIAL_CATALOG_TYPE_OPTIONS_BY_CATEGORY,
+          materials,
+          materialsById: new Map(materials.map(material => [material.catalog_id, material])),
+          groups,
+        };
+      })
+      .catch((error) => {
+        preparedCatalogPromise = null;
+        throw error;
+      });
+  }
+
+  return preparedCatalogPromise;
+}
+
 export function getMaterialSourceLabel(source) {
   return SOURCE_LABELS[source] || source || "거래처";
 }
@@ -29,6 +54,10 @@ const INLINE_MARKETING_PATTERN = new RegExp(
 );
 const GIVEAWAY_PATTERN = /\s*(?:구매\s*시|구매시).*(?:증정|이벤트).*/gi;
 const POLICY_PATTERN = /\s*\/?\s*(?:반품\s*불가\s*상품?|참고용\s*대표이미지|묶음상품\s*구매\s*시\s*할인\s*적용)\s*/gi;
+const REPRESENTATIVE_TYPE_PATTERN = /거즈|gauze|마스크|mask|글러브|장갑|glove|코튼롤|코튼\s*롤|코튼펠렛|코튼|cotton|알콜|알코올|alcohol|스왑|swab|석션\s*팁|석션팁|suction\s*tip|파우치|pouch|시린지|주사기?|syringe|니들|needle|수술복|소공포|에이프런|apron/i;
+const PRODUCT_WORD_PATTERN = /\b(?:the|new|premium|standard|disposable|sterile|non[-\s]?sterile|powder\s*free|latex|nitrile|dental|medical)\b/gi;
+const SIZE_TOKEN_PATTERN = /\b(?:xs|s|m|l|xl|xxl|small|medium|large)\b|(?:\d+(?:\.\d+)?\s*(?:cc|ml|mm|cm|inch|in|g|ea|pcs|매|장|개|봉|박스|box|pkg|pack|roll|롤|호|gauge|g|조))|(?:\d+(?:\.\d+)?\s*[x×]\s*\d+(?:\.\d+)?(?:\s*(?:inch|in|mm|cm))?)|(?:\d+\s*g)|(?:kf[-\s]?\d+)|(?:\d+\s*way)|(?:\d+\s*홀)|(?:\d+\s*중)/gi;
+const COLOR_PATTERN = /화이트|흰색|백색|블랙|검정|그레이|회색|블루|파랑|핑크|분홍|옐로우|노랑|그린|녹색|투명|white|black|gray|grey|blue|pink|yellow|green|clear/gi;
 
 export function cleanMaterialName(name) {
   const original = String(name || "").trim();
@@ -48,7 +77,7 @@ export function cleanMaterialName(name) {
 }
 
 export function getMaterialDisplayName(material = {}) {
-  return cleanMaterialName(material.display_name || material.name);
+  return cleanMaterialName(material.app_display_name || material.display_name || material.name);
 }
 
 export function getMaterialCategoryLabel(material = {}) {
@@ -64,6 +93,291 @@ export function getMaterialTypeLabel(material = {}) {
     .pop();
   const type = cleanMaterialName(lastMeaningfulPart || rawType);
   return type || "기타";
+}
+
+function normalizeGroupText(value) {
+  return cleanMaterialName(value)
+    .replace(/[()[\]{}【】]/g, " ")
+    .replace(SIZE_TOKEN_PATTERN, " ")
+    .replace(COLOR_PATTERN, " ")
+    .replace(PRODUCT_WORD_PATTERN, " ")
+    .replace(/\b(?:for|type|size)\b/gi, " ")
+    .replace(/\s*[-_/|·,]+\s*/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function normalizeKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[()[\]{}【】]/g, "")
+    .trim();
+}
+
+function firstMeaningfulToken(values) {
+  return values
+    .map(value => cleanMaterialName(value || ""))
+    .find(value => value && !/^\d+$/.test(value));
+}
+
+export function getMaterialRepresentativeName(material = {}) {
+  if (material.representative_name) return material.representative_name;
+  const category = getMaterialCategoryLabel(material);
+  const type = getMaterialTypeLabel(material);
+  const displayName = getMaterialDisplayName(material);
+  const typeCandidate = normalizeGroupText(type);
+  const typeIsSpecific = typeCandidate.length <= 16 && !/[/>|,]/.test(String(material.source_category || type));
+
+  if (typeIsSpecific && REPRESENTATIVE_TYPE_PATTERN.test(typeCandidate) && category === "소모품") {
+    return typeCandidate || type;
+  }
+
+  const nameCandidate = normalizeGroupText(displayName);
+  const sourceCandidate = normalizeGroupText(material.source_category);
+  const fallback = firstMeaningfulToken([nameCandidate, sourceCandidate, typeCandidate, displayName]);
+
+  return fallback || "카탈로그 품목";
+}
+
+function extractUniqueMatches(text, patterns) {
+  const normalizedText = String(text || "");
+  const values = [];
+
+  patterns.forEach(pattern => {
+    const matches = normalizedText.match(pattern) || [];
+    matches.forEach(match => {
+      const value = cleanMaterialName(match)
+        .replace(/\s+/g, " ")
+        .replace(/\s*([x×])\s*/gi, " x ")
+        .trim();
+      if (value && !values.some(existing => normalizeKey(existing) === normalizeKey(value))) {
+        values.push(value);
+      }
+    });
+  });
+
+  return values;
+}
+
+export function getMaterialVariantLabel(material = {}) {
+  if (material.variant_label) return material.variant_label;
+  const text = [
+    getMaterialDisplayName(material),
+    material.spec,
+    material.package_unit,
+    material.unit,
+  ].filter(Boolean).join(" ");
+
+  const matches = extractUniqueMatches(text, [
+    /\d+(?:\.\d+)?\s*[x×]\s*\d+(?:\.\d+)?(?:\s*(?:inch|in|mm|cm))?/gi,
+    /\d+(?:\.\d+)?\s*(?:cc|ml|mm|cm|inch|in)\b/gi,
+    /\b(?:xs|s|m|l|xl|xxl|small|medium|large)\b/gi,
+    /kf[-\s]?\d+/gi,
+    /\d+\s*(?:ea|pcs|매|장|개|봉|박스|box|pkg|pack|롤|roll|조)\b/gi,
+    /\d+\s*(?:g|gauge)\b/gi,
+    /\d+\s*way/gi,
+    /\d+\s*홀/gi,
+    /\d+\s*중/gi,
+    COLOR_PATTERN,
+    /멸균|비멸균|sterile|non[-\s]?sterile|파우더\s*프리|powder\s*free|라텍스|니트릴|latex|nitrile/gi,
+  ]);
+
+  return matches.slice(0, 4).join(" · ") || "기본";
+}
+
+function createComparableMaterial(materials) {
+  const sorted = [...materials].sort((a, b) => {
+    const aPrice = Math.min(...getMaterialVendorOptions(a).map(option => option.price).filter(Boolean));
+    const bPrice = Math.min(...getMaterialVendorOptions(b).map(option => option.price).filter(Boolean));
+    const safeA = Number.isFinite(aPrice) ? aPrice : Number.MAX_SAFE_INTEGER;
+    const safeB = Number.isFinite(bPrice) ? bPrice : Number.MAX_SAFE_INTEGER;
+    return safeA - safeB || getMaterialDisplayName(a).localeCompare(getMaterialDisplayName(b), "ko-KR");
+  });
+
+  return sorted[0] || materials[0];
+}
+
+function makeInventoryDisplayName(group, variant) {
+  if (!variant || variant.label === "기본") return group.representativeName;
+  const normalizedName = normalizeKey(group.representativeName);
+  const normalizedVariant = normalizeKey(variant.label);
+  if (normalizedName.includes(normalizedVariant)) return group.representativeName;
+  return `${group.representativeName} ${variant.label}`;
+}
+
+export function getMaterialGroupInventoryMaterial(group, variantKey) {
+  const variant = group?.variants?.find(option => option.key === variantKey) || group?.variants?.[0];
+  const material = variant?.material || group?.materials?.[0] || {};
+  const displayName = makeInventoryDisplayName(group, variant);
+
+  return {
+    ...material,
+    catalog_id: variant?.key || material.catalog_id,
+    display_name: displayName,
+    name: displayName,
+  };
+}
+
+export function buildMaterialCatalogGroups(materials = []) {
+  const groupMap = new Map();
+
+  materials.forEach(material => {
+    const category = getMaterialCategoryLabel(material);
+    const type = getMaterialTypeLabel(material);
+    const representativeName = getMaterialRepresentativeName(material);
+    const key = [
+      normalizeKey(category),
+      normalizeKey(type),
+      normalizeKey(representativeName),
+    ].join("::");
+
+    if (!groupMap.has(key)) {
+      groupMap.set(key, {
+        key,
+        representativeName,
+        category,
+        type,
+        unit: inferMaterialUnit(material),
+        manufacturer: material.manufacturer || "",
+        materials: [],
+        variants: [],
+      });
+    }
+
+    groupMap.get(key).materials.push(material);
+  });
+
+  return [...groupMap.values()].map(group => {
+    const variantMap = new Map();
+
+    group.materials.forEach(material => {
+      const label = getMaterialVariantLabel(material);
+      const key = `${group.key}::${normalizeKey(label)}`;
+      if (!variantMap.has(key)) {
+        variantMap.set(key, {
+          key,
+          label,
+          materials: [],
+          vendorCount: 0,
+          material: material,
+        });
+      }
+      variantMap.get(key).materials.push(material);
+    });
+
+    const variants = [...variantMap.values()].map(variant => {
+      const vendors = new Set();
+      variant.materials.forEach(material => {
+        getMaterialVendorOptions(material).forEach(option => {
+          if (option.vendor_name || option.vendor_id) vendors.add(option.vendor_name || option.vendor_id);
+        });
+      });
+      return {
+        ...variant,
+        material: createComparableMaterial(variant.materials),
+        vendorCount: vendors.size || variant.materials.length,
+      };
+    }).sort((a, b) => (
+      (a.label === "기본" ? 1 : 0) - (b.label === "기본" ? 1 : 0) ||
+      a.label.localeCompare(b.label, "ko-KR", { numeric: true })
+    ));
+
+    return {
+      ...group,
+      variants,
+      vendorCount: new Set(group.materials.flatMap(material =>
+        getMaterialVendorOptions(material).map(option => option.vendor_name || option.vendor_id).filter(Boolean)
+      )).size,
+    };
+  }).sort((a, b) => (
+    getCategorySortIndex(a.category) - getCategorySortIndex(b.category) ||
+    a.type.localeCompare(b.type, "ko-KR") ||
+    a.representativeName.localeCompare(b.representativeName, "ko-KR")
+  ));
+}
+
+function matchesMaterialGroupQuery(group, normalizedQuery) {
+  if (!normalizedQuery) return true;
+  const haystack = [
+    group.representativeName,
+    group.category,
+    group.type,
+    group.unit,
+    group.manufacturer,
+    ...group.variants.map(variant => variant.label),
+    ...group.materials.map(material => [
+      getMaterialDisplayName(material),
+      material.name,
+      material.spec,
+      material.package_unit,
+      material.search_keywords,
+      material.manufacturer,
+    ].join(" ")),
+  ].join(" ").toLowerCase();
+
+  return haystack.includes(normalizedQuery);
+}
+
+export function filterMaterialCatalogGroups(groups = [], { query = "", category = "", type = "" } = {}, limit = 60) {
+  const normalizedQuery = String(query || "").trim().toLowerCase();
+  const filtered = groups.filter(group => (
+    (!category || group.category === category) &&
+    (!type || group.type === type) &&
+    matchesMaterialGroupQuery(group, normalizedQuery)
+  ));
+
+  return {
+    total: filtered.length,
+    items: filtered.slice(0, limit),
+  };
+}
+
+function matchesPreparedGroupQuery(group, normalizedQuery, materialsById) {
+  if (!normalizedQuery) return true;
+  if (group.search_text) return String(group.search_text).toLowerCase().includes(normalizedQuery);
+
+  const materialText = group.variants?.flatMap(variant => {
+    const material = materialsById?.get?.(variant.material_id) || {};
+    return [
+      variant.label,
+      material.name,
+      material.display_name,
+      material.app_display_name,
+      material.spec,
+      material.manufacturer,
+      ...(material.vendor_options || []).flatMap(option => [
+        option.vendor_name,
+        option.product_code,
+        option.sku,
+        option.source_product_id,
+      ]),
+    ];
+  }) || [];
+  const haystack = [
+    group.representativeName,
+    group.category,
+    group.type,
+    group.unit,
+    group.manufacturer,
+    ...materialText,
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  return haystack.includes(normalizedQuery);
+}
+
+export function filterPreparedMaterialCatalogGroups(groups = [], { query = "", category = "", type = "" } = {}, limit = 60, materialsById = null) {
+  const normalizedQuery = String(query || "").trim().toLowerCase();
+  const filtered = groups.filter(group => (
+    (!category || group.category === category) &&
+    (!type || group.type === type) &&
+    matchesPreparedGroupQuery(group, normalizedQuery, materialsById)
+  ));
+
+  return {
+    total: filtered.length,
+    items: filtered.slice(0, limit),
+  };
 }
 
 export function inferMaterialCategoryName(material = {}) {

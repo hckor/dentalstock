@@ -7,8 +7,26 @@ import { catColor, getActiveOrder, getStatus } from "../../utils/helpers";
 import { resolveOrderVendorForQty } from "../../utils/vendorSelection";
 import { Inp } from "../shared/Inp";
 
-const buildInitialRows = (items, orders) =>
-  items
+const buildInitialRows = (items, orders, initialRows = null) => {
+  const itemMap = new Map(items.map(item => [item.id, item]));
+  if (Array.isArray(initialRows) && initialRows.length > 0) {
+    return initialRows
+      .map(row => {
+        const item = row.item || itemMap.get(row.item_id);
+        if (!item) return null;
+        return {
+          item,
+          qty: Math.max(1, Number(row.qty) || Number(item.min_qty) - Number(item.current_qty) || 1),
+          selected: !getActiveOrder(orders, item.id),
+          blocked: Boolean(getActiveOrder(orders, item.id)),
+          reason: row.reason || "",
+          sourceLabel: row.sourceLabel || "",
+        };
+      })
+      .filter(Boolean);
+  }
+
+  return items
     .filter(item => getStatus(item) !== "ok")
     .map(item => ({
       item,
@@ -16,10 +34,11 @@ const buildInitialRows = (items, orders) =>
       selected: !getActiveOrder(orders, item.id),
       blocked: Boolean(getActiveOrder(orders, item.id)),
     }));
+};
 
-export function BulkOrderRequestSheet({ items, orders, onSubmit, onClose }) {
-  const [rows, setRows] = useState(() => buildInitialRows(items, orders));
-  const [note, setNote] = useState("부족 품목 일괄 발주");
+export function BulkOrderRequestSheet({ items, orders, onSubmit, onClose, initialRows = null, initialNote = "부족 품목 일괄 발주", title = "부족 품목 발주", description = "필요한 품목만 남기고 수량을 조정하세요." }) {
+  const [rows, setRows] = useState(() => buildInitialRows(items, orders, initialRows));
+  const [note, setNote] = useState(initialNote);
   const settings = useMemo(() => settingsApi.load(), []);
   const vendorByItemId = useMemo(() => new Map(rows.map(row => [row.item.id, resolveOrderVendorForQty(row.item, settings, row.qty)])), [rows, settings]);
 
@@ -44,9 +63,9 @@ export function BulkOrderRequestSheet({ items, orders, onSubmit, onClose }) {
     <div style={{ padding: "16px 20px 0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: T.grey900 }}>부족 품목 발주</h2>
+          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: T.grey900 }}>{title}</h2>
           <p style={{ margin: "6px 0 0", fontSize: 14, color: T.grey500, lineHeight: 1.45 }}>
-            필요한 품목만 남기고 수량을 조정하세요.
+            {description}
           </p>
         </div>
         <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", padding: 6 }}>
@@ -115,6 +134,11 @@ export function BulkOrderRequestSheet({ items, orders, onSubmit, onClose }) {
                     예상 거래처 <span style={{ fontWeight: 700, color: T.grey700 }}>{vendorByItemId.get(row.item.id)?.vendor_name || "거래처 미정"}</span>
                     {vendorByItemId.get(row.item.id)?.vendor_price && <span> · {vendorByItemId.get(row.item.id).vendor_price.toLocaleString()}원</span>}
                   </p>
+                  {row.reason && (
+                    <p style={{ margin: "4px 0 0", fontSize: 13, color: T.orange500, fontWeight: 700, lineHeight: 1.35 }}>
+                      {row.sourceLabel && `${row.sourceLabel} · `}{row.reason}
+                    </p>
+                  )}
                 </div>
               </div>
 

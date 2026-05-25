@@ -1,13 +1,21 @@
 import { describe, expect, it } from "vitest";
+import { loadDentalMaterialCatalog } from "../data/dentalMaterialCatalog";
 import {
+  buildMaterialCatalogGroups,
   cleanMaterialName,
+  filterMaterialCatalogGroups,
+  filterPreparedMaterialCatalogGroups,
   filterMaterials,
   getMaterialCategoryOptions,
+  getMaterialGroupInventoryMaterial,
+  getMaterialRepresentativeName,
   getMaterialTypeLabel,
   getMaterialTypeOptions,
+  getMaterialVariantLabel,
   groupMaterialsByCategoryAndType,
   inferMaterialCategoryId,
   inferMaterialUnit,
+  loadPreparedDentalMaterialCatalog,
   materialToInventoryItem,
   searchMaterials,
 } from "../utils/dentalMaterialCatalog";
@@ -150,5 +158,83 @@ describe("dental material catalog", () => {
         items: [materials[0]],
       },
     ]);
+  });
+
+  it("판매처가 달라도 같은 소모품 종류는 대표 품목으로 묶고 규격만 옵션으로 분리한다", () => {
+    const materials = [
+      {
+        catalog_id: "gauze-a",
+        name: "[특가] 거즈 2 x 2 inch 200pcs",
+        display_name: "거즈 2 x 2 inch",
+        category: "소모품",
+        source_category: "거즈",
+        source: "edent",
+        vendor_options: [{ vendor_name: "이덴트", price: 7000 }],
+      },
+      {
+        catalog_id: "gauze-b",
+        name: "거즈 4x4 200pcs",
+        display_name: "거즈 4x4",
+        category: "소모품",
+        source_category: "거즈",
+        source: "jdent",
+        vendor_options: [{ vendor_name: "제이덴트", price: 6900 }],
+      },
+      {
+        catalog_id: "mask-a",
+        name: "KF-94 마스크 화이트 50매",
+        category: "소모품",
+        source_category: "마스크",
+        vendor_options: [{ vendor_name: "덴탈365", price: 12000 }],
+      },
+    ];
+
+    expect(getMaterialRepresentativeName(materials[0])).toBe("거즈");
+    expect(getMaterialVariantLabel(materials[0])).toContain("2 x 2 inch");
+
+    const groups = buildMaterialCatalogGroups(materials);
+    const gauzeGroup = groups.find(group => group.representativeName === "거즈");
+    expect(gauzeGroup.variants).toHaveLength(2);
+    expect(gauzeGroup.vendorCount).toBe(2);
+
+    const filtered = filterMaterialCatalogGroups(groups, { query: "4x4" });
+    expect(filtered.total).toBe(1);
+    expect(filtered.items[0].representativeName).toBe("거즈");
+
+    const inventoryMaterial = getMaterialGroupInventoryMaterial(gauzeGroup, gauzeGroup.variants[0].key);
+    expect(inventoryMaterial.name).toMatch(/^거즈 /);
+  });
+
+  it("사전 생성된 대표 품목 그룹은 가벼운 검색 텍스트로 필터링한다", () => {
+    const groups = [
+      { representativeName: "거즈", category: "소모품", type: "거즈", variants: [{ label: "2 x 2 inch", material_id: "m1" }] },
+      { representativeName: "리도카인", category: "의약품", type: "마취제", variants: [{ label: "앰플", material_id: "m2" }] },
+    ];
+    const materialsById = new Map([
+      ["m1", { manufacturer: "메디탑", vendor_options: [] }],
+      ["m2", { name: "리도카인 앰플", vendor_options: [] }],
+    ]);
+
+    expect(filterPreparedMaterialCatalogGroups(groups, { query: "메디탑" }, 60, materialsById).items).toEqual([groups[0]]);
+    expect(filterPreparedMaterialCatalogGroups(groups, { category: "의약품" }).items).toEqual([groups[1]]);
+    expect(filterPreparedMaterialCatalogGroups(groups, { category: "소모품", type: "마스크" }).total).toBe(0);
+  });
+
+  it("사전 생성된 대형 카탈로그는 비동기로 불러와 검색에 사용한다", async () => {
+    const catalog = await loadPreparedDentalMaterialCatalog();
+    const firstGroup = catalog.groups[0];
+    const filtered = filterPreparedMaterialCatalogGroups(
+      catalog.groups,
+      { query: firstGroup.representativeName },
+      5,
+      catalog.materialsById
+    );
+
+    expect(catalog.summary.rawItemCount).toBeGreaterThan(0);
+    expect(catalog.groups).toHaveLength(catalog.summary.groupCount);
+    expect(catalog.materialsById.size).toBe(catalog.materials.length);
+    expect(filtered.items.some(group => group.key === firstGroup.key)).toBe(true);
+    await expect(loadDentalMaterialCatalog()).resolves.toHaveLength(catalog.summary.preparedMaterialCount);
+    await expect(loadPreparedDentalMaterialCatalog()).resolves.toBe(catalog);
   });
 });

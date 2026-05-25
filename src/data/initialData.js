@@ -6,6 +6,7 @@ export const INITIAL_USERS = [
   { id:"u3", name:"박위생사", role:"hygienist", pin:"0000", active:true },
   { id:"u4", name:"최위생사", role:"hygienist", pin:"0000", active:true },
   { id:"u5", name:"정위생사", role:"hygienist", pin:"0000", active:true },
+  { id:"u6", name:"한스태프", role:"staff",     pin:"2222", active:true },
 ];
 
 export const INIT_ITEMS = [

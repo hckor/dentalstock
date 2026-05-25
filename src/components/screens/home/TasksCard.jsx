@@ -30,6 +30,8 @@ export function TasksCard({
   items,
   setTab,
   defaultExpanded = false,
+  showSurgeryTasks = true,
+  showExpiryTasks = true,
 }) {
   const { tokens: T } = useTheme();
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -45,12 +47,13 @@ export function TasksCard({
         kind: "approval",
         priority: 10,
         Icon: ClipboardList,
-        iconBg: T.orange50,
-        iconColor: T.orange500,
+	        iconBg: T.warningBg,
+	        iconColor: T.warning,
         title: item?.name || "-",
         subtitle: `발주 승인 대기 · ${priceLabel}`,
         actionLabel: "검토하기",
-        actionBg: T.blue500,
+	        actionBg: T.primary,
+        targetTab: "shipping",
       };
     }) : [];
 
@@ -66,17 +69,18 @@ export function TasksCard({
         kind: isDelivered ? "receipt" : needsTracking ? "tracking" : "shipping",
         priority: isDelivered ? 20 : needsTracking ? 30 : 60,
         Icon: isDelivered ? PackageCheck : needsTracking ? Truck : Package,
-        iconBg: isDelivered ? T.green50 : needsTracking ? T.blue50 : T.teal50,
-        iconColor: isDelivered ? T.green500 : needsTracking ? T.blue500 : T.teal500,
+	        iconBg: isDelivered ? T.successBg : needsTracking ? T.primaryBg : T.infoBg,
+	        iconColor: isDelivered ? T.success : needsTracking ? T.primary : T.info,
         title: item?.name || "-",
         subtitle: isDelivered ? `배송완료 · 입고 수량 확인 필요` : needsTracking ? `송장 미등록 · ${carrier}` : `입고 대기 · ${carrier}${trackingNumber}`,
         actionLabel: isDelivered ? "입고확인" : needsTracking ? "송장등록" : "확인하기",
-        actionBg: T.blue500,
+	        actionBg: T.primary,
+        targetTab: "shipping",
       };
     });
 
     const today = todayKey();
-    const surgeryTasks = surgeries
+    const surgeryTasks = showSurgeryTasks ? surgeries
       .filter(surgery => surgery.scheduled_date === today && (!surgery.prep_confirmed || (surgery.prep_confirmed && !surgery.usage_confirmed)))
       .map(surgery => {
         if (surgery.prep_confirmed && !surgery.usage_confirmed) {
@@ -85,12 +89,13 @@ export function TasksCard({
             kind: "surgery_usage",
             priority: 35,
             Icon: ClipboardList,
-            iconBg: T.blue50,
-            iconColor: T.blue500,
+	            iconBg: T.primaryBg,
+	            iconColor: T.primary,
             title: surgery.title,
             subtitle: "수술 후 실사용량 확인 필요",
             actionLabel: "확인하기",
-            actionBg: T.blue500,
+	            actionBg: T.primary,
+            targetTab: "home",
           };
         }
         const shortageCount = (surgery.required_items || []).filter(required => {
@@ -103,18 +108,19 @@ export function TasksCard({
           kind: "surgery",
           priority: 40,
           Icon: CalendarClock,
-          iconBg: T.orange50,
-          iconColor: T.orange500,
+	          iconBg: T.warningBg,
+	          iconColor: T.warning,
           title: surgery.title,
           subtitle: `수술 준비 부족 · ${shortageCount}개 품목 확인`,
           actionLabel: "준비하기",
-          actionBg: T.blue500,
+	          actionBg: T.primary,
+          targetTab: "home",
         };
       })
-      .filter(Boolean);
+      .filter(Boolean) : [];
 
     const now = new Date(`${today}T00:00:00`);
-    const expiryTasks = items
+    const expiryTasks = showExpiryTasks ? items
       .filter(item => item.expiry)
       .map(item => {
         const expiryDate = new Date(`${item.expiry}T00:00:00`);
@@ -129,16 +135,17 @@ export function TasksCard({
         kind: "expiry",
         priority: 50,
         Icon: AlertTriangle,
-        iconBg: T.red50,
-        iconColor: T.red500,
+	        iconBg: T.dangerBg,
+	        iconColor: T.danger,
         title: item.name,
         subtitle: `유통기한 ${daysLeft}일 남음 · ${item.expiry}`,
         actionLabel: "확인하기",
-        actionBg: T.blue500,
-      }));
+	        actionBg: T.primary,
+        targetTab: "inventory",
+      })) : [];
 
     return [...approvals, ...shippings, ...surgeryTasks, ...expiryTasks].sort((a, b) => (a.priority || 70) - (b.priority || 70));
-  }, [T, approvalOrders, canApprove, items, shippingOrders, surgeries]);
+  }, [T, approvalOrders, canApprove, items, shippingOrders, showExpiryTasks, showSurgeryTasks, surgeries]);
 
   if (workItems.length === 0) return null;
 
@@ -157,13 +164,13 @@ export function TasksCard({
   const firstSurgeryUsage = workItems.find(item => item.kind === "surgery_usage");
   const firstExpiry = workItems.find(item => item.kind === "expiry");
   const summaryItems = [
-    approvalCount > 0 && { key: "approval", count: approvalCount, label: "승인 대기", subtitle: `${firstApproval?.title || "-"}부터 검토`, Icon: ClipboardList, bg: T.orange50, color: T.orange500 },
-    receiptCount > 0 && { key: "receipt", count: receiptCount, label: "입고 확인", subtitle: `${firstReceipt?.title || "-"} 수량 확인`, Icon: PackageCheck, bg: T.green50, color: T.green500 },
-    trackingCount > 0 && { key: "tracking", count: trackingCount, label: "송장 등록", subtitle: `${firstTracking?.title || "-"}부터 등록`, Icon: Truck, bg: T.blue50, color: T.blue500 },
-    surgeryUsageCount > 0 && { key: "surgery_usage", count: surgeryUsageCount, label: "사용량 확인", subtitle: `${firstSurgeryUsage?.title || "-"} 확인`, Icon: ClipboardList, bg: T.blue50, color: T.blue500 },
-    surgeryCount > 0 && { key: "surgery", count: surgeryCount, label: "수술 준비", subtitle: `${firstSurgery?.title || "-"} 확인`, Icon: CalendarClock, bg: T.orange50, color: T.orange500 },
-    expiryCount > 0 && { key: "expiry", count: expiryCount, label: "유통기한", subtitle: `${firstExpiry?.title || "-"} 확인`, Icon: AlertTriangle, bg: T.red50, color: T.red500 },
-    shippingCount > 0 && { key: "shipping", count: shippingCount, label: "입고 대기", subtitle: `${firstShipping?.title || "-"}부터 확인`, Icon: Package, bg: T.teal50, color: T.teal500 },
+	    approvalCount > 0 && { key: "approval", count: approvalCount, label: "승인 대기", subtitle: `${firstApproval?.title || "-"}부터 검토`, Icon: ClipboardList, bg: T.warningBg, color: T.warning },
+	    receiptCount > 0 && { key: "receipt", count: receiptCount, label: "입고 확인", subtitle: `${firstReceipt?.title || "-"} 수량 확인`, Icon: PackageCheck, bg: T.successBg, color: T.success },
+	    trackingCount > 0 && { key: "tracking", count: trackingCount, label: "송장 등록", subtitle: `${firstTracking?.title || "-"}부터 등록`, Icon: Truck, bg: T.primaryBg, color: T.primary },
+	    surgeryUsageCount > 0 && { key: "surgery_usage", count: surgeryUsageCount, label: "사용량 확인", subtitle: `${firstSurgeryUsage?.title || "-"} 확인`, Icon: ClipboardList, bg: T.primaryBg, color: T.primary },
+	    surgeryCount > 0 && { key: "surgery", count: surgeryCount, label: "수술 준비", subtitle: `${firstSurgery?.title || "-"} 확인`, Icon: CalendarClock, bg: T.warningBg, color: T.warning },
+	    expiryCount > 0 && { key: "expiry", count: expiryCount, label: "유통기한", subtitle: `${firstExpiry?.title || "-"} 확인`, Icon: AlertTriangle, bg: T.dangerBg, color: T.danger },
+	    shippingCount > 0 && { key: "shipping", count: shippingCount, label: "입고 대기", subtitle: `${firstShipping?.title || "-"}부터 확인`, Icon: Package, bg: T.infoBg, color: T.info },
   ].filter(Boolean).slice(0, 3);
 
   return (
@@ -188,7 +195,7 @@ export function TasksCard({
             오늘 해야 할 일
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 16, fontWeight: 700, color: T.blue500, fontFamily: monoFont }}>
+	            <span style={{ fontSize: 16, fontWeight: 700, color: T.primary, fontFamily: monoFont }}>
               {workItems.length}건
             </span>
             <ChevronRight size={18} color={T.grey400} style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 150ms" }} />
@@ -227,7 +234,7 @@ export function TasksCard({
             <div key={task.id}>
               {i > 0 && <Divider />}
               <button
-                onClick={() => setTab("shipping")}
+                onClick={() => setTab(task.targetTab || "shipping")}
                 style={{
                   width: "100%",
                   display: "flex",

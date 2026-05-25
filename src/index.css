@@ -1,7 +1,12 @@
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+:root {
+  --ds-body-bg: #f2f4f6;
+  --ds-body-text: #191f28;
+  --ds-placeholder: #b0b8c1;
+}
 body {
-  background: #f2f4f6;
+  background: var(--ds-body-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color-scheme: light;
@@ -10,15 +15,21 @@ body {
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; }
-input::placeholder { color: #b0b8c1; }
+input::placeholder { color: var(--ds-placeholder); }
 
 html[data-theme="dark"] body {
-  background: #1a1d21;
-  color: #f2f4f6;
+  --ds-body-bg: #1a1d21;
+  --ds-body-text: #f2f4f6;
+  --ds-placeholder: #52606d;
+  background: var(--ds-body-bg);
+  color: var(--ds-body-text);
   color-scheme: dark;
 }
 html[data-theme="light"] body {
-  background: #f2f4f6;
-  color: #191f28;
+  --ds-body-bg: #f2f4f6;
+  --ds-body-text: #191f28;
+  --ds-placeholder: #b0b8c1;
+  background: var(--ds-body-bg);
+  color: var(--ds-body-text);
   color-scheme: light;
 }

@@ -22,6 +22,8 @@ describe('Login flow', () => {
     expect(screen.getByText('김원장')).toBeInTheDocument();
     expect(screen.getByText('이매니저')).toBeInTheDocument();
     expect(screen.getByText('박위생사')).toBeInTheDocument();
+    expect(screen.getByText('한스태프')).toBeInTheDocument();
+    expect(screen.getByText(/스태프 2222/)).toBeInTheDocument();
   });
 
   it('사용자를 선택하면 PIN 화면으로 이동', async () => {

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Activity, ClipboardCheck, Package, ShieldCheck, Stethoscope } from "lucide-react";
 import { auditLogsApi } from "../../../api/auditLogsApi";
 import { T, font, monoFont } from "../../../constants/colors";
+import { ORDER_ST } from "../../../constants/orderStates";
 import { fmtFull } from "../../../utils/helpers";
 import { Card } from "../../shared/Card";
 import { Chip } from "../../shared/Chip";
@@ -16,20 +17,21 @@ const filters = [
 ];
 
 const actionMeta = {
-  "stock.in": { label: "입고 등록", color: T.blue500, bg: T.blue50 },
-  "stock.out": { label: "출고 등록", color: T.red500, bg: T.red50 },
-  "order.requested": { label: "발주 요청", color: T.orange500, bg: T.orange50 },
-  "order.approved": { label: "발주 승인", color: T.blue500, bg: T.blue50 },
-  "order.rejected": { label: "발주 반려", color: T.red500, bg: T.red50 },
-  "order.tracking_registered": { label: "송장 등록", color: T.teal500, bg: T.teal50 },
-  "order.tracking_refreshed": { label: "배송 갱신", color: T.teal500, bg: T.teal50 },
-  "order.delivered": { label: "배달완료", color: T.green500, bg: T.green50 },
-  "order.received": { label: "입고 확인", color: T.green500, bg: T.green50 },
-  "surgery.created": { label: "수술 등록", color: T.blue500, bg: T.blue50 },
-  "surgery.prep_confirmed": { label: "수술 준비확인", color: T.green500, bg: T.green50 },
-  "surgery.usage_confirmed": { label: "수술 사용확인", color: T.green500, bg: T.green50 },
-  "surgery.items_updated": { label: "수술 품목수정", color: T.purple500, bg: T.purple50 },
-  "surgery.deleted": { label: "수술 삭제", color: T.red500, bg: T.red50 },
+  "stock.in": { label: "입고 등록", color: T.primary, bg: T.primaryBg },
+  "stock.out": { label: "출고 등록", color: T.danger, bg: T.dangerBg },
+  "stock.adjust": { label: "재고 보정", color: T.grey700, bg: T.grey100 },
+  "order.requested": { label: "발주 요청", color: ORDER_ST.pending.text, bg: ORDER_ST.pending.bg },
+  "order.approved": { label: "발주 승인", color: ORDER_ST.ordered.text, bg: ORDER_ST.ordered.bg },
+  "order.rejected": { label: "발주 반려", color: ORDER_ST.rejected.text, bg: ORDER_ST.rejected.bg },
+  "order.tracking_registered": { label: "송장 등록", color: ORDER_ST.ordered.text, bg: ORDER_ST.ordered.bg },
+  "order.tracking_refreshed": { label: "배송 갱신", color: ORDER_ST.ordered.text, bg: ORDER_ST.ordered.bg },
+  "order.delivered": { label: "배달완료", color: ORDER_ST.received.text, bg: ORDER_ST.received.bg },
+  "order.received": { label: "입고 확인", color: ORDER_ST.received.text, bg: ORDER_ST.received.bg },
+  "surgery.created": { label: "수술 등록", color: T.primary, bg: T.primaryBg },
+  "surgery.prep_confirmed": { label: "수술 준비확인", color: T.success, bg: T.successBg },
+  "surgery.usage_confirmed": { label: "수술 사용확인", color: T.success, bg: T.successBg },
+  "surgery.items_updated": { label: "수술 품목수정", color: T.grey700, bg: T.grey100 },
+  "surgery.deleted": { label: "수술 삭제", color: T.danger, bg: T.dangerBg },
 };
 
 function getCategory(action) {
@@ -120,7 +122,7 @@ export function ActivityLogTab() {
                 border: "none",
                 borderRadius: 9999,
                 padding: "9px 13px",
-                background: active ? T.blue500 : T.white,
+                background: active ? T.primary : T.white,
                 color: active ? T.white : T.grey600,
                 fontFamily: font,
                 fontSize: 14,

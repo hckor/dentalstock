@@ -1,11 +1,12 @@
 import { createContext, useContext } from "react";
 import { T } from "../constants/colors";
 
-const ThemeContext = createContext({ tokens: T });
+const themeContextValue = { tokens: T };
+const ThemeContext = createContext(themeContextValue);
 
 export function ThemeProvider({ children }) {
   return (
-    <ThemeContext.Provider value={{ tokens: T }}>
+    <ThemeContext.Provider value={themeContextValue}>
       {children}
     </ThemeContext.Provider>
   );
