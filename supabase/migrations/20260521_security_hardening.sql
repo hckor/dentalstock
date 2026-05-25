@@ -103,6 +103,7 @@ grant execute on function public.record_audit_log(text, text, text, jsonb) to au
 drop policy if exists "members can create notifications" on public.notifs;
 drop policy if exists "members can update clinic notifications" on public.notifs;
 drop policy if exists "members can update their notifications" on public.notifs;
+drop policy if exists "members can update notification read state" on public.notifs;
 revoke insert, update, delete on public.notifs from authenticated;
 grant update(read_at) on public.notifs to authenticated;
 
